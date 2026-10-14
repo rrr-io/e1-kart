@@ -32,112 +32,121 @@ export const DEFAULT_MOOD = {
 // Fallback lines used when a team doesn't have its own for that moment.
 export const COMMON = {
   lightstick: [
-    'The ENGENEs lit up their lightsticks: boost!',
-    'This boost comes straight from the stands.',
-    'Lightstick on, heart on, engine too.',
+    'ENGENEs in the stands just lit their lightsticks. Boost.',
+    'Boost from the grandstand. Thank them later.',
+    'Copy, boost received.',
   ],
   lastLap: [
-    'Final lap! Now or never.',
+    'Final lap. No mistakes.',
   ],
 };
 
+// Each team is inspired by an ENHYPEN member; the lines follow that member's personality.
+// The player is always an ENGENE talking to their driver over the team radio.
 export const DRIVERS = [
   {
+    // Jake: chill, but secretly very competitive.
     team: 'MCJAKEY',
-    driver: '',
+    driver: 'JAKE',
     portrait: null,
     lines: {
-      select: ['Papaya ready, tyres ready. Pick me and the podium turns orange.'],
+      select: ["Relax. We're just going to win, that's all."],
       start: [
-        ['Radio check… can you hear me? Perfect.', 'Three laps, zero excuses. Full throttle!'],
-        ['Warm tyres, papaya engine.', { t: "Let's go get that P1!", mood: 'hype' }],
+        ['Easy. Deep breath.', { t: "Okay. Now let's beat everyone.", mood: 'hype' }],
+        ['No pressure, Engene.', { t: '…Little bit of pressure. We want P1.', mood: 'hype' }],
       ],
-      miniTurbo: ['Nice drift! Orange and fast, just how we like it.'],
-      lastLap: ["Final lap! Papaya isn't stopping now."],
-      win: [['P1! The finish line just turned orange.', 'This one goes to everyone who voted: every vote was extra horsepower in the engine.']],
-      podium: ["Podium! It's not gold, but orange goes with everything."],
-      lose: [['Rough day. Even papaya is sometimes unripe.', { t: "Another vote, another run. We'll bounce back.", mood: 'normal' }]],
+      miniTurbo: ['Smooth. Very smooth.'],
+      lastLap: ['Final lap. Stay chill. But also, go.'],
+      win: [['P1. Told you, no stress.', '…Okay, I was a little stressed.']],
+      podium: ["Podium's nice. Winning's nicer. Next one."],
+      lose: [['Huh. Okay.', { t: 'Rematch. Right now.', mood: 'hype' }]],
     },
   },
   {
+    // Jay: F1 nerd, loves explaining things, humble, always a friend to ENGENE.
     team: 'JAYBULL RACING',
-    driver: '',
+    driver: 'JAY',
     portrait: null,
     lines: {
-      select: ['JAYBULL gives you wings. On track, of course.'],
+      select: ["I've studied this track a lot. Like, a lot. Let's go, Engene."],
       start: [
-        ['Strategy: start strong, finish stronger.', { t: "We've got the wings. Let's see if they fly.", mood: 'hype' }],
+        ['Fun fact: most overtakes here happen into turn one.', { t: "So let's make one.", mood: 'hype' }],
+        ['Tyres are cold for the first half lap.', 'Take it easy, then trust the grip. I trust you.'],
       ],
-      miniTurbo: ['There are the wings! Textbook mini-turbo.'],
-      lastLap: ['Final lap. Everything left in the tank, right now.'],
-      win: [['P1! Told you the wings worked.', 'Yellow looks great on the top step.']],
-      podium: ['Podium. The wings were there, we just ran out of track.'],
-      lose: [['The wings were in for servicing today.', { t: "Upload another certificate: we'll swap them and get back on track.", mood: 'normal' }]],
+      miniTurbo: ['Textbook. Honestly, better than textbook.'],
+      lastLap: ["Final lap. Gap's holding. Keep the lines we practiced."],
+      win: [['P1. The data said we could do it.', "But the data didn't drive. You did."]],
+      podium: ["Podium. Good points. I'll go through the telemetry with you later."],
+      lose: [['Not our day. It happens to the best teams.', { t: "I'll look at the data. One more vote and we go again.", mood: 'normal' }]],
     },
   },
   {
+    // Sunoo: the brightest sunshine, ENGENE's best confidant. Cute, but fierce.
     team: 'ALPINOO',
-    driver: '',
+    driver: 'SUNOO',
     portrait: null,
     lines: {
-      select: ["Pink on track, pink on the podium. It's a style, not a colour."],
+      select: ["Engene! We're going to have so much fun. And win."],
       start: [
-        ['The cutest kart on the grid is about to become the fastest.', { t: "Three laps. Let's make them pink.", mood: 'hype' }],
+        ["You look nervous. It's okay, I'm right here.", { t: "Now let's show them how it's done.", mood: 'hype' }],
       ],
-      miniTurbo: ['Candy-pink mini-turbo, delivered.'],
-      lastLap: ["Final lap! Don't ruin the look now."],
-      win: [['P1! The finish line is pink tonight.', "Fast and cute: they're not mutually exclusive."]],
-      podium: ['Podium! And this suit looks amazing in the photo.'],
-      lose: [['The kart was cute, the lap time less so.', { t: "One vote and we're back on the grid. Pink never gives up.", mood: 'normal' }]],
+      miniTurbo: ['Ooh, that was pretty. And fast!'],
+      lastLap: ["Final lap! I'm cheering the loudest, you know that."],
+      win: [['P1! I knew it, I knew it!', 'Victory hug. Over the radio. It counts.']],
+      podium: ['Podium! You were amazing. I mean it.'],
+      lose: [['Hey, look at me. You did great.', { t: "And next time? We don't lose. Promise.", mood: 'hype' }]],
     },
   },
   {
+    // Sunghoon: loves the thrill. Concise, but warm.
     team: 'HOONRARI',
-    driver: '',
+    driver: 'SUNGHOON',
     portrait: null,
     lines: {
-      select: ['HOONRARI: red, elegant, and a pit wall that always has a plan.'],
+      select: ["Fast laps? Let's go."],
       start: [
-        ['The box says stay calm.', 'The box always says that.'],
-        ['Plan A: win.', { t: 'Plan B: win anyway.', mood: 'hype' }],
+        ['Ready?', { t: 'Good. Me too.', mood: 'hype' }],
       ],
-      miniTurbo: ['That drift is going in the museum.'],
-      lastLap: ['Final lap. The pit wall says manage it. I say push.'],
-      win: [["P1! The fans won't sleep tonight.", 'The plan worked. Mark the date.']],
-      podium: ['Podium. The pit wall calls it “a great team result”.'],
-      lose: [['We dropped out of the strategy. Or the strategy dropped us.', { t: "We'll analyse the data, one more vote and we go again.", mood: 'normal' }]],
+      miniTurbo: ['Nice. Again.'],
+      lastLap: ['Last lap. Enjoy it.'],
+      win: [['P1.', 'That was fun. Thank you, Engene.']],
+      podium: ['Podium. Good race. I liked that one.'],
+      lose: [['Close one.', { t: "Again? I'm in.", mood: 'normal' }]],
     },
   },
   {
+    // Jungwon: goofy, loves ENGENEs, supportive but firm.
     team: 'MEOWCEDES',
-    driver: '',
+    driver: 'JUNGWON',
     portrait: null,
     lines: {
-      select: ['Nine lives, three laps. The maths checks out.'],
+      select: ["Engene, you picked us? Good choice. Now let's not waste it."],
       start: [
-        ['Ears up, paws on the wheel.', { t: 'No purring until we cross the line.', mood: 'hype' }],
+        ['Radio check. Engene, you there?', "Okay. Mirrors, focus, hands on the wheel. I'm serious.", { t: "…Mostly serious. Let's go.", mood: 'hype' }],
+        ['Three laps. I believe in you.', { t: 'Now prove me right.', mood: 'hype' }],
       ],
-      miniTurbo: ['Landed on my feet, as always.'],
-      lastLap: ["Final lap. We've still got eight lives: let's use one."],
-      win: [["P1! Now I'm purring.", 'The fastest cat of the night.']],
-      podium: ["Podium! Not the top step, but it's comfy as a cushion."],
-      lose: [['I got distracted by the stars. Happens to cats.', { t: "One life lost, eight to go. Another vote and we're off again.", mood: 'normal' }]],
+      miniTurbo: ["That's my Engene!", 'Wait, did you just— okay, that was cool.'],
+      lastLap: ["Final lap. Eyes up, no silly mistakes. I'm watching."],
+      win: [['P1! Engene, you did that!', "I'm not crying. The visor is fogged."]],
+      podium: ["Podium. I'm proud of you. Next time, top step. That's an order."],
+      lose: [["Hey. Don't be sad.", { t: 'We learn, we go again. Together.', mood: 'normal' }]],
     },
   },
   {
+    // Ni-ki: HATES to lose. Not very vocal, but the best support: total loyalty and integrity.
     team: 'RIKSTON DRIFT',
-    driver: '',
+    driver: 'NI-KI',
     portrait: null,
     lines: {
-      select: ["The team name is no accident: corners are taken sideways."],
+      select: ["…Let's win."],
       start: [
-        ['Warm tyres, steady hands.', { t: 'Green, like the lights in a moment.', mood: 'hype' }],
+        ['Ready.', "I've got your back. Whole race."],
       ],
-      miniTurbo: ['Now that was a RIKSTON drift.'],
-      lastLap: ['Final lap! Last corners to take sideways, in style.'],
-      win: [['P1! I even crossed the line sideways.', 'Green means go. And go we did.']],
-      podium: ['Podium! One more drift and it was P1.'],
-      lose: [['Too much sideways, not enough forward.', { t: "Another vote, another run. We'll fix the drift.", mood: 'normal' }]],
+      miniTurbo: ['Good.'],
+      lastLap: ["Last lap. Don't let them pass. Not now."],
+      win: [['P1.', '…Knew you could.']],
+      podium: ['Podium. Not enough. Again.'],
+      lose: [['No.', { t: "Again. I'm not leaving until we win. You're not either.", mood: 'hype' }]],
     },
   },
 ];
