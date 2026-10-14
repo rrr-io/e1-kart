@@ -1,0 +1,246 @@
+// Driver dialogue: box with nameplate and portrait, in-race radio, menu preview.
+// Portraits are PNGs in public/drivers/ (see drivers.js); a pixel silhouette is used until they're added.
+import { $ } from './engine.js';
+import { TEAMS, lum } from './config.js';
+import { DRIVERS, pickLines } from './drivers.js';
+
+const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TYPE_MS = 28;
+
+// ---------- Portraits ----------
+
+const mix = (a, b, t) => {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ch = (s) => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+};
+
+// Small 5×5 icons for the silhouette's expression.
+const GLYPHS = {
+  happy: { color: '#ff6fae', rows: ['.X.X.', 'XXXXX', 'XXXXX', '.XXX.', '..X..'] },
+  sad: { color: '#6fb6ff', rows: ['..X..', '.XXX.', 'XXXXX', 'XXXXX', '.XXX.'] },
+  hype: { color: '#ffd23a', rows: ['..X..', '..X..', 'XXXXX', '..X..', '..X..'] },
+};
+const QMARK = ['.XXX.', 'X...X', '...X.', '..X..', '.....', '..X..'];
+
+/** 32×32 sticker-style silhouette: dark bust tinted with the team's color, white then black outline. */
+function drawSilhouette(canvas, color, mood) {
+  const S = 32;
+  canvas.width = S;
+  canvas.height = S;
+  const g = canvas.getContext('2d');
+  g.clearRect(0, 0, S, S);
+
+  const inside = (x, y) => {
+    const hx = (x + 0.5 - 16) / 6.6, hy = (y + 0.5 - 11.5) / 7.2;
+    if (hx * hx + hy * hy <= 1) return true;                       // head
+    if (y >= 17 && y <= 21 && x >= 13 && x <= 18) return true;     // neck
+    if (y >= 21) {                                                 // shoulders
+      const half = Math.min(14, 5 + (y - 21) * 2.2);
+      return Math.abs(x + 0.5 - 16) <= half;
+    }
+    return false;
+  };
+  const near = (x, y, test) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => test(x + dx, y + dy));
+  const white = (x, y) => !inside(x, y) && near(x, y, inside);
+
+  const body = mix(color, '#0b0b0d', 0.72);
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      if (inside(x, y)) {
+        g.fillStyle = y >= 23 && y <= 24 ? color : body;           // stripe in the team's color
+      } else if (white(x, y)) {
+        g.fillStyle = '#ffffff';
+      } else if (near(x, y, white)) {
+        g.fillStyle = '#0b0b0d';
+      } else {
+        continue;
+      }
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+  // Question mark on the face: it's a placeholder.
+  g.fillStyle = 'rgba(255,255,255,.85)';
+  QMARK.forEach((r, y) => [...r].forEach((c, x) => { if (c === 'X') g.fillRect(14 + x, 8 + y, 1, 1); }));
+  // Expression.
+  const gl = GLYPHS[mood];
+  if (gl) {
+    g.fillStyle = '#0b0b0d';
+    g.fillRect(24, 1, 7, 7);
+    g.fillStyle = gl.color;
+    gl.rows.forEach((r, y) => [...r].forEach((c, x) => { if (c === 'X') g.fillRect(25 + x, 2 + y, 1, 1); }));
+  }
+}
+
+const imgCache = new Map(); // url -> Promise<HTMLImageElement|null>
+function loadImage(url) {
+  if (!imgCache.has(url)) {
+    imgCache.set(url, new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    }));
+  }
+  return imgCache.get(url);
+}
+
+/** Draws the driver's portrait on the canvas: PNG if configured and available, otherwise a silhouette. */
+export async function drawPortrait(canvas, teamIdx, mood) {
+  const color = TEAMS[teamIdx].color;
+  drawSilhouette(canvas, color, mood);
+  const prefix = DRIVERS[teamIdx] && DRIVERS[teamIdx].portrait;
+  if (!prefix) return;
+  const base = import.meta.env.BASE_URL + 'drivers/' + prefix;
+  const token = (canvas._token = (canvas._token || 0) + 1);
+  const img = (await loadImage(`${base}-${mood}.png`)) || (await loadImage(`${base}-normal.png`));
+  if (!img || canvas._token !== token) return;
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const g = canvas.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(img, 0, 0);
+}
+
+export function applyTeam(el, teamIdx) {
+  const c = TEAMS[teamIdx].color;
+  el.style.setProperty('--team', c);
+  el.style.setProperty('--team-ink', lum(c) > 0.55 ? '#0b0b0d' : '#ffffff');
+}
+
+const nameOf = (teamIdx) => (DRIVERS[teamIdx] && DRIVERS[teamIdx].driver) || TEAMS[teamIdx].name;
+
+// ---------- Typewriter ----------
+
+function typewriter(el, text, onDone) {
+  let i = 0, timer = null, done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    clearInterval(timer);
+    el.textContent = text;
+    if (onDone) onDone();
+  };
+  if (REDUCED) {
+    finish();
+  } else {
+    el.textContent = '';
+    timer = setInterval(() => {
+      i++;
+      el.textContent = text.slice(0, i);
+      if (i >= text.length) finish();
+    }, TYPE_MS);
+  }
+  return { finish, typing: () => !done, cancel: () => { done = true; clearInterval(timer); } };
+}
+
+// ---------- On-screen dialogue ----------
+
+const dlg = $('dialog');
+const dlgText = $('dlgText');
+const dlgLive = $('dlgLive');
+let current = null; // { lines, index, tw, resolve }
+
+function showLine() {
+  const { lines, index, teamIdx } = current;
+  const line = lines[index];
+  $('dlgNext').hidden = true;
+  drawPortrait($('dlgPortrait'), teamIdx, line.mood);
+  dlgLive.textContent = line.t;
+  current.tw = typewriter(dlgText, line.t, () => { $('dlgNext').hidden = false; });
+}
+
+function close() {
+  if (!current) return;
+  const { resolve, tw } = current;
+  if (tw) tw.cancel();
+  current = null;
+  dlg.hidden = true;
+  $('game').classList.remove('talking');
+  resolve();
+}
+
+function advance() {
+  if (!current) return;
+  if (current.tw && current.tw.typing()) { current.tw.finish(); return; }
+  current.index++;
+  if (current.index >= current.lines.length) close();
+  else showLine();
+}
+
+/** Shows the driver's dialogue for a race moment. Resolves once the player closes it. */
+export function talk(teamIdx, key) {
+  const lines = pickLines(teamIdx, key);
+  if (!lines.length) return Promise.resolve();
+  if (current) close();
+  hideRadio();
+  return new Promise((resolve) => {
+    current = { lines, index: 0, teamIdx, tw: null, resolve };
+    applyTeam(dlg, teamIdx);
+    $('dlgName').textContent = nameOf(teamIdx);
+    dlg.hidden = false;
+    $('game').classList.add('talking');
+    showLine();
+  });
+}
+
+export const isTalking = () => current !== null;
+
+dlg.addEventListener('click', (e) => {
+  if (e.target.closest('#dlgSkip')) return;
+  advance();
+});
+$('dlgSkip').addEventListener('click', (e) => { e.stopPropagation(); close(); });
+// Keyboard: Enter/Space to advance, Esc to skip. Captured so it never reaches the driving controls.
+window.addEventListener('keydown', (e) => {
+  if (!current) return;
+  if (['Enter', 'Space', 'KeyE'].includes(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) advance(); }
+  else if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); }
+}, true);
+
+// ---------- In-race radio ----------
+
+const radioEl = $('radio');
+let radioTimer = null, radioTw = null, lastRadio = -1e9;
+
+function hideRadio() {
+  clearTimeout(radioTimer);
+  if (radioTw) radioTw.cancel();
+  radioEl.hidden = true;
+}
+
+/** Short radio message that doesn't pause the race. force ignores the minimum gap between radios. */
+export function radio(teamIdx, key, force = false) {
+  const now = performance.now();
+  if (current || (!force && now - lastRadio < 6000)) return;
+  const [line] = pickLines(teamIdx, key);
+  if (!line) return;
+  lastRadio = now;
+  applyTeam(radioEl, teamIdx);
+  $('radioName').textContent = nameOf(teamIdx);
+  drawPortrait($('radioPortrait'), teamIdx, line.mood);
+  radioEl.hidden = false;
+  if (radioTw) radioTw.cancel();
+  radioTw = typewriter($('radioText'), line.t);
+  clearTimeout(radioTimer);
+  radioTimer = setTimeout(hideRadio, 1400 + line.t.length * 45);
+}
+
+export { hideRadio };
+
+// ---------- Menu preview ----------
+
+let introTeam = -1, introTw = null;
+
+/** Shows the driver's line under the team selection (only redrawn when the team changes). */
+export function showTeamIntro(teamIdx) {
+  if (teamIdx === introTeam) return;
+  introTeam = teamIdx;
+  const box = $('teamIntro');
+  applyTeam(box, teamIdx);
+  $('introName').textContent = nameOf(teamIdx);
+  const [line] = pickLines(teamIdx, 'select');
+  drawPortrait($('introPortrait'), teamIdx, line ? line.mood : 'normal');
+  if (introTw) introTw.cancel();
+  introTw = typewriter($('introText'), line ? line.t : '');
+}

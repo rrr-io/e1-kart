@@ -1,0 +1,41 @@
+server:
+  port: 8080
+  # Behind Caddy: use X-Forwarded-For for the real IP (rate limiting).
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: e1kart-api
+  datasource:
+    url: jdbc:sqlite:${E1KART_DB_PATH:./data/e1kart.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      # SQLite handles one write at a time: a single connection avoids SQLITE_BUSY errors.
+      maximum-pool-size: 1
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+
+e1kart:
+  # Key for the HMAC hash of certificate IDs. In production it comes from .env (at least 32 random characters).
+  id-secret: ${E1KART_ID_SECRET:dev-secret-only-for-local-use}
+  # If true, the game shows the "Play without a certificate" flag.
+  free-play-allowed: ${E1KART_FREE_PLAY:true}
+  runs-per-certificate: 1
+  # Dates on Mnet Plus certificates are in Korean time.
+  zone: Asia/Seoul
+  tesseract-command: tesseract
+  ocr-timeout-seconds: 20
+  max-concurrent-ocr: 2
+  upload-rate-limit-per-minute: 6
+  # Valid voting periods (Korean time). Add future rounds here.
+  vote-windows:
+    - label: "FANS' CHOICE · 1st VOTE"
+      start: 2026-10-12T00:00:00
+      end: 2026-10-22T23:59:59

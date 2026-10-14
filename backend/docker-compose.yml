@@ -1,0 +1,21 @@
+services:
+  e1kart-api:
+    build: .
+    image: e1kart-api
+    container_name: e1kart-api
+    restart: unless-stopped
+    # Contains E1KART_ID_SECRET (and optionally E1KART_FREE_PLAY). Created by hand on the server, never in git.
+    env_file: .env
+    volumes:
+      - e1kart-data:/data
+    networks:
+      - web
+    mem_limit: 512m
+    cpus: 0.8
+
+volumes:
+  e1kart-data:
+
+networks:
+  web:
+    external: true

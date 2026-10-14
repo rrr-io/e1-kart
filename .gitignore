@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dev-dist/
+target/
+*.db
+data/
+.env
+.DS_Store
+*.log
+.idea/
+*.iml
+backend/app.jar

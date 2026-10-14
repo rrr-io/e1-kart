@@ -1,0 +1,21 @@
+{
+  "name": "e1-kart-gp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kart racer mobile single player ispirato a E1 / Enhypen MAMA Grand Prix",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "@fontsource/press-start-2p": "5.0.20",
+    "@fontsource/vt323": "5.0.13",
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "vite": "5.4.10",
+    "vite-plugin-pwa": "0.20.5"
+  }
+}

@@ -1,0 +1,72 @@
+// Starting grid and lights.
+import { $ } from './engine.js';
+import { TEAMS, settings } from './config.js';
+import { N, off, yawAt } from './track.js';
+import { startLights, resetBoxes } from './scenery.js';
+import { paintKart } from './kart.js';
+import { G, player } from './state.js';
+import { updateCpus } from './ai.js';
+import { placePlayer } from './physics.js';
+import { banner } from './hud.js';
+import { talk } from './dialogue.js';
+
+const COUNTDOWN = 3.6;
+const PLAYER_SLOT = 3;
+
+export function setupRace() {
+  const others = [...TEAMS.keys()].filter((k) => k !== settings.teamIdx);
+  G.cpus = [];
+  let ck = 0;
+  for (let slot = 0; slot < TEAMS.length; slot++) {
+    const idx = (N - 6 - slot * 5 + N) % N, lat = slot % 2 ? -3.2 : 3.2;
+    if (slot === PLAYER_SLOT) {
+      const o = off(idx, lat);
+      Object.assign(player, {
+        x: o[0], z: o[1], h: yawAt(idx), v: 0, idx, prevIdx: undefined, laps: -1, half: true,
+        drifting: false, dT: 0, boost: 0, item: null, hop: 0, steerS: 0, finish: null, team: settings.teamIdx,
+      });
+      player.kart = G.karts[0];
+      paintKart(G.karts[0], TEAMS[settings.teamIdx].color);
+    } else {
+      const t = others[ck], kart = G.karts[ck + 1];
+      paintKart(kart, TEAMS[t].color);
+      G.cpus.push({
+        kart, team: t, prog: idx - N, lat, latT: lat,
+        spd: 29.5 + ck * 0.7 + Math.random() * 0.8, band: 0, boost: 0,
+        timer: 1 + Math.random() * 2, finish: null, speed: 0, x: 0, z: 0,
+      });
+      ck++;
+    }
+  }
+  resetBoxes();
+  // 'intro': the driver talks before the lights; the countdown starts once the dialogue closes.
+  Object.assign(G, { raceT: 0, countT: COUNTDOWN, lapStart: 0, bestLap: null, state: 'intro', ending: false });
+  startLights.forEach((l) => l.material.color.set(0x330000));
+  $('hud').hidden = false;
+  $('controls').hidden = true;
+  $('menu').hidden = true;
+  $('results').hidden = true;
+  updateCpus(0);
+  placePlayer(0);
+  talk(settings.teamIdx, 'start').then(startCountdown);
+}
+
+export function startCountdown() {
+  if (G.state !== 'intro') return;
+  G.state = 'count';
+  $('controls').hidden = false;
+}
+
+export function tickCountdown(dt) {
+  G.countT -= dt;
+  const lit = Math.min(5, Math.floor((COUNTDOWN - G.countT) / 0.6) + 1);
+  startLights.forEach((l, k) => l.material.color.set(k < lit ? 0xff1a0a : 0x330000));
+  const n = Math.ceil(G.countT - 0.6);
+  const txt = n >= 1 && n <= 3 ? String(n) : '';
+  if (txt && $('banner').textContent !== txt) banner(txt, 0.7);
+  if (G.countT <= 0.6) {
+    G.state = 'race';
+    startLights.forEach((l) => l.material.color.set(0x29ff5a));
+    banner('GO!', 0.8);
+  }
+}
