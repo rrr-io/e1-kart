@@ -63,34 +63,55 @@
     </div>
   </div>
 
-  <div class="overlay" id="menu">
-    <div class="win" role="dialog" aria-labelledby="mTitle">
-      <div class="bar"><span>E1KART.EXE</span><span class="sq"><span></span><span></span><span></span></span></div>
-      <div class="wbody menu-body">
-        <div class="col">
-          <h1 class="logo" id="mTitle">E1 <em>KART</em> GP</h1>
-          <p class="sub">A night race under the blue moon. 3 laps, 6 teams, drifts and lightstick boost.</p>
-          <div class="lbl">CHOOSE YOUR TEAM</div>
-          <div class="teams" id="teams"></div>
-          <div class="intro" id="teamIntro">
-            <canvas id="introPortrait" class="portrait" width="32" height="32" aria-hidden="true"></canvas>
-            <div class="intro-body"><b class="tag" id="introName"></b><p id="introText"></p></div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="row" id="freeRow" hidden><span class="lbl">PLAY WITHOUT A CERTIFICATE</span><span class="row" id="free"></span></div>
+  <div class="overlay menu" id="menu">
+    <div class="menu-ui" role="dialog" aria-labelledby="mTitle">
+      <header class="m-top">
+        <h1 class="logo" id="mTitle">
+          <img class="logo-e1 lg" id="logoE1" alt="E1" width="90" height="44"><img class="logo-e1 sm" id="logoE1sm" alt="" width="60" height="30">
+          <span class="logo-sub">KART GRAND PRIX</span>
+        </h1>
+      </header>
+
+      <div class="m-corner m-right">
+        <button class="gear" id="optBtn" aria-expanded="false" aria-controls="optPanel">OPTIONS</button>
+      </div>
+
+      <div class="m-bubble" id="teamIntro">
+        <canvas id="introPortrait" class="portrait" width="32" height="32" aria-hidden="true"></canvas>
+        <div class="bubble-body"><b class="tag" id="introName"></b><p id="introText"></p></div>
+      </div>
+
+      <div class="m-stage" aria-hidden="true">
+        <div class="hero"><span class="hero-no" id="heroNo">01</span><b class="hero-team" id="heroTeam"></b></div>
+      </div>
+
+      <footer class="m-bottom">
+        <div class="teams" id="teams" role="group" aria-label="Choose your team"></div>
+        <button class="go" id="start">START ▶</button>
+      </footer>
+
+      <div class="run-box" id="runBox" hidden>
+        <div class="run-card" role="dialog" aria-labelledby="runTitle">
+          <div class="run-head"><span id="runTitle">ENTRY TICKET</span><button class="x" id="runClose" aria-label="Back to team selection">✕</button></div>
+          <div class="run-team"><span class="lbl">TEAM</span><b id="runTeam"></b><span class="drv" id="runDriver"></span></div>
           <div class="cert" id="certBox" hidden>
-            <div class="row">
-              <span class="lbl">RUNS AVAILABLE</span><b class="runs" id="runs">–</b>
-              <label class="chipbtn upload" id="uploadBtn">UPLOAD CERTIFICATE
-                <input class="sr-only" type="file" id="certFile" accept="image/png,image/jpeg">
-              </label>
-            </div>
+            <div class="runs-line"><span class="lbl">RUNS LEFT</span><b class="runs" id="runs">–</b></div>
+            <label class="chipbtn upload" id="uploadBtn">+ UPLOAD CERTIFICATE
+              <input class="sr-only" type="file" id="certFile" accept="image/png,image/jpeg">
+            </label>
             <p class="hint">Each certificate can only be used once.</p>
           </div>
           <p class="msg" id="certMsg" role="status" aria-live="polite"></p>
-          <div class="row"><span class="lbl">STEERING ASSIST</span><span class="row" id="ast"></span></div>
-          <div class="row"><button class="go" id="start">START ▶</button></div>
+          <div class="row"><button class="go alt" id="runBack">BACK</button><button class="go" id="runGo">RACE ▶</button></div>
+        </div>
+      </div>
+
+      <div class="opt-panel" id="optPanel" role="dialog" aria-label="Options" hidden>
+        <div class="opt-head"><span>OPTIONS</span><button class="x" id="optClose" aria-label="Close options">✕</button></div>
+        <div class="opt" id="freeRow" hidden><span class="lbl">PLAY WITHOUT A CERTIFICATE</span><span class="row" id="free"></span></div>
+        <div class="opt"><span class="lbl">STEERING ASSIST</span><span class="row" id="ast"></span></div>
+        <div class="howto">
+          <span class="lbl">HOW TO PLAY</span>
           <p class="hint">Acceleration is automatic. Phone in landscape: touch and drag on the left half of the screen to steer, hold DRIFT in corners. Keyboard: ← → steer, ↓ brake, SPACE drift, E item.</p>
         </div>
       </div>

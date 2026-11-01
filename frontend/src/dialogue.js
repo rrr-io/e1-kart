@@ -108,7 +108,7 @@ export function applyTeam(el, teamIdx) {
   el.style.setProperty('--team-ink', lum(c) > 0.55 ? '#0b0b0d' : '#ffffff');
 }
 
-const nameOf = (teamIdx) => (DRIVERS[teamIdx] && DRIVERS[teamIdx].driver) || TEAMS[teamIdx].name;
+export const nameOf = (teamIdx) => (DRIVERS[teamIdx] && DRIVERS[teamIdx].driver) || TEAMS[teamIdx].name;
 
 // ---------- Typewriter ----------
 

@@ -5,8 +5,33 @@ import { N, off, yawAt } from './track.js';
 import { paintKart } from './kart.js';
 import { G } from './state.js';
 import { renderAccount } from './account.js';
-import { showTeamIntro, hideRadio, applyTeam } from './dialogue.js';
+import { showTeamIntro, hideRadio, applyTeam, nameOf } from './dialogue.js';
 import { resetItems } from './items.js';
+
+$('logoE1').src = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
+$('logoE1sm').src = new URL('./assets/brand/e1-logo-pixel-sm.png', import.meta.url).href;
+
+// Options panel (assist, free play, how to play): opened from the ⚙ button.
+function setOptions(open) {
+  $('optPanel').hidden = !open;
+  $('optBtn').setAttribute('aria-expanded', String(open));
+}
+$('optBtn').onclick = () => setOptions($('optPanel').hidden);
+$('optClose').onclick = () => setOptions(false);
+
+// Entry ticket: in certificate mode START opens this box (runs, upload, RACE) after the team is chosen.
+export function openRunBox() {
+  setOptions(false);
+  $('runTeam').textContent = TEAMS[settings.teamIdx].name;
+  $('runDriver').textContent = nameOf(settings.teamIdx);
+  $('runBox').hidden = false;
+  $('runGo').focus();
+}
+export function closeRunBox() {
+  $('runBox').hidden = true;
+}
+$('runClose').onclick = closeRunBox;
+$('runBack').onclick = closeRunBox;
 
 function chip(cls, id, label, pressed, onClick) {
   const b = document.createElement('button');
@@ -20,12 +45,16 @@ function chip(cls, id, label, pressed, onClick) {
 
 export function buildMenu() {
   $('teams').replaceChildren(...TEAMS.map((t, k) => {
-    const sw = document.createElement('i');
-    sw.style.background = t.color;
+    const no = document.createElement('i');
+    no.className = 'no';
+    no.textContent = String(k + 1).padStart(2, '0');
     const name = document.createElement('span');
     name.className = 'nm';
     name.textContent = t.name;
-    const btn = chip('team', 'team' + k, [sw, name], k === settings.teamIdx, () => {
+    const drv = document.createElement('span');
+    drv.className = 'drv';
+    drv.textContent = nameOf(k);
+    const btn = chip('team', 'team' + k, [no, name, drv], k === settings.teamIdx, () => {
       settings.teamIdx = k;
       saveSettings();
       buildMenu();
@@ -35,6 +64,8 @@ export function buildMenu() {
     return btn;
   }));
   applyTeam($('game'), settings.teamIdx);
+  $('heroNo').textContent = String(settings.teamIdx + 1).padStart(2, '0');
+  $('heroTeam').textContent = TEAMS[settings.teamIdx].name;
   $('ast').replaceChildren(...[[true, 'ON'], [false, 'OFF']].map(([v, l]) => chip('chipbtn', 'ast' + l, l, v === settings.assist, () => {
     settings.assist = v;
     saveSettings();
@@ -46,6 +77,8 @@ export function buildMenu() {
 
 export function toMenu() {
   G.state = 'menu';
+  setOptions(false);
+  closeRunBox();
   $('menu').hidden = false;
   $('results').hidden = true;
   $('hud').hidden = true;

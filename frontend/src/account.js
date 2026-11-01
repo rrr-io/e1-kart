@@ -4,7 +4,7 @@ import { settings, saveSettings } from './config.js';
 import { G } from './state.js';
 import * as api from './api.js';
 import { setupRace } from './race.js';
-import { toMenu } from './menu.js';
+import { toMenu, openRunBox, closeRunBox } from './menu.js';
 
 export const wallet = {
   online: false,          // the server has responded
@@ -44,6 +44,7 @@ export function renderAccount() {
   $('runs').textContent = wallet.balance == null ? '–' : String(wallet.balance);
   $('uploadBtn').classList.toggle('busy', wallet.busy);
   $('start').disabled = wallet.busy;
+  $('runGo').disabled = wallet.busy || wallet.balance === 0;
   if (!wallet.online) message((wallet.error || 'Server unreachable') + ' — for now you can only play without a certificate.');
 }
 
@@ -81,7 +82,13 @@ async function onCertificate(file) {
   }
 }
 
-/** START and PLAY AGAIN: in certificate mode, asks the server to consume a run before starting. */
+/** Menu START: free play starts right away, certificate mode opens the entry ticket first. */
+export function menuStart() {
+  if (isFreePlay()) startGame();
+  else { renderAccount(); openRunBox(); }
+}
+
+/** RACE (entry ticket) and PLAY AGAIN: in certificate mode, asks the server to consume a run before starting. */
 export async function startGame() {
   if (isFreePlay()) {
     G.runId = null;
@@ -96,9 +103,11 @@ export async function startGame() {
     G.runId = r.runId;
     wallet.balance = r.balance;
     message('');
+    closeRunBox();
     setupRace();
   } catch (e) {
     if (!$('results').hidden) toMenu();
+    openRunBox();
     message(e.message, 'err');
     if (e.code === 'NO_RUNS') wallet.balance = 0;
   } finally {
