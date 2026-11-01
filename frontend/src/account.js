@@ -8,6 +8,7 @@ import { toMenu } from './menu.js';
 
 export const wallet = {
   online: false,          // the server has responded
+  error: '',              // why the server couldn't be used, shown in the menu
   freePlayAllowed: true,  // the server allows playing without a certificate
   balance: null,          // runs available
   busy: false,
@@ -43,8 +44,7 @@ export function renderAccount() {
   $('runs').textContent = wallet.balance == null ? '–' : String(wallet.balance);
   $('uploadBtn').classList.toggle('busy', wallet.busy);
   $('start').disabled = wallet.busy;
-  $('start').textContent = free ? 'START ▶' : 'START ▶  −1 RUN';
-  if (!wallet.online) message('Server unreachable: for now you can only play without a certificate.');
+  if (!wallet.online) message((wallet.error || 'Server unreachable') + ' — for now you can only play without a certificate.');
 }
 
 export async function initAccount() {
@@ -56,6 +56,10 @@ export async function initAccount() {
     wallet.balance = me.balance;
   } catch (e) {
     wallet.online = false;
+    // Say what actually failed: no network, or the server answered with an error.
+    wallet.error = e.code === 'OFFLINE'
+      ? 'Server unreachable' + (e.detail ? ' (' + e.detail + ')' : '')
+      : 'Server error' + (e.status ? ' ' + e.status : '') + ': ' + e.message;
   }
   renderAccount();
 }

@@ -52,18 +52,33 @@ const FLOWER = [
   '...XXXXXXXXXX...',
   '....XXX..XXX....',
 ];
-export const FLOWER_BASE = '#A7B8C2';
-const FLOWER_LIGHT = '#DCE7EC';
-const FLOWER_DARK = '#74899A';
 
-function drawFlower(g) {
+// Flower colors: one per PARALLEL WORLD album version (mist, green, sky blue, pink, red, steel blue, teal).
+// Every time you get the item the flower comes out in one of them.
+const mixHex = (hex, to, t) => {
+  const a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16);
+  const ch = (sh) => Math.round(((a >> sh) & 255) * (1 - t) + ((b >> sh) & 255) * t);
+  return '#' + [16, 8, 0].map((sh) => ch(sh).toString(16).padStart(2, '0')).join('');
+};
+export const FLOWER_PALETTES = ['#A7B8C2', '#2FAE66', '#28B5E8', '#E8318A', '#D3222E', '#5B8DC9', '#42B299']
+  .map((base) => ({ base, light: mixHex(base, '#ffffff', 0.5), dark: mixHex(base, '#000000', 0.35) }));
+export const randomFlowerPalette = () => (Math.random() * FLOWER_PALETTES.length) | 0;
+
+/** Rolls the item for a racer (player or CPU) by race position, and picks the flower's color if it's a flower. */
+export function rollFor(o, position) {
+  o.item = rollItem(position);
+  if (o.item === 'flower') o.pal = randomFlowerPalette();
+}
+
+function drawFlower(g, pal = 0) {
+  const c = FLOWER_PALETTES[pal % FLOWER_PALETTES.length];
   const on = (x, y) => FLOWER[y] && FLOWER[y][x] === 'X';
   for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 16; x++) {
       if (!on(x, y)) continue;
       // Light edge on the top/left, dark edge on the bottom/right.
       const dark = !on(x, y + 1) || !on(x + 1, y), light = !on(x, y - 1) || !on(x - 1, y);
-      g.fillStyle = dark ? FLOWER_DARK : light ? FLOWER_LIGHT : FLOWER_BASE;
+      g.fillStyle = dark ? c.dark : light ? c.light : c.base;
       g.fillRect(x, y, 1, 1);
     }
   }
@@ -100,18 +115,22 @@ function drawStick(g) {
 }
 
 /** Draws an item on a 16×16 canvas context. 'roll' cycles through all of them. */
-export function drawItemIcon(g, kind) {
+export function drawItemIcon(g, kind, pal = 0) {
   g.clearRect(0, 0, 16, 16);
   if (!kind) return;
-  if (kind === 'roll') kind = KINDS[((performance.now() / 90) | 0) % KINDS.length];
+  if (kind === 'roll') {
+    const k = (performance.now() / 90) | 0;
+    kind = KINDS[k % KINDS.length];
+    pal = k;   // the flower also cycles through its colors while rolling
+  }
   if (kind === 'stick') drawStick(g);
   else if (kind === 'pop') drawPop(g);
   else if (kind === 'bats') drawBatFrame(g, BAT_A, 1, 5, '#C9B6FF', 2);
-  else if (kind === 'flower') drawFlower(g);
+  else if (kind === 'flower') drawFlower(g, pal);
 }
 
 /** The flower on its own canvas, with a dark outline so it reads as a flower against the night (18×18). */
-export function makeFlowerCanvas() {
+export function makeFlowerCanvas(pal = 0) {
   const c = document.createElement('canvas');
   c.width = 18; c.height = 18;
   const g = c.getContext('2d');
@@ -123,7 +142,7 @@ export function makeFlowerCanvas() {
     }
   }
   g.translate(1, 1);
-  drawFlower(g);
+  drawFlower(g, pal);
   return c;
 }
 

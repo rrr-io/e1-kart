@@ -62,7 +62,7 @@ export function toMenu() {
   k.body.rotation.set(0, 0, 0);
   const others = [...TEAMS.keys()].filter((x) => x !== settings.teamIdx);
   G.karts.slice(1).forEach((kk, n) => {
-    const ii = (N - 10 - n * 6) % N, oo = off(ii, n % 2 ? -3 : 3);
+    const ii = (N - 7 - n * 4) % N, oo = off(ii, n % 2 ? -3 : 3);
     kk.root.position.set(oo[0], 0, oo[1]);
     kk.root.rotation.y = yawAt(ii);
     paintKart(kk, TEAMS[others[n]].color);

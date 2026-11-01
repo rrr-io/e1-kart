@@ -78,7 +78,7 @@ export function updateHud(dt) {
   $('time').textContent = fmt(G.raceT);
   $('best').textContent = 'BEST ' + fmt(G.bestLap);
   $('spd').textContent = Math.round(player.v * 4);
-  drawItemIcon(itemCtx, player.item);
+  drawItemIcon(itemCtx, player.item, player.pal);
   const ready = isReady(player.item);
   $('itemName').hidden = !ready;
   if (ready) $('itemName').textContent = ITEM_NAMES[player.item];

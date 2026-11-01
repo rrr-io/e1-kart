@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { scene, toon, canvasTex, redrawTex } from './engine.js';
 import { TEAMS, lum } from './config.js';
-import { N, NR, HALF, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
+import { N, NR, HALF, WORLD_K, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
 
 // ---------- Start line and portal ----------
 const checker = canvasTex(16, 2, (g) => {
@@ -169,16 +169,16 @@ const bannerMats = bannerTexs.map((map) => new THREE.MeshBasicMaterial({ map }))
 
 // ---------- Trees and bushes ----------
 (function vegetation() {
-  const cnt = 260;
+  const K = WORLD_K, cnt = Math.round(260 * K), bushCnt = Math.round(120 * K);
   const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.45, 2, 5), toon(0x3d2c2a), cnt);
   const cones = new THREE.InstancedMesh(new THREE.ConeGeometry(2.4, 5.5, 6), toon(0xffffff), cnt);
-  const bush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1.5, 0), toon(0xffffff), 120);
+  const bush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1.5, 0), toon(0xffffff), bushCnt);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const greens = ['#1c4a3c', '#235645', '#173f35'].map((c) => new THREE.Color(c));
   let n = 0, tries = 0;
-  while (n < cnt && tries < 5000) {
+  while (n < cnt && tries < 30000) {
     tries++;
-    const x = -260 + Math.random() * 560, z = -150 + Math.random() * 440;
+    const x = (-260 + Math.random() * 560) * K, z = (-150 + Math.random() * 440) * K;
     const d = minTrackDist(x, z);
     if (d < HALF + 14 || d > 170) continue;
     const k = 0.7 + Math.random() * 0.8;
@@ -195,9 +195,9 @@ const bannerMats = bannerTexs.map((map) => new THREE.MeshBasicMaterial({ map }))
   scene.add(cones);
   let b = 0;
   tries = 0;
-  while (b < 120 && tries < 4000) {
+  while (b < bushCnt && tries < 30000) {
     tries++;
-    const x = -240 + Math.random() * 520, z = -130 + Math.random() * 400;
+    const x = (-240 + Math.random() * 520) * K, z = (-130 + Math.random() * 400) * K;
     const d = minTrackDist(x, z);
     if (d < HALF + 10 || d > 120) continue;
     const k = 0.6 + Math.random() * 0.7;
@@ -217,9 +217,9 @@ const bannerMats = bannerTexs.map((map) => new THREE.MeshBasicMaterial({ map }))
 // ---------- Mountains and clouds ----------
 const clouds = [];
 (function backdrop() {
-  const c = new THREE.Vector3(10, 0, 90);
+  const K = WORLD_K, c = new THREE.Vector3(10 * K, 0, 90 * K);
   for (let k = 0; k < 26; k++) {
-    const a = (k / 26) * Math.PI * 2, r = 430 + Math.random() * 60, h = 60 + Math.random() * 90;
+    const a = (k / 26) * Math.PI * 2, r = (430 + Math.random() * 60) * K, h = 60 + Math.random() * 90;
     const mtn = new THREE.Mesh(new THREE.ConeGeometry(45 + Math.random() * 40, h, 5), toon(k % 2 ? 0x16224a : 0x1c2a56));
     mtn.position.set(c.x + Math.cos(a) * r, h / 2 - 4, c.z + Math.sin(a) * r);
     mtn.rotation.y = Math.random() * 3;
@@ -233,7 +233,7 @@ const clouds = [];
       b.position.set(j * 8 - 8, j === 1 ? 2 : 0, (j % 2) * 3);
       g.add(b);
     }
-    const a = Math.random() * Math.PI * 2, r = 200 + Math.random() * 180;
+    const a = Math.random() * Math.PI * 2, r = (200 + Math.random() * 180) * K;
     g.position.set(c.x + Math.cos(a) * r, 70 + Math.random() * 40, c.z + Math.sin(a) * r);
     g.userData.v = 1 + Math.random() * 2;
     scene.add(g);
@@ -314,7 +314,7 @@ export function updateScenery(dt, now) {
     b.m.position.y = 1.3 + Math.sin(now / 300 + b.m.position.x) * 0.15;
     if (!b.m.visible) { b.t -= dt; if (b.t <= 0) b.m.visible = true; }
   });
-  clouds.forEach((c) => { c.position.x += c.userData.v * dt; if (c.position.x > 500) c.position.x = -480; });
+  clouds.forEach((c) => { c.position.x += c.userData.v * dt; if (c.position.x > 500 * WORLD_K) c.position.x = -480 * WORLD_K; });
   lightsticks.forEach((s, k) => { s.position.y = Math.max(0, Math.sin(now / 170 + k * 2)) * 0.35; });
 }
 

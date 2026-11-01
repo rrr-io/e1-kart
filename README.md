@@ -2,7 +2,7 @@
 
 Mobile single-player kart racer inspired by E1 / Enhypen MAMA Grand Prix: a night race under the blue moon, 6 teams, drift mini-turbos, boost pads and lightstick boost.
 
-The game can be played in two modes, chosen with the **GIOCA SENZA CERTIFICATO** ("play without a certificate") flag in the menu:
+The game can be played in two modes, chosen with the **PLAY WITHOUT A CERTIFICATE** flag in the menu:
 - **ON**: free, unlimited play.
 - **OFF**: every race costs one run. Runs are earned by uploading a screenshot of a MAMA voting certificate: **1 certificate = 1 run**, and each certificate can only be used once.
 
@@ -85,6 +85,10 @@ To use real portraits:
    `-normal.png` alone is enough: missing expressions fall back to it.
 2. In `drivers.js` set `portrait: 'alpinoo'` for that team.
 
+## Track length
+
+The lap length is `SCALE` in `frontend/src/track.js`. Boost pads, item boxes and scenery are placed by track index, so they keep the same relative spots when the track is made longer or shorter.
+
 ## Items
 
 Driving through an item box gives you an item, picked at random with odds that depend on your race position: whoever leads gets the "hit the ones behind" items, whoever trails gets the comeback. The CPU karts pick up and use items too.
@@ -94,9 +98,9 @@ Driving through an item box gives you an item, picked at random with odds that d
 | **LIGHTSTICK** | boost | everyone |
 | **BLOOD POP** (red popsicle) | dropped behind you: whoever steps on it slips and spins out for about a second | the leaders |
 | **BAT SWARM** | sent backwards: slows whoever is behind for a few seconds; when a CPU sends it at you, the screen darkens and bats fly across it | the leaders |
-| **PARALLEL WORLD** (flower) | strong boost, and nothing can hit you while it lasts | the last positions |
+| **PARALLEL WORLD** (flower) | strong boost, and nothing can hit you while it lasts; the flower comes out in a different color each time (the PARALLEL WORLD album versions) | the last positions |
 
-Odds, durations and icons live in `frontend/src/itemdefs.js`; the effects and the CPU behavior in `frontend/src/items.js`.
+Odds, durations, flower colors and icons live in `frontend/src/itemdefs.js`; the effects and the CPU behavior in `frontend/src/items.js`.
 
 ## How certificate redemption works
 

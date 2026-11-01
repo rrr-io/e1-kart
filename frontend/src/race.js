@@ -19,7 +19,7 @@ export function setupRace() {
   G.cpus = [];
   let ck = 0;
   for (let slot = 0; slot < TEAMS.length; slot++) {
-    const idx = (N - 6 - slot * 5 + N) % N, lat = slot % 2 ? -3.2 : 3.2;
+    const idx = (N - 4 - slot * 3 + N) % N, lat = slot % 2 ? -3.2 : 3.2;
     if (slot === PLAYER_SLOT) {
       const o = off(idx, lat);
       Object.assign(player, {

@@ -6,19 +6,18 @@
 // Also fires the radio lines that react to the race (taking the lead, overtakes).
 import * as THREE from 'three';
 import { $, scene, toon, outlineMat } from './engine.js';
-import { N, off, spacing, lateral, HALF } from './track.js';
+import { N, off, spacing, lateral, HALF, WORLD_K } from './track.js';
 import { boxes } from './scenery.js';
 import { G, player, playerProgress, boostFor } from './state.js';
 import { spawn } from './particles.js';
 import { toast, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
-import { rollItem, isReady, makeBatSheet, makeFlowerCanvas, SLIP_T, BATS_T, FLOWER_T, STICK_T, FLOWER_BASE } from './itemdefs.js';
+import { rollFor, isReady, makeBatSheet, makeFlowerCanvas, FLOWER_PALETTES, SLIP_T, BATS_T, FLOWER_T, STICK_T } from './itemdefs.js';
 
 const POP_LIFE = 30;        // seconds a popsicle stays on the track
 const POP_R2 = 3.8;         // squared hit radius
-const BAT_RANGE = 60;       // how far behind (in track samples) the swarm reaches
+const BAT_RANGE = Math.round(60 / WORLD_K); // how far behind (in track samples, ≈100 units) the swarm reaches
 const BAT_SPEED = 60;       // swarm speed (units/s), used for the hit delay and the visuals
-const PETALS = [FLOWER_BASE, '#ffffff', '#DCE7EC'];
 
 let clock = 0;
 
@@ -201,12 +200,15 @@ function updateBatEffects() {
 
 // ---------- PARALLEL WORLD: floating pixel flowers ----------
 
-const flowerTex = new THREE.CanvasTexture(makeFlowerCanvas());
-flowerTex.magFilter = THREE.NearestFilter;
-flowerTex.minFilter = THREE.NearestFilter;
-flowerTex.generateMipmaps = false;
+const flowerTex = FLOWER_PALETTES.map((_, k) => {
+  const t = new THREE.CanvasTexture(makeFlowerCanvas(k));
+  t.magFilter = THREE.NearestFilter;
+  t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false;
+  return t;
+});
 const flowers = Array.from({ length: 24 }, () => {
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: flowerTex, transparent: true, depthWrite: false }));
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: flowerTex[0], transparent: true, depthWrite: false }));
   sp.visible = false;
   scene.add(sp);
   return { sp, life: 0, max: 1 };
@@ -219,6 +221,7 @@ function spawnFlower(o) {
   f.vy = 1.6 + Math.random() * 1.4;
   f.sp.position.set(o.x + (Math.random() - 0.5) * 4.4, 0.6 + Math.random() * 1.4, o.z + (Math.random() - 0.5) * 4.4);
   f.sp.scale.setScalar(1 + Math.random() * 0.8);
+  f.sp.material.map = flowerTex[(o.pal || 0) % flowerTex.length];
   f.sp.material.rotation = (Math.random() - 0.5) * 1.2;
   f.sp.visible = true;
 }
@@ -280,7 +283,7 @@ function updateCpuItems(dt) {
     }
     if (c.item === 'roll') {
       c.itemT -= dt;
-      if (c.itemT <= 0) { c.item = rollItem(rankOf(c)); c.hold = c.item === 'flower' ? 0.3 : 1 + Math.random() * 3; }
+      if (c.itemT <= 0) { rollFor(c, rankOf(c)); c.hold = c.item === 'flower' ? 0.3 : 1 + Math.random() * 3; }
     } else if (isReady(c.item)) {
       c.hold -= dt;
       if (c.hold <= 0 && (c.item === 'stick' || c.item === 'flower' || hasTargetBehind(c))) useItem(c);
@@ -307,6 +310,11 @@ function updateRadioEvents(dt) {
   }
 }
 
+const petalColor = (o) => {
+  const c = FLOWER_PALETTES[(o.pal || 0) % FLOWER_PALETTES.length];
+  return [c.base, c.light, '#ffffff'][(Math.random() * 3) | 0];
+};
+
 // ---------- Frame update ----------
 
 export function updateItems(dt) {
@@ -317,7 +325,7 @@ export function updateItems(dt) {
     // PARALLEL WORLD: flowers and petals around the kart.
     if (o.ghost > 0 && Math.random() < 0.55) spawnFlower(o);
     if (o.ghost > 0 && Math.random() < 0.8) {
-      spawn(o.x + (Math.random() - 0.5) * 2.4, 0.5 + Math.random() * 1.6, o.z + (Math.random() - 0.5) * 2.4, PETALS[(Math.random() * 3) | 0], (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.7);
+      spawn(o.x + (Math.random() - 0.5) * 2.4, 0.5 + Math.random() * 1.6, o.z + (Math.random() - 0.5) * 2.4, petalColor(o), (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.7);
     }
   });
   if (racing) updateCpuItems(dt);

@@ -1,7 +1,7 @@
 // CPU opponents: follow the center line with a lateral offset that changes over time,
 // with light rubber banding to stay close to the player.
 import { LAPS } from './config.js';
-import { N, P, T, NR, HALF, bend, spacing } from './track.js';
+import { N, P, T, NR, HALF, WORLD_K, bend, spacing } from './track.js';
 import { pads } from './scenery.js';
 import { G, player, playerProgress } from './state.js';
 import { spawn } from './particles.js';
@@ -19,7 +19,7 @@ export function updateCpus(dt) {
   G.cpus.forEach((c) => {
     if (G.state === 'race' || G.state === 'done') {
       const diff = c.prog - pp;
-      const want = diff > 45 ? -3 : diff < -60 ? 2.6 : 0;
+      const want = diff > 45 / WORLD_K ? -3 : diff < -60 / WORLD_K ? 2.6 : 0;
       c.band += (want - c.band) * Math.min(1, dt * 0.8);
       let s = c.spd + c.band;
       if (c.boost > 0) { s += 8; c.boost -= dt; }

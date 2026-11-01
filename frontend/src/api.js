@@ -20,6 +20,7 @@ async function call(path, opts = {}) {
   } catch (e) {
     const err = new Error('Server unreachable. Check your connection.');
     err.code = 'OFFLINE';
+    err.detail = (e && e.message) || '';   // the browser's own reason, e.g. "Load failed"
     throw err;
   }
   if (res.status === 204) return null;

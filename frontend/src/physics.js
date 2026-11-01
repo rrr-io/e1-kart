@@ -7,7 +7,7 @@ import { G, input, player, boostFor } from './state.js';
 import { spawn } from './particles.js';
 import { toast, banner, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
-import { rollItem, isReady, SLIP_T } from './itemdefs.js';
+import { rollFor, isReady, SLIP_T } from './itemdefs.js';
 import { useItem } from './items.js';
 
 // Driving parameters: tweak these to change the feel.
@@ -97,7 +97,7 @@ export function updatePlayer(dt) {
       if (G.bestLap === null || lt < G.bestLap) G.bestLap = lt;
     }
     G.lapStart = G.raceT;
-    if (p.laps >= LAPS && G.state === 'race') { G.state = 'done'; p.finish = G.raceT; G.doneT = 0; banner('ARRIVO!', 1.8); }
+    if (p.laps >= LAPS && G.state === 'race') { G.state = 'done'; p.finish = G.raceT; G.doneT = 0; banner('FINISH!', 1.8); }
     else if (p.laps === LAPS - 1 && G.state === 'race') { banner('FINAL LAP', 1.4); radio(p.team, 'lastLap', true); }
   }
   p.prevIdx = i;
@@ -120,7 +120,7 @@ export function updatePlayer(dt) {
     }
   });
   // The item depends on the position: whoever leads gets the traps, whoever trails gets the comeback.
-  if (p.item === 'roll') { p.rollT -= dt; if (p.rollT <= 0) p.item = rollItem(playerPosition()); }
+  if (p.item === 'roll') { p.rollT -= dt; if (p.rollT <= 0) rollFor(p, playerPosition()); }
   if (input.item && isReady(p.item) && G.state === 'race') { useItem(p); input.item = false; }
 
   // Particles

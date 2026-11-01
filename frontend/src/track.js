@@ -4,7 +4,10 @@ import { scene, toon, canvasTex } from './engine.js';
 
 // Track control points (x, z). For a new track, just change this array.
 const RAW = [[0, 0], [70, -14], [130, 6], [158, 58], [128, 108], [70, 104], [36, 146], [-30, 150], [-84, 112], [-74, 58], [-118, 20], [-80, -34], [-30, -30]];
-const SCALE = 1.5;
+// Track size. Raising it makes each lap longer: the index-based things (boost pads, item boxes, scenery)
+// stay in the same relative spots, just further apart. WORLD_K is the factor compared to the original size (1.5).
+const SCALE = 2.25;
+export const WORLD_K = SCALE / 1.5;
 
 export const N = 720;      // samples along the track
 export const HALF = 8;     // half the width of the road
