@@ -10,6 +10,7 @@ import { N, off, spacing, lateral, HALF, WORLD_K } from './track.js';
 import { boxes } from './scenery.js';
 import { G, player, playerProgress, boostFor } from './state.js';
 import { spawn } from './particles.js';
+import { burst } from './fx.js';
 import { toast, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
 import { rollFor, isReady, makeBatSheet, makeFlowerCanvas, FLOWER_PALETTES, SLIP_T, BATS_T, FLOWER_T, STICK_T } from './itemdefs.js';
@@ -74,6 +75,7 @@ function dropPop(owner, x, z) {
 function slip(o) {
   if (o.ghost > 0 || o.slip > 0) return;
   o.slip = SLIP_T;
+  burst('boom', o.x, 1.8, o.z, 7);
   for (let k = 0; k < 10; k++) spawn(o.x, 0.8, o.z, k % 2 ? '#E10600' : '#ffffff', (Math.random() - 0.5) * 9, 2 + Math.random() * 5, (Math.random() - 0.5) * 9, 0.6);
   if (o === player) {
     o.v *= 0.4;
@@ -183,6 +185,7 @@ function releaseBats(user) {
 function hitBats(o) {
   if (o.ghost > 0) return;
   o.bats = BATS_T;
+  burst('ring', o.x, 1.4, o.z, 7);
   if (o === player) {
     toast('BATS!');
     radio(o.team, 'batsHit', true);
@@ -245,6 +248,7 @@ export function useItem(o) {
   const me = o === player;
   if (kind === 'stick') {
     boostFor(o, STICK_T);
+    burst('flare', o.x, 1, o.z, 4.5);
     if (me) { toast('LIGHTSTICK BOOST!'); radio(o.team, 'lightstick'); }
   } else if (kind === 'pop') {
     if (me) dropPop(o, o.x - Math.sin(o.h) * 3.4, o.z - Math.cos(o.h) * 3.4);
@@ -263,6 +267,7 @@ export function useItem(o) {
     if (me) { toast('BAT SWARM!'); radio(o.team, 'attack', true); }
   } else if (kind === 'flower') {
     o.ghost = FLOWER_T;
+    burst('swirl', o.x, 1.5, o.z, 7);
     boostFor(o, FLOWER_T);
     if (me) { toast('PARALLEL WORLD!'); radio(o.team, 'comeback', true); }
   }

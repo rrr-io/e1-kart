@@ -102,6 +102,13 @@ Driving through an item box gives you an item, picked at random with odds that d
 
 Odds, durations, flower colors and icons live in `frontend/src/itemdefs.js`; the effects and the CPU behavior in `frontend/src/items.js`.
 
+## Credits
+
+Pixel-art effects (`frontend/src/assets/fx/`):
+
+- `boom.png`: "Explosion pack 1" by Luis Zuno (Ansimuz), CC0.
+- `flare.png`, `sparkle.png`, `ring.png`, `swirl.png`: "Retro Pixel Effects 32x32" (free version) by BDragon1727, free for non-commercial games, not to be resold or redistributed as an asset pack.
+
 ## How certificate redemption works
 
 1. The game sends the screenshot to `POST /api/certificates`.

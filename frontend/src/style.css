@@ -31,8 +31,8 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .stand span.chip{width:8px;height:13px;display:block;flex-shrink:0;outline:1px solid var(--ink)}
 .stand span.n{width:12px;font-variant-numeric:tabular-nums}
 .hud-c{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px}
-.item{width:56px;height:56px;border:3px solid var(--paper);background:var(--glass);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
-.item canvas{width:32px;height:32px;image-rendering:pixelated}
+.item{width:64px;height:64px;border:3px solid var(--paper);background:var(--glass);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.item canvas{width:56px;height:56px;image-rendering:pixelated}
 .item-name{font-family:var(--display);font-size:7px;background:var(--red);padding:3px 5px;color:var(--paper)}
 .hud-r{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .time{font-family:var(--display);font-size:14px;font-variant-numeric:tabular-nums;text-shadow:2px 2px 0 var(--ink)}
@@ -164,7 +164,7 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
   .stand div{font-size:15px;padding:1px 5px;min-width:104px}
   .stand span.chip{width:6px;height:10px}
   .hud-c{top:calc(6px + env(safe-area-inset-top,0px))}
-  .item{width:44px;height:44px;border-width:2px}
+  .item{width:60px;height:60px;border-width:2px}
   .hud-r{top:calc(8px + env(safe-area-inset-top,0px));gap:4px}
   .time{font-size:11px}
   .best{font-size:15px}

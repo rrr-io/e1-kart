@@ -5,6 +5,7 @@ import { N, P, HALF, KERB, off, yawAt, lateral, nearestIdx } from './track.js';
 import { pads, boxes } from './scenery.js';
 import { G, input, player, boostFor } from './state.js';
 import { spawn } from './particles.js';
+import { burst } from './fx.js';
 import { toast, banner, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
 import { rollFor, isReady, SLIP_T } from './itemdefs.js';
@@ -106,7 +107,7 @@ export function updatePlayer(dt) {
     pads.forEach((pd) => {
       let d = Math.abs(i - pd[0]);
       d = Math.min(d, N - d);
-      if (d < 5 && Math.abs(lat2 - pd[1]) < 2.4) { if (p.boost < 0.6) toast('BOOST!'); boostFor(p, 0.9); }
+      if (d < 5 && Math.abs(lat2 - pd[1]) < 2.4) { if (p.boost < 0.6) { toast('BOOST!'); burst('flare', p.x, 0.9, p.z, 4.5); } boostFor(p, 0.9); }
     });
   }
 
@@ -115,6 +116,7 @@ export function updatePlayer(dt) {
     const dx = b.m.position.x - p.x, dz = b.m.position.z - p.z;
     if (dx * dx + dz * dz < 5.5) {
       b.m.visible = false; b.t = 4;
+      burst('sparkle', b.m.position.x, 1.4, b.m.position.z, 4);
       for (let k = 0; k < 8; k++) spawn(b.m.position.x, 1.3, b.m.position.z, k % 2 ? '#E10600' : '#ffffff', (Math.random() - 0.5) * 8, Math.random() * 6, (Math.random() - 0.5) * 8, 0.6);
       if (!p.item && racing) { p.item = 'roll'; p.rollT = 0.9; }
     }

@@ -103,30 +103,68 @@ function drawBatFrame(g, rows, ox, oy, color, eyeRow) {
   }));
 }
 
-function drawStick(g) {
-  g.save();
-  g.translate(2, 2);
-  g.fillStyle = '#E10600'; g.fillRect(4, 0, 4, 4);
-  g.fillStyle = '#ffffff'; g.fillRect(5, 1, 2, 2); g.fillRect(5, 4, 2, 1);
-  g.fillStyle = '#9a9aa4'; g.fillRect(5, 5, 2, 7);
-  g.fillStyle = '#ffffff'; g.fillRect(1, 1, 1, 1); g.fillRect(10, 2, 1, 1);
-  g.fillStyle = '#E10600'; g.fillRect(1, 5, 1, 1); g.fillRect(10, 6, 1, 1);
-  g.restore();
+// ENGENE lightstick, from Rio's pixel art (14×25). Bigger than the 16×16 icons, same pixel size.
+const STICK = [
+  '.....KKKK.....',
+  '...KKGGGDKK...',
+  '..KWWDDDDWWK..',
+  '.KWWLLWWLLWWK.',
+  '.KWLWLWWLWLWK.',
+  'KWLWWLWWLWWLWK',
+  'KWLWWLWWLWWLWK',
+  'KWLWWLWWLWWLWK',
+  'KWLWWLWWLWWLWK',
+  '.KWLWLWWLWLWK.',
+  '.KWWLLWWLLWWK.',
+  '..KWWLWWLWWK..',
+  '...KWKKKKWK...',
+  '....KGGGGK....',
+  '....KGGGGK....',
+  '.....KKKK.....',
+  '.....KGGK.....',
+  '.....KGGK.....',
+  '.....KDDK.....',
+  '.....KGGK.....',
+  '.....KGGK.....',
+  '.....KGGK.....',
+  '.....KGGK.....',
+  '.....KDDK.....',
+  '......KK......',
+];
+const STICK_COLORS = { K: '#0b0b0d', D: '#3a3a40', G: '#6c6c74', L: '#dcdce6', W: '#ffffff' };
+
+function drawStick(g, ox, oy) {
+  // White sticker outline, so the black edge reads on the dark item box.
+  const on = (x, y) => STICK[y] && STICK[y][x] && STICK[y][x] !== '.';
+  g.fillStyle = '#ffffff';
+  for (let y = -1; y <= STICK.length; y++) {
+    for (let x = -1; x <= 14; x++) {
+      if (!on(x, y) && (on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1))) g.fillRect(ox + x, oy + y, 1, 1);
+    }
+  }
+  STICK.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c === '.') return;
+    g.fillStyle = STICK_COLORS[c];
+    g.fillRect(ox + x, oy + y, 1, 1);
+  }));
 }
 
-/** Draws an item on a 16×16 canvas context. 'roll' cycles through all of them. */
+/** Draws an item on the 28×28 item canvas: 16×16 icons centred, the lightstick at full height. 'roll' cycles through all of them. */
 export function drawItemIcon(g, kind, pal = 0) {
-  g.clearRect(0, 0, 16, 16);
+  g.clearRect(0, 0, 28, 28);
   if (!kind) return;
   if (kind === 'roll') {
     const k = (performance.now() / 90) | 0;
     kind = KINDS[k % KINDS.length];
     pal = k;   // the flower also cycles through its colors while rolling
   }
-  if (kind === 'stick') drawStick(g);
-  else if (kind === 'pop') drawPop(g);
+  if (kind === 'stick') { drawStick(g, 7, 1); return; }
+  g.save();
+  g.translate(6, 6);
+  if (kind === 'pop') drawPop(g);
   else if (kind === 'bats') drawBatFrame(g, BAT_A, 1, 5, '#C9B6FF', 2);
   else if (kind === 'flower') drawFlower(g, pal);
+  g.restore();
 }
 
 /** The flower on its own canvas, with a dark outline so it reads as a flower against the night (18×18). */

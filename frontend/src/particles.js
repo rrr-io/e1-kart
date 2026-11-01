@@ -1,6 +1,7 @@
 // Pool of cube particles: drift sparks, off-road dust, boost flames.
 import * as THREE from 'three';
 import { scene } from './engine.js';
+import { updateFx } from './fx.js';
 
 const parts = [];
 const geo = new THREE.BoxGeometry(0.28, 0.28, 0.28);
@@ -23,6 +24,7 @@ export function spawn(x, y, z, color, vx, vy, vz, life) {
 }
 
 export function updateParticles(dt) {
+  updateFx(dt);
   parts.forEach((p) => {
     if (p.life <= 0) return;
     p.life -= dt;
