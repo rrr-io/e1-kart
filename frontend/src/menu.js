@@ -1,11 +1,12 @@
 // Main menu: team selection, pixelation and steering assist.
-import { $, resize } from './engine.js';
+import { $ } from './engine.js';
 import { TEAMS, settings, saveSettings } from './config.js';
 import { N, off, yawAt } from './track.js';
 import { paintKart } from './kart.js';
 import { G } from './state.js';
 import { renderAccount } from './account.js';
 import { showTeamIntro, hideRadio, applyTeam } from './dialogue.js';
+import { resetItems } from './items.js';
 
 function chip(cls, id, label, pressed, onClick) {
   const b = document.createElement('button');
@@ -34,12 +35,6 @@ export function buildMenu() {
     return btn;
   }));
   applyTeam($('game'), settings.teamIdx);
-  $('pix').replaceChildren(...[2, 3, 4].map((s) => chip('chipbtn', 'pix' + s, s + '×', s === settings.pixelScale, () => {
-    settings.pixelScale = s;
-    saveSettings();
-    buildMenu();
-    resize();
-  })));
   $('ast').replaceChildren(...[[true, 'ON'], [false, 'OFF']].map(([v, l]) => chip('chipbtn', 'ast' + l, l, v === settings.assist, () => {
     settings.assist = v;
     saveSettings();
@@ -56,6 +51,7 @@ export function toMenu() {
   $('hud').hidden = true;
   $('controls').hidden = true;
   hideRadio();
+  resetItems();
 
   // The player's kart stopped near the finish line, the others in grid behind it.
   const k = G.karts[0];

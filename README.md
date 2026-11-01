@@ -34,6 +34,7 @@ e1-kart-gp/
 │     ├─ config.js               teams, laps, saved settings
 │     ├─ engine.js  sky.js  track.js  scenery.js  kart.js
 │     ├─ physics.js              player driving (parameters in TUNING)
+│     ├─ items.js  itemdefs.js   items (player and CPU), reactive radio; names, drop odds, pixel icons
 │     ├─ ai.js  camera.js  hud.js  race.js  menu.js  input.js  particles.js
 │     └─ style.css
 ├─ backend/                      the API (Spring Boot)
@@ -58,11 +59,14 @@ e1-kart-gp/
 
 ## Driver dialogue
 
-Each team has a driver who speaks at four moments:
-- **menu**: a portrait and a line appear when you select the team;
-- **before the start**: an on-screen dialogue (tap to advance, SALTA/"skip" to close it), then the lights go out;
-- **during the race**: short radio messages that don't pause the game (super mini-turbo, lightstick boost, last lap);
-- **after the finish**: a different line for a win, podium or loss, then the results.
+Each team has a driver (inspired by an ENHYPEN member) who speaks at these moments:
+- **menu**: a portrait and a line appear when you select the team (`select`);
+- **before the start**: an on-screen dialogue (tap to advance, SKIP to close it), then the lights go out (`start`);
+- **during the race**: short radio messages that don't pause the game:
+  - `miniTurbo`, `lightstick`, `lastLap`;
+  - `takeLead`, `overtake`, `overtaken`: the race position changed (it has to hold for a moment, so a brief swap doesn't trigger it);
+  - `attack` (you used BLOOD POP or BAT SWARM), `slip` (you stepped on a BLOOD POP), `batsHit` (the swarm reached you), `comeback` (you used PARALLEL WORLD);
+- **after the finish**: a different line for a win, podium or loss, then the results (`win`, `podium`, `lose`).
 
 Everything is configured in `frontend/src/drivers.js`:
 - `driver`: the name shown on the nameplate (empty = the team's name);
@@ -80,6 +84,19 @@ To use real portraits:
    ```
    `-normal.png` alone is enough: missing expressions fall back to it.
 2. In `drivers.js` set `portrait: 'alpinoo'` for that team.
+
+## Items
+
+Driving through an item box gives you an item, picked at random with odds that depend on your race position: whoever leads gets the "hit the ones behind" items, whoever trails gets the comeback. The CPU karts pick up and use items too.
+
+| Item | Effect | Mostly for |
+|---|---|---|
+| **LIGHTSTICK** | boost | everyone |
+| **BLOOD POP** (red popsicle) | dropped behind you: whoever steps on it slips and spins out for about a second | the leaders |
+| **BAT SWARM** | sent backwards: slows whoever is behind for a few seconds; when a CPU sends it at you, the screen darkens and bats fly across it | the leaders |
+| **PARALLEL WORLD** (flower) | strong boost, and nothing can hit you while it lasts | the last positions |
+
+Odds, durations and icons live in `frontend/src/itemdefs.js`; the effects and the CPU behavior in `frontend/src/items.js`.
 
 ## How certificate redemption works
 

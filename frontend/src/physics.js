@@ -5,8 +5,10 @@ import { N, P, HALF, KERB, off, yawAt, lateral, nearestIdx } from './track.js';
 import { pads, boxes } from './scenery.js';
 import { G, input, player, boostFor } from './state.js';
 import { spawn } from './particles.js';
-import { toast, banner } from './hud.js';
+import { toast, banner, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
+import { rollItem, isReady, SLIP_T } from './itemdefs.js';
+import { useItem } from './items.js';
 
 // Driving parameters: tweak these to change the feel.
 export const TUNING = {
@@ -36,8 +38,11 @@ export function updatePlayer(dt) {
   }
   p.steerVis += (steer - p.steerVis) * Math.min(1, dt * 10);
 
+  // BLOOD POP: while spinning out you steer very little and can't drift.
+  if (p.slip > 0) { steer *= 0.3; p.drifting = false; }
+
   // Drift: activated by holding DRIFT while steering; releasing it grants the mini-turbo.
-  if (racing && !auto && input.drift && !p.drifting && Math.abs(steer) > 0.3 && p.v > 14) {
+  if (racing && !auto && p.slip <= 0 && input.drift && !p.drifting && Math.abs(steer) > 0.3 && p.v > 14) {
     p.drifting = true; p.ddir = Math.sign(steer); p.dT = 0; p.hop = 0.45;
   }
   if (p.drifting && (!input.drift || p.v < 9 || auto)) {
@@ -50,6 +55,8 @@ export function updatePlayer(dt) {
   const offroad = Math.abs(lat) > HALF + KERB;
   let target = racing ? TUNING.topSpeed : 0;
   if (offroad) target *= TUNING.offroadFactor;
+  if (p.slip > 0) target *= 0.25;   // BLOOD POP
+  if (p.bats > 0) target *= 0.8;    // BAT SWARM
   if (p.boost > 0) { target *= TUNING.boostFactor; p.boost -= dt; }
   if (input.brake && !auto) target = Math.min(target, 6);
   if (auto) target = Math.min(target, 22);
@@ -112,8 +119,9 @@ export function updatePlayer(dt) {
       if (!p.item && racing) { p.item = 'roll'; p.rollT = 0.9; }
     }
   });
-  if (p.item === 'roll') { p.rollT -= dt; if (p.rollT <= 0) p.item = 'stick'; }
-  if (input.item && p.item === 'stick' && G.state === 'race') { p.item = null; boostFor(p, 1.7); toast('LIGHTSTICK BOOST!'); radio(p.team, 'lightstick'); input.item = false; }
+  // The item depends on the position: whoever leads gets the traps, whoever trails gets the comeback.
+  if (p.item === 'roll') { p.rollT -= dt; if (p.rollT <= 0) p.item = rollItem(playerPosition()); }
+  if (input.item && isReady(p.item) && G.state === 'race') { useItem(p); input.item = false; }
 
   // Particles
   const rx = p.x - Math.sin(p.h) * 1.2, rz = p.z - Math.cos(p.h) * 1.2;
@@ -137,6 +145,9 @@ export function placePlayer(dt) {
   p.hop = Math.max(0, p.hop - dt * 2.2);
   const targetYaw = p.drifting ? p.ddir * 0.32 : 0;
   k.body.rotation.y += (targetYaw - k.body.rotation.y) * Math.min(1, dt * 10);
+  // BLOOD POP: two full spins.
+  if (p.slip > 0) { k.body.rotation.y = (1 - p.slip / SLIP_T) * Math.PI * 4; p.spun = true; }
+  else if (p.spun) { k.body.rotation.y = 0; p.spun = false; }
   k.body.rotation.z += ((p.drifting ? -p.ddir * 0.07 : -p.steerVis * 0.04) - k.body.rotation.z) * Math.min(1, dt * 8);
   k.body.position.y = Math.sin((p.hop / 0.45) * Math.PI) * 0.45 + (p.v > 1 ? Math.sin(G.raceT * 40) * 0.02 : 0);
   k.flame.visible = p.boost > 0;

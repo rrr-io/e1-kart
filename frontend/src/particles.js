@@ -4,7 +4,7 @@ import { scene } from './engine.js';
 
 const parts = [];
 const geo = new THREE.BoxGeometry(0.28, 0.28, 0.28);
-for (let k = 0; k < 90; k++) {
+for (let k = 0; k < 150; k++) {
   const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xffffff }));
   m.visible = false;
   scene.add(m);

@@ -3,6 +3,7 @@ import { $ } from './engine.js';
 import { TEAMS, LAPS } from './config.js';
 import { N, P, spacing } from './track.js';
 import { G, player, playerProgress } from './state.js';
+import { ITEM_NAMES, isReady, drawItemIcon } from './itemdefs.js';
 
 export function toast(msg) {
   const el = $('toast');
@@ -27,25 +28,8 @@ export const fmt = (t) => {
 };
 const suffix = (n) => (n === 1 ? 'ST' : n === 2 ? 'ND' : n === 3 ? 'RD' : 'TH');
 
-// ---------- Item icon (12×12 pixel) ----------
+// ---------- Item icon (16×16 pixel) ----------
 const itemCtx = $('itemC').getContext('2d');
-function drawItem(kind) {
-  const g = itemCtx;
-  g.clearRect(0, 0, 12, 12);
-  if (!kind) return;
-  if (kind === 'roll') {
-    const cols = ['#E10600', '#ffffff', '#4fc3ff', '#ffd23a'];
-    g.fillStyle = cols[((performance.now() / 90) | 0) % 4];
-    g.fillRect(3, 3, 6, 6);
-    return;
-  }
-  // lightstick
-  g.fillStyle = '#E10600'; g.fillRect(4, 0, 4, 4);
-  g.fillStyle = '#ffffff'; g.fillRect(5, 1, 2, 2); g.fillRect(5, 4, 2, 1);
-  g.fillStyle = '#9a9aa4'; g.fillRect(5, 5, 2, 7);
-  g.fillStyle = '#ffffff'; g.fillRect(1, 1, 1, 1); g.fillRect(10, 2, 1, 1);
-  g.fillStyle = '#E10600'; g.fillRect(1, 5, 1, 1); g.fillRect(10, 6, 1, 1);
-}
 
 // ---------- Minimap ----------
 const MW = 112, MH = 84;
@@ -94,9 +78,11 @@ export function updateHud(dt) {
   $('time').textContent = fmt(G.raceT);
   $('best').textContent = 'BEST ' + fmt(G.bestLap);
   $('spd').textContent = Math.round(player.v * 4);
-  drawItem(player.item);
-  $('itemName').hidden = player.item !== 'stick';
-  $('bI').classList.toggle('on', player.item === 'stick');
+  drawItemIcon(itemCtx, player.item);
+  const ready = isReady(player.item);
+  $('itemName').hidden = !ready;
+  if (ready) $('itemName').textContent = ITEM_NAMES[player.item];
+  $('bI').classList.toggle('on', ready);
 
   standT -= dt;
   if (standT <= 0) {

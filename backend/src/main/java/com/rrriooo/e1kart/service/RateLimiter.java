@@ -6,6 +6,7 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rrriooo.e1kart.config.E1KartProperties;
@@ -22,6 +23,8 @@ public class RateLimiter {
     private final Clock clock;
     private final Map<String, Deque<Long>> hits = new ConcurrentHashMap<>();
 
+    // Two constructors (the second one is for tests): Spring needs to be told which one to use.
+    @Autowired
     public RateLimiter(E1KartProperties props) {
         this(props.uploadRateLimitPerMinute(), Clock.systemUTC());
     }

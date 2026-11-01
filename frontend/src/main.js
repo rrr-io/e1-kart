@@ -15,6 +15,7 @@ import { updateParticles } from './particles.js';
 import { G, player } from './state.js';
 import { updatePlayer } from './physics.js';
 import { updateCpus } from './ai.js';
+import { updateItems } from './items.js';
 import { updateCamera } from './camera.js';
 import { updateHud, showResults, playerPosition } from './hud.js';
 import { talk } from './dialogue.js';
@@ -48,6 +49,7 @@ function frame(now) {
   if (G.state !== 'menu') {
     updatePlayer(dt);
     updateCpus(dt);
+    updateItems(dt);
     updateHud(dt);
   }
   if (G.state === 'done') {

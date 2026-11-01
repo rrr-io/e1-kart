@@ -20,18 +20,18 @@ export const lum = (h) => {
 const KEY = 'e1kart';
 
 // freePlay: the menu's "Play without a certificate" flag.
-export const settings = { teamIdx: 2, pixelScale: 4, assist: true, freePlay: true };
+// pixelScale is fixed at 2× (the sharpest pixel look); it is no longer a menu option.
+export const settings = { teamIdx: 2, pixelScale: 2, assist: true, freePlay: true };
 
 try {
   const s = JSON.parse(localStorage.getItem(KEY) || '{}');
   if (s.team >= 0 && s.team < TEAMS.length) settings.teamIdx = s.team;
-  if ([2, 3, 4].includes(s.pix)) settings.pixelScale = s.pix;
   if (typeof s.assist === 'boolean') settings.assist = s.assist;
   if (typeof s.free === 'boolean') settings.freePlay = s.free;
 } catch (e) { /* storage unavailable */ }
 
 export function saveSettings() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ team: settings.teamIdx, pix: settings.pixelScale, assist: settings.assist, free: settings.freePlay }));
+    localStorage.setItem(KEY, JSON.stringify({ team: settings.teamIdx, assist: settings.assist, free: settings.freePlay }));
   } catch (e) { /* storage unavailable */ }
 }

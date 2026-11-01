@@ -5,6 +5,7 @@ import { N, P, T, NR, HALF, bend, spacing } from './track.js';
 import { pads } from './scenery.js';
 import { G, player, playerProgress } from './state.js';
 import { spawn } from './particles.js';
+import { SLIP_T } from './itemdefs.js';
 
 function cpuPos(c) {
   const f = ((c.prog % N) + N) % N;
@@ -22,6 +23,8 @@ export function updateCpus(dt) {
       c.band += (want - c.band) * Math.min(1, dt * 0.8);
       let s = c.spd + c.band;
       if (c.boost > 0) { s += 8; c.boost -= dt; }
+      if (c.slip > 0) s *= 0.25;  // BLOOD POP
+      if (c.bats > 0) s *= 0.8;   // BAT SWARM
       if (c.finish !== null) s = Math.min(s, 20);
       c.prog += (s / spacing) * dt;
       c.timer -= dt;
@@ -52,6 +55,8 @@ export function updateCpus(dt) {
     k.root.rotation.y = yaw;
     const drift = Math.max(-0.3, Math.min(0.3, bend[i] * 0.9));
     k.body.rotation.y += (drift - k.body.rotation.y) * Math.min(1, dt * 6);
+    if (c.slip > 0) { k.body.rotation.y = (1 - c.slip / SLIP_T) * Math.PI * 4; c.spun = true; }
+    else if (c.spun) { k.body.rotation.y = 0; c.spun = false; }
     k.flame.visible = c.boost > 0;
     k.wheels.forEach((w) => { w.rotation.x += ((c.speed || 0) * dt) / 0.45; });
     if (Math.abs(drift) > 0.18 && Math.random() < 0.25 && dt > 0) {

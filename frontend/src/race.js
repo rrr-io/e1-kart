@@ -9,6 +9,7 @@ import { updateCpus } from './ai.js';
 import { placePlayer } from './physics.js';
 import { banner } from './hud.js';
 import { talk } from './dialogue.js';
+import { resetItems } from './items.js';
 
 const COUNTDOWN = 3.6;
 const PLAYER_SLOT = 3;
@@ -24,6 +25,7 @@ export function setupRace() {
       Object.assign(player, {
         x: o[0], z: o[1], h: yawAt(idx), v: 0, idx, prevIdx: undefined, laps: -1, half: true,
         drifting: false, dT: 0, boost: 0, item: null, hop: 0, steerS: 0, finish: null, team: settings.teamIdx,
+        slip: 0, bats: 0, ghost: 0, spun: false,
       });
       player.kart = G.karts[0];
       paintKart(G.karts[0], TEAMS[settings.teamIdx].color);
@@ -33,12 +35,14 @@ export function setupRace() {
       G.cpus.push({
         kart, team: t, prog: idx - N, lat, latT: lat,
         spd: 29.5 + ck * 0.7 + Math.random() * 0.8, band: 0, boost: 0,
+        item: null, slip: 0, bats: 0, ghost: 0, pickCd: 0, spun: false,
         timer: 1 + Math.random() * 2, finish: null, speed: 0, x: 0, z: 0,
       });
       ck++;
     }
   }
   resetBoxes();
+  resetItems();
   // 'intro': the driver talks before the lights; the countdown starts once the dialogue closes.
   Object.assign(G, { raceT: 0, countT: COUNTDOWN, lapStart: 0, bestLap: null, state: 'intro', ending: false });
   startLights.forEach((l) => l.material.color.set(0x330000));

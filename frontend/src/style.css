@@ -32,7 +32,7 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .stand span.n{width:12px;font-variant-numeric:tabular-nums}
 .hud-c{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px}
 .item{width:56px;height:56px;border:3px solid var(--paper);background:var(--glass);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
-.item canvas{width:36px;height:36px;image-rendering:pixelated}
+.item canvas{width:32px;height:32px;image-rendering:pixelated}
 .item-name{font-family:var(--display);font-size:7px;background:var(--red);padding:3px 5px;color:var(--paper)}
 .hud-r{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .time{font-family:var(--display);font-size:14px;font-variant-numeric:tabular-nums;text-shadow:2px 2px 0 var(--ink)}
@@ -137,3 +137,56 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
   .radio{bottom:auto;top:calc(96px + env(safe-area-inset-top,0px));width:min(330px,calc(100% - 32px))}
 }
 @media (prefers-reduced-motion:reduce){.dlg-next{animation:none}}
+
+/* Menu columns: stacked on tall screens, side by side on short landscape screens. */
+.menu-body .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* Short landscape screens (phones held sideways, browser bars included):
+   two-column menu, compact HUD and controls so the track stays visible. */
+@media (orientation:landscape) and (max-height:500px){
+  .win{width:min(900px,100%)}
+  .menu-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start;padding:10px 12px}
+  .menu-body .col{gap:8px}
+  .logo{font-size:18px}
+  .sub{font-size:17px}
+  .teams{gap:5px}
+  .team{min-height:38px;padding:6px 5px}
+  .intro .portrait{width:46px;height:46px}
+  .intro-body p{font-size:17px}
+  .go{height:46px}
+  .hint,.msg{font-size:16px}
+
+  .hud-l{top:calc(8px + env(safe-area-inset-top,0px));gap:5px}
+  .pos b{font-size:28px}
+  .pos i{font-size:11px}
+  .pos small{font-size:9px}
+  .lap{font-size:8px;padding:4px 6px}
+  .stand div{font-size:15px;padding:1px 5px;min-width:104px}
+  .stand span.chip{width:6px;height:10px}
+  .hud-c{top:calc(6px + env(safe-area-inset-top,0px))}
+  .item{width:44px;height:44px;border-width:2px}
+  .hud-r{top:calc(8px + env(safe-area-inset-top,0px));gap:4px}
+  .time{font-size:11px}
+  .best{font-size:15px}
+  #mini{width:90px;height:68px}
+  .speed{right:calc(max(16px,env(safe-area-inset-right,0px)) + 166px);bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .speed b{font-size:17px}
+  .speed span{font-size:15px}
+  #toast{top:calc(60px + env(safe-area-inset-top,0px))}
+
+  #steerPad{width:150px;height:50px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
+  #steerKnob{width:30px;height:38px;top:4px;margin-left:-15px}
+  #bD{width:70px;height:70px;font-size:9px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
+  #bI{width:58px;height:40px;font-size:8px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
+  #bB{width:58px;height:32px;font-size:7px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(58px + env(safe-area-inset-bottom,0px));border-width:2px}
+  .radio{width:min(300px,calc(100% - 400px));min-width:200px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+}
+
+/* BAT SWARM: darkened screen edges with pixel bats flying across (the player's screen only) */
+#batFx{position:absolute;inset:0;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(6,2,14,.3) 10%,rgba(6,2,14,.96) 78%)}
+#batFx .bat{position:absolute;left:0;width:52px;height:24px;background:var(--bat) 0 0/104px 24px no-repeat;image-rendering:pixelated;animation:batflap .24s steps(2) infinite,batfly 1.6s linear infinite}
+#batFx .bat.r{animation-name:batflap,batflyr}
+@keyframes batflap{to{background-position:-104px 0}}
+@keyframes batfly{from{translate:-12vw 0}to{translate:112vw 0}}
+@keyframes batflyr{from{translate:112vw 0}to{translate:-12vw 0}}
+@media (prefers-reduced-motion:reduce){#batFx .bat{animation:none;opacity:0}}
