@@ -4,6 +4,7 @@ import { TEAMS, LAPS } from './config.js';
 import { N, P, spacing } from './track.js';
 import { G, player, playerProgress } from './state.js';
 import { ITEM_NAMES, isReady, drawItemIcon } from './itemdefs.js';
+import { nameOf } from './dialogue.js';
 
 export function toast(msg) {
   const el = $('toast');
@@ -106,7 +107,17 @@ export function showResults() {
   $('resList').innerHTML = rows.map((e, k) => row(e.me ? 'me' : '',
     '<span class="p">' + (k + 1) + '</span><span class="chip" style="background:' + TEAMS[e.team].color + '"></span><span class="nm">' + TEAMS[e.team].name +
     '</span><span class="t">' + (k ? '+' + (e.t - w).toFixed(2) : fmt(e.t)) + '</span>')).join('');
-  $('resBest').textContent = 'Fastest lap: ' + fmt(G.bestLap);
+  // Header and driver card: position, verdict, driver.
+  const pos = rows.findIndex((e) => e.me) + 1;
+  const sfx = pos === 1 ? 'ST' : pos === 2 ? 'ND' : pos === 3 ? 'RD' : 'TH';
+  $('resPos').innerHTML = pos + '<small>' + sfx + '</small>';
+  $('resHead').textContent = pos === 1 ? 'YOU WIN!' : pos <= 3 ? 'PODIUM!' : 'NEXT TIME!';
+  $('results').classList.toggle('podium', pos <= 3);
+  $('resName').textContent = nameOf(player.team);
+  $('resTeam').textContent = TEAMS[player.team].name;
+  $('resTime').textContent = fmt(player.finish);
+  $('resBest').textContent = fmt(G.bestLap);
   $('results').hidden = false;
+  $('hud').hidden = true;
   $('controls').hidden = true;
 }

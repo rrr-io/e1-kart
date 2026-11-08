@@ -85,18 +85,26 @@ function loadImage(url) {
   return imgCache.get(url);
 }
 
-/** Draws the driver's portrait on the canvas: PNG if configured and available, otherwise a silhouette. */
-export async function drawPortrait(canvas, teamIdx, mood) {
+/** Draws the driver's portrait on the canvas: one of the driver's drawings for that moment
+ *  ('neutral', 'win', 'podium' or 'end', see drivers.js), otherwise a silhouette with the mood glyph.
+ *  pick (0..1) chooses among the drawings of the moment. The dialogue portrait (behind the box)
+ *  is shown at the drawing's own size (× portrait.scale, default 1). */
+export async function drawPortrait(canvas, teamIdx, mood, slot = 'neutral', pick = Math.random()) {
   const color = TEAMS[teamIdx].color;
+  const twice = canvas.classList.contains('dlg-portrait');
   drawSilhouette(canvas, color, mood);
-  const prefix = DRIVERS[teamIdx] && DRIVERS[teamIdx].portrait;
-  if (!prefix) return;
-  const base = import.meta.env.BASE_URL + 'drivers/' + prefix;
+  if (twice) canvas.style.width = '';
+  const set = DRIVERS[teamIdx] && DRIVERS[teamIdx].portrait;
+  if (!set) return;
+  const list = set[slot] || (slot === 'win' && (set.podium || set.end)) || (slot === 'podium' && set.end) || set.neutral;
+  if (!list || !list.length) return;
   const token = (canvas._token = (canvas._token || 0) + 1);
-  const img = (await loadImage(`${base}-${mood}.png`)) || (await loadImage(`${base}-normal.png`));
+  const file = list[Math.min(list.length - 1, Math.floor(pick * list.length))];
+  const img = await loadImage(import.meta.env.BASE_URL + 'drivers/' + file);
   if (!img || canvas._token !== token) return;
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
+  if (twice) canvas.style.width = img.naturalWidth * (set.scale || 1) + 'px';
   const g = canvas.getContext('2d');
   g.imageSmoothingEnabled = false;
   g.drawImage(img, 0, 0);
@@ -145,7 +153,10 @@ function showLine() {
   const { lines, index, teamIdx } = current;
   const line = lines[index];
   $('dlgNext').hidden = true;
-  drawPortrait($('dlgPortrait'), teamIdx, line.mood);
+  // After the finish: podium or end drawings; before the start: neutral. Same drawing for the whole dialogue.
+  const key = current.key;
+  const slot = key === 'win' ? 'win' : key === 'podium' ? 'podium' : key === 'lose' ? 'end' : 'neutral';
+  drawPortrait($('dlgPortrait'), teamIdx, line.mood, slot, current.pick);
   dlgLive.textContent = line.t;
   current.tw = typewriter(dlgText, line.t, () => { $('dlgNext').hidden = false; });
 }
@@ -175,7 +186,7 @@ export function talk(teamIdx, key) {
   if (current) close();
   hideRadio();
   return new Promise((resolve) => {
-    current = { lines, index: 0, teamIdx, tw: null, resolve };
+    current = { lines, index: 0, teamIdx, key, pick: Math.random(), tw: null, resolve };
     applyTeam(dlg, teamIdx);
     $('dlgName').textContent = nameOf(teamIdx);
     dlg.hidden = false;

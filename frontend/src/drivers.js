@@ -1,8 +1,15 @@
 // Team drivers and dialogue lines.
 //
 // driver:   name shown on the dialogue nameplate (empty = the team's name).
-// portrait: prefix of the portraits in public/drivers/. With portrait: 'alpinoo' the game loads
-//           drivers/alpinoo-normal.png, -happy.png, -sad.png, -hype.png (missing ones fall back to -normal).
+// portrait: the driver's drawings in public/drivers/, by moment (half-body pixel art, shown behind the
+//           dialogue box). Each moment lists one or more files; one is picked at random
+//           every time the driver talks, so two drawings in a list alternate.
+//             neutral: the dialogue before the start, the menu, the radio during the race
+//             win:     the dialogue after the finish, in first place (missing = podium)
+//             podium:  the dialogue after the finish, on the podium (missing = end)
+//             end:     the dialogue after the finish, off the podium (missing = neutral)
+//           The drawings are traced at double resolution (about 110×157) and shown 1:1, to keep the
+//           fine detail of hair and eyes; scale: 2 doubles a drawing made at normal resolution.
 //           null = placeholder silhouette drawn by the game.
 //
 // Each key of "lines" is a list of variants: one is picked at random.
@@ -62,7 +69,11 @@ export const DRIVERS = [
     // Jake: chill, but secretly very competitive.
     team: 'MCJAKEY',
     driver: 'JAKE',
-    portrait: null,
+    portrait: {
+      neutral: ['mcjakey-1.png', 'mcjakey-2.png'],
+      win: ['mcjakey-4.png'],
+      podium: ['mcjakey-3.png'],
+    },
     lines: {
       select: ["Relax. We're just going to win, that's all."],
       start: [
@@ -87,7 +98,11 @@ export const DRIVERS = [
     // Jay: F1 nerd, loves explaining things, humble, always a friend to ENGENE.
     team: 'JAYBULL RACING',
     driver: 'JAY',
-    portrait: null,
+    portrait: {
+      neutral: ['jaybull-1.png'],
+      win: ['jaybull-3.png'],
+      podium: ['jaybull-2.png'],
+    },
     lines: {
       select: ["I've studied this track a lot. Like, a lot. Let's go, Engene."],
       start: [
@@ -112,7 +127,10 @@ export const DRIVERS = [
     // Sunoo: the brightest sunshine, ENGENE's best confidant. Cute, but fierce.
     team: 'ALPINOO',
     driver: 'SUNOO',
-    portrait: null,
+    portrait: {
+      neutral: ['alpinoo-1.png', 'alpinoo-2.png'],
+      podium: ['alpinoo-3.png', 'alpinoo-4.png'],
+    },
     lines: {
       select: ["Engene! We're going to have so much fun. And win."],
       start: [
@@ -136,7 +154,11 @@ export const DRIVERS = [
     // Sunghoon: loves the thrill. Concise, but warm.
     team: 'HOONRARI',
     driver: 'SUNGHOON',
-    portrait: null,
+    portrait: {
+      neutral: ['hoonrari-1.png', 'hoonrari-2.png'],
+      podium: ['hoonrari-3.png', 'hoonrari-4.png'],
+      end: ['hoonrari-3.png'],
+    },
     lines: {
       select: ["Fast laps? Let's go."],
       start: [
@@ -160,7 +182,10 @@ export const DRIVERS = [
     // Jungwon: goofy, loves ENGENEs, supportive but firm.
     team: 'MEOWCEDES',
     driver: 'JUNGWON',
-    portrait: null,
+    portrait: {
+      neutral: ['meowcedes-1.png', 'meowcedes-2.png'],
+      podium: ['meowcedes-3.png'],
+    },
     lines: {
       select: ["Engene, you picked us? Good choice. Now let's not waste it."],
       start: [
@@ -185,7 +210,11 @@ export const DRIVERS = [
     // Ni-ki: HATES to lose. Not very vocal, but the best support: total loyalty and integrity.
     team: 'RIKSTON DRIFT',
     driver: 'NI-KI',
-    portrait: null,
+    portrait: {
+      neutral: ['rikston-1.png', 'rikston-2.png'],
+      win: ['rikston-5.png'],
+      podium: ['rikston-3.png', 'rikston-4.png'],
+    },
     lines: {
       select: ["…Let's win."],
       start: [

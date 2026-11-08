@@ -68,7 +68,7 @@
       <header class="m-top">
         <h1 class="logo" id="mTitle">
           <img class="logo-e1 lg" id="logoE1" alt="E1" width="90" height="44"><img class="logo-e1 sm" id="logoE1sm" alt="" width="60" height="30">
-          <span class="logo-sub">KART GRAND PRIX</span>
+          <span class="logo-sub">MAMA GRAND PRIX 2026</span>
         </h1>
       </header>
 
@@ -118,15 +118,23 @@
     </div>
   </div>
 
-  <div class="overlay" id="results" hidden>
-    <div class="win" role="dialog" aria-labelledby="rTitle">
-      <div class="bar"><span id="rTitle">RESULTS.TXT</span><span class="sq"><span></span><span></span></span></div>
-      <div class="wbody">
-        <div class="res" id="resList"></div>
-        <p class="hint" id="resBest"></p>
+  <div class="overlay results" id="results" hidden>
+    <div class="res-ui" role="dialog" aria-labelledby="rTitle">
+      <header class="res-top">
+        <span class="res-kicker" id="rTitle">RESULTS</span>
+        <b class="res-pos" id="resPos">1<small>ST</small></b>
+        <span class="res-head" id="resHead">YOU WIN!</span>
+      </header>
+      <section class="res-tower" aria-label="Standings"><div class="res" id="resList"></div></section>
+      <aside class="res-side">
+        <div class="res-driver"><b class="tag" id="resName"></b><span class="res-team" id="resTeam"></span></div>
+        <dl class="res-stats">
+          <div><dt>TIME</dt><dd id="resTime">--:--.--</dd></div>
+          <div><dt>FASTEST LAP</dt><dd id="resBest">--:--.--</dd></div>
+        </dl>
         <p class="hint" id="resRuns"></p>
-        <div class="row"><button class="go alt" id="toMenu">CHANGE TEAM</button><button class="go" id="again">PLAY AGAIN ▶</button></div>
-      </div>
+        <div class="res-btns"><button class="go alt" id="toMenu">CHANGE TEAM</button><button class="go" id="again">PLAY AGAIN ▶</button></div>
+      </aside>
     </div>
   </div>
 </div>
