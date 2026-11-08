@@ -1,12 +1,13 @@
 // Track: closed curve sampled into N points, plus asphalt, curbs and gravel.
 import * as THREE from 'three';
 import { scene, toon, canvasTex } from './engine.js';
+import { TRACK, THEME } from './theme.js';
 
-// Track control points (x, z). For a new track, just change this array.
-const RAW = [[0, 0], [70, -14], [130, 6], [158, 58], [128, 108], [70, 104], [36, 146], [-30, 150], [-84, 112], [-74, 58], [-118, 20], [-80, -34], [-30, -30]];
-// Track size. Raising it makes each lap longer: the index-based things (boost pads, item boxes, scenery)
-// stay in the same relative spots, just further apart. WORLD_K is the factor compared to the original size (1.5).
-const SCALE = 2.25;
+// Track control points (x, z) and size come from the chosen track (theme.js). Raising the scale makes each lap
+// longer: the index-based things (boost pads, item boxes, scenery) stay in the same relative spots, just further
+// apart. WORLD_K is the factor compared to the original size (1.5).
+const RAW = TRACK.raw;
+const SCALE = TRACK.scale;
 export const WORLD_K = SCALE / 1.5;
 
 export const N = 720;      // samples along the track
@@ -98,8 +99,14 @@ function strip(a, b, y, colorFn) {
   return m;
 }
 
-// Striped night-time grass.
-const grass = canvasTex(32, 32, (g) => {
+// Striped night-time grass, or (interstellar) a dark glass floor with a neon grid.
+const grass = THEME.ground ? canvasTex(32, 32, (g) => {
+  const [base, alt, line, dot] = THEME.ground;
+  g.fillStyle = base; g.fillRect(0, 0, 32, 32);
+  g.fillStyle = alt; g.fillRect(0, 0, 16, 16); g.fillRect(16, 16, 16, 16);
+  g.fillStyle = line; g.fillRect(0, 0, 32, 1); g.fillRect(0, 0, 1, 32);
+  g.fillStyle = dot; g.fillRect(0, 0, 1, 1);
+}, true) : canvasTex(32, 32, (g) => {
   g.fillStyle = '#1d3a33'; g.fillRect(0, 0, 32, 32);
   g.fillStyle = '#1a342e'; g.fillRect(0, 0, 32, 16);
   for (let k = 0; k < 40; k++) { g.fillStyle = k % 2 ? '#152c27' : '#25463c'; g.fillRect((k * 13) % 32, (k * 7) % 32, 1, 1); }
@@ -110,13 +117,13 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-strip(-HALF, HALF, 0.03, (i) => (Math.floor(i / 12) % 2 ? '#2e3140' : '#2b2e3c'));
-strip(HALF - 0.7, HALF - 0.3, 0.08, () => '#e9e9ee');
-strip(-HALF + 0.3, -HALF + 0.7, 0.08, () => '#e9e9ee');
+strip(-HALF, HALF, 0.03, (i) => (Math.floor(i / 12) % 2 ? THEME.asphalt[0] : THEME.asphalt[1]));
+strip(HALF - 0.7, HALF - 0.3, 0.08, () => THEME.line);
+strip(-HALF + 0.3, -HALF + 0.7, 0.08, () => THEME.line);
 strip(-0.22, 0.22, 0.08, (i) => (i % 10 < 5 ? '#d9d9de' : null));
-const kerbC = (i) => (corner[i] ? (Math.floor(i / 2) % 2 ? '#E10600' : '#ffffff') : null);
+const kerbC = (i) => (corner[i] ? THEME.kerb[Math.floor(i / 2) % 2 ? 0 : 1] : null);
 strip(HALF, HALF + KERB, 0.07, kerbC);
 strip(-HALF - KERB, -HALF, 0.07, kerbC);
-const gravC = (i) => (corner[i] ? (i % 3 ? '#5f5f74' : '#57576b') : null);
+const gravC = (i) => (corner[i] ? THEME.gravel[i % 3 ? 0 : 1] : null);
 strip(HALF + KERB, HALF + 8, 0.03, gravC);
 strip(-HALF - 8, -HALF - KERB, 0.03, gravC);

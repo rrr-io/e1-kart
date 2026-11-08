@@ -1,6 +1,7 @@
 // Renderer, scene, camera and shared helpers (pixel textures, toon materials).
 import * as THREE from 'three';
 import { settings } from './config.js';
+import { THEME } from './theme.js';
 
 export const $ = (id) => document.getElementById(id);
 
@@ -13,7 +14,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.BasicShadowMap;
 
 export const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x101c3e, 150, 760);
+scene.fog = new THREE.Fog(...THEME.fog);
 
 export const camera = new THREE.PerspectiveCamera(68, 1, 0.5, 1500);
 

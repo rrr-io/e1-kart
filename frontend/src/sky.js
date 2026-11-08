@@ -2,21 +2,22 @@
 import * as THREE from 'three';
 import { scene, camera, canvasTex } from './engine.js';
 import moonUrl from './assets/moon.png';
+import { THEME, SPACE } from './theme.js';
 
 scene.background = canvasTex(4, 256, (g) => {
   const gr = g.createLinearGradient(0, 0, 0, 256);
-  gr.addColorStop(0, '#03050f');
-  gr.addColorStop(0.45, '#08102a');
-  gr.addColorStop(0.78, '#13224d');
-  gr.addColorStop(1, '#1f3570');
+  gr.addColorStop(0, THEME.sky[0]);
+  gr.addColorStop(0.45, THEME.sky[1]);
+  gr.addColorStop(0.78, THEME.sky[2]);
+  gr.addColorStop(1, THEME.sky[3]);
   g.fillStyle = gr;
   g.fillRect(0, 0, 4, 256);
 });
 
-scene.add(new THREE.HemisphereLight(0x7290d6, 0x0b1320, 0.6));
+scene.add(new THREE.HemisphereLight(...THEME.hemi));
 
 // Moonlight: follows the player to keep shadows crisp.
-export const moonLight = new THREE.DirectionalLight(0xb3cbff, 0.85);
+export const moonLight = new THREE.DirectionalLight(THEME.moonLight, 0.85);
 moonLight.castShadow = true;
 moonLight.shadow.mapSize.set(1024, 1024);
 const sc = moonLight.shadow.camera;
@@ -28,14 +29,14 @@ scene.add(moonLight.target);
 const sky = new THREE.Group();
 scene.add(sky);
 
-const MOON_DIR = new THREE.Vector3(-0.45, 0.34, 0.83).normalize();
+const MOON_DIR = new THREE.Vector3(...THEME.moonDir).normalize();
 const moonTex = new THREE.TextureLoader().load(moonUrl);
 moonTex.magFilter = THREE.NearestFilter;
 moonTex.minFilter = THREE.NearestFilter;
 moonTex.generateMipmaps = false;
 
 const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, fog: false, depthWrite: false, transparent: true }));
-moon.scale.set(150, 150, 1);
+moon.scale.set(THEME.moonScale, THEME.moonScale, 1);
 moon.renderOrder = -1;
 moon.position.copy(MOON_DIR).multiplyScalar(760);
 
@@ -49,11 +50,35 @@ const glowTex = canvasTex(64, 64, (g) => {
 });
 glowTex.magFilter = glowTex.minFilter = THREE.LinearFilter;
 const moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending }));
-moonGlow.scale.set(420, 420, 1);
+moonGlow.scale.set(THEME.moonScale * 2.8, THEME.moonScale * 2.8, 1);
 moonGlow.renderOrder = -2;
 moonGlow.position.copy(MOON_DIR).multiplyScalar(770);
 sky.add(moonGlow);
 sky.add(moon);
+
+// Interstellar: soft nebula clouds in the MAMA 2026 poster colours (deep blue, violet, pink, white swirl).
+function nebula() {
+  const tex = canvasTex(64, 64, (g) => {
+    for (let k = 0; k < 7; k++) {
+      const x = 16 + Math.random() * 32, y = 16 + Math.random() * 32, r = 10 + Math.random() * 18;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, 'rgba(255,255,255,.55)');
+      gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    }
+  });
+  tex.magFilter = tex.minFilter = THREE.LinearFilter;
+  const cols = [0x3d5bff, 0x9b4dff, 0xff5fc8, 0x4fc3ff, 0x6a3dff, 0xffffff];
+  for (let k = 0; k < 9; k++) {
+    const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: cols[k % cols.length], fog: false, depthWrite: false, transparent: true, opacity: k === 5 ? 0.25 : 0.5, blending: THREE.AdditiveBlending }));
+    const a = (k / 9) * Math.PI * 2 + Math.random() * 0.4, y = 0.18 + Math.random() * 0.45;
+    m.position.set(Math.cos(a) * 700, y * 700, Math.sin(a) * 700);
+    const sz = 380 + Math.random() * 320;
+    m.scale.set(sz * 1.6, sz, 1);
+    m.renderOrder = -3;
+    sky.add(m);
+  }
+}
 
 function starField(n, size, colors, minY) {
   const pos = [], col = [];
@@ -71,7 +96,8 @@ function starField(n, size, colors, minY) {
   sky.add(p);
   return p;
 }
-starField(1300, 1, ['#8fa3d6', '#c9d6ff', '#6f86c4'], 0.02);
+starField(SPACE ? 2400 : 1300, 1, SPACE ? ['#b9a8ff', '#ffffff', '#ff9be6', '#8fd8ff'] : ['#8fa3d6', '#c9d6ff', '#6f86c4'], 0.02);
+if (SPACE) nebula();
 const brightStars = starField(140, 2, ['#ffffff', '#bfe0ff', '#9fd0ff'], 0.08);
 
 const shoot = new THREE.Mesh(

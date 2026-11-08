@@ -34,7 +34,7 @@ export function setupRace() {
       paintKart(kart, TEAMS[t].color);
       G.cpus.push({
         kart, team: t, prog: idx - N, lat, latT: lat,
-        spd: 29.5 + ck * 0.7 + Math.random() * 0.8, band: 0, boost: 0,
+        spd: 40 + ck * 0.9 + Math.random() * 1.1, band: 0, boost: 0,
         item: null, slip: 0, bats: 0, ghost: 0, pickCd: 0, spun: false,
         timer: 1 + Math.random() * 2, finish: null, speed: 0, x: 0, z: 0,
       });

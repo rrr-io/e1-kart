@@ -13,12 +13,12 @@ import { useItem } from './items.js';
 
 // Driving parameters: tweak these to change the feel.
 export const TUNING = {
-  topSpeed: 34,          // units/s (×4 = on-screen km/h)
+  topSpeed: 46,          // units/s (×4 = on-screen km/h)
   offroadFactor: 0.64,   // top speed on grass
   boostFactor: 1.48,
   steerRate: 2.9,        // rad/s at low speed
   steerHighSpeedLoss: 0.9,
-  assistStrength: 1.8,   // how fast the assist realigns the kart with the track
+  assistStrength: 2.4,   // how fast the assist realigns the kart with the track
   driftSlide: 0.2,       // how much the kart slides outward while drifting
   miniTurbo: [0.9, 1.9], // seconds of drift for blue / orange mini-turbo
   wallLimit: HALF + 16,
@@ -61,15 +61,15 @@ export function updatePlayer(dt) {
   if (p.boost > 0) { target *= TUNING.boostFactor; p.boost -= dt; }
   if (input.brake && !auto) target = Math.min(target, 6);
   if (auto) target = Math.min(target, 22);
-  p.v += (target - p.v) * (p.v < target ? 1.05 : 2.4) * dt;
+  p.v += (target - p.v) * (p.v < target ? 1.35 : 2.4) * dt;
 
   let turnIn = steer;
   if (p.drifting) { p.dT += dt; turnIn = p.ddir * (0.72 + 0.5 * steer * p.ddir); }
-  p.h += turnIn * (TUNING.steerRate - TUNING.steerHighSpeedLoss * Math.min(1, p.v / 45)) * Math.min(1, p.v / 6) * (p.drifting ? 1.15 : 1) * dt;
+  p.h += turnIn * (TUNING.steerRate - TUNING.steerHighSpeedLoss * Math.min(1, p.v / 60)) * Math.min(1, p.v / 6) * (p.drifting ? 1.15 : 1) * dt;
 
   // Steering assist: if the steering isn't touched, the kart gently realigns with the track.
   if (settings.assist && racing && !auto && !p.drifting && Math.abs(steer) < 0.15 && p.v > 4) {
-    const d = wrapAngle(yawAt(p.idx) - lat * 0.025 - p.h);
+    const d = wrapAngle(yawAt((p.idx + 2) % N) - lat * 0.025 - p.h);   // looks a little ahead: needed at top speed
     if (Math.abs(d) < 0.8) p.h += d * Math.min(1, dt * TUNING.assistStrength);
   }
 

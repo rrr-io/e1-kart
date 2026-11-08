@@ -19,13 +19,13 @@ export function updateCpus(dt) {
   G.cpus.forEach((c) => {
     if (G.state === 'race' || G.state === 'done') {
       const diff = c.prog - pp;
-      const want = diff > 45 / WORLD_K ? -3 : diff < -60 / WORLD_K ? 2.6 : 0;
+      const want = diff > 45 / WORLD_K ? -4 : diff < -60 / WORLD_K ? 3.5 : 0;
       c.band += (want - c.band) * Math.min(1, dt * 0.8);
       let s = c.spd + c.band;
-      if (c.boost > 0) { s += 8; c.boost -= dt; }
+      if (c.boost > 0) { s += 11; c.boost -= dt; }
       if (c.slip > 0) s *= 0.25;  // BLOOD POP
       if (c.bats > 0) s *= 0.8;   // BAT SWARM
-      if (c.finish !== null) s = Math.min(s, 20);
+      if (c.finish !== null) s = Math.min(s, 27);
       c.prog += (s / spacing) * dt;
       c.timer -= dt;
       if (c.timer <= 0) { c.timer = 1.5 + Math.random() * 2.5; c.latT = (Math.random() * 2 - 1) * (HALF - 2.4); }

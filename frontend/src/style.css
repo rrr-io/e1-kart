@@ -187,6 +187,13 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .m-right{grid-area:right;justify-self:end}
 .gear{font-family:var(--display);font-size:8px;color:var(--paper);background:rgba(7,13,30,.86);border:2px solid var(--ink);outline:2px solid rgba(159,208,255,.35);padding:9px 10px;min-height:38px;cursor:pointer}
 .gear[aria-expanded="true"]{background:var(--paper);color:var(--ink)}
+.m-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.gear.track{display:inline-flex;align-items:center;gap:8px}
+.gear.track .lbl{font-size:6px;color:var(--moon-dim)}
+.gear.track b{font-weight:400;color:var(--paper)}
+.gear.track .cost{font-size:6px;padding:3px 4px;background:var(--red);color:var(--paper)}
+.gear.track .cost.free{background:#1f8a5b}
+.gear.track .cost:empty{display:none}
 .gear:focus-visible{outline-color:var(--moon)}
 
 /* The driver's line: a speech box pointing down at the kart */

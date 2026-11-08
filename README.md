@@ -2,9 +2,7 @@
 
 Mobile single-player kart racer inspired by E1 / Enhypen MAMA Grand Prix: a night race under the blue moon, 6 teams, drift mini-turbos, boost pads and lightstick boost.
 
-The game can be played in two modes, chosen with the **PLAY WITHOUT A CERTIFICATE** flag in the menu:
-- **ON**: free, unlimited play.
-- **OFF**: every race costs one run. Runs are earned by uploading a screenshot of a MAMA voting certificate: **1 certificate = 1 run**, and each certificate can only be used once.
+The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run per race: runs are earned by uploading a screenshot of a MAMA voting certificate (**1 certificate = 1 run**, each certificate can only be used once). When the server allows it (`E1KART_FREE_PLAY`), OPTIONS shows **PLAY WITHOUT A CERTIFICATE** to race the Interstellar track for free, for testing.
 
 ## Tech stack
 
@@ -102,7 +100,19 @@ Driving through an item box gives you an item, picked at random with odds that d
 
 Odds, durations, flower colors and icons live in `frontend/src/itemdefs.js`; the effects and the CPU behavior in `frontend/src/items.js`.
 
+## Tracks
+
+Two tracks, chosen with the TRACK button in the menu (the choice is saved and the page reloads):
+
+- **NIGHT CIRCUIT**: the original night track under the blue moon. Always free.
+- **INTERSTELLAR**: needs a run (1 MAMA voting certificate = 1 run; the server's free-play flag still overrides it for testing). MAMA 2026 "A Music Interstellar" theme — neon skyline, giant moon, nebula, floating glass cubes, MAMA billboards.
+
+Layouts and colours live in `frontend/src/theme.js`; the interstellar scenery is in `frontend/src/space.js`.
+
 ## Credits
+
+Skyline of the INTERSTELLAR track (`frontend/src/assets/space/`): "Neon City" by Kelench, recoloured; free for free and commercial projects, not to be redistributed or resold as an asset pack.
+
 
 Pixel-art effects (`frontend/src/assets/fx/`):
 

@@ -7,6 +7,7 @@ import { G } from './state.js';
 import { renderAccount } from './account.js';
 import { showTeamIntro, hideRadio, applyTeam, nameOf } from './dialogue.js';
 import { resetItems } from './items.js';
+import { TRACK, TRACK_IDS, TRACKS } from './theme.js';
 
 $('logoE1').src = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 $('logoE1sm').src = new URL('./assets/brand/e1-logo-pixel-sm.png', import.meta.url).href;
@@ -18,6 +19,17 @@ function setOptions(open) {
 }
 $('optBtn').onclick = () => setOptions($('optPanel').hidden);
 $('optClose').onclick = () => setOptions(false);
+
+// Track: the scene is built once per track, so changing it saves the choice and reloads the page.
+$('trackName').textContent = TRACK.name;
+$('trackCost').textContent = TRACK.cost ? 'CERTIFICATE' : 'FREE';
+$('trackCost').classList.toggle('free', !TRACK.cost);
+$('trackBtn').onclick = () => {
+  const next = TRACK_IDS[(TRACK_IDS.indexOf(settings.track) + 1) % TRACK_IDS.length];
+  settings.track = TRACKS[next] ? next : 'night';
+  saveSettings();
+  location.reload();
+};
 
 // Entry ticket: in certificate mode START opens this box (runs, upload, RACE) after the team is chosen.
 export function openRunBox() {

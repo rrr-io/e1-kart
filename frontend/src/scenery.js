@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { scene, toon, canvasTex, redrawTex } from './engine.js';
 import { TEAMS, lum } from './config.js';
 import { N, NR, HALF, WORLD_K, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
+import { THEME, SPACE } from './theme.js';
+import { buildSpace, updateSpace, spaceTexts } from './space.js';
 
 // ---------- Start line and portal ----------
 const checker = canvasTex(16, 2, (g) => {
@@ -28,7 +30,7 @@ const signTex = canvasTex(128, 16, (g, w, h) => {
   g.fillStyle = '#0b0b0d';
   g.font = '8px "Press Start 2P", monospace';
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('E1 GRAND PRIX', w / 2, h / 2 + 1);
+  g.fillText(THEME.sign, w / 2, h / 2 + 1);
 });
 [1, -1].forEach((s) => {
   const pl = new THREE.Mesh(new THREE.PlaneGeometry(HALF * 2 + 3, 1.5), new THREE.MeshBasicMaterial({ map: signTex }));
@@ -168,7 +170,7 @@ const bannerMats = bannerTexs.map((map) => new THREE.MeshBasicMaterial({ map }))
 })();
 
 // ---------- Trees and bushes ----------
-(function vegetation() {
+if (!SPACE) (function vegetation() {
   const K = WORLD_K, cnt = Math.round(260 * K), bushCnt = Math.round(120 * K);
   const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.45, 2, 5), toon(0x3d2c2a), cnt);
   const cones = new THREE.InstancedMesh(new THREE.ConeGeometry(2.4, 5.5, 6), toon(0xffffff), cnt);
@@ -216,7 +218,7 @@ const bannerMats = bannerTexs.map((map) => new THREE.MeshBasicMaterial({ map }))
 
 // ---------- Mountains and clouds ----------
 const clouds = [];
-(function backdrop() {
+if (!SPACE) (function backdrop() {
   const K = WORLD_K, c = new THREE.Vector3(10 * K, 0, 90 * K);
   for (let k = 0; k < 26; k++) {
     const a = (k / 26) * Math.PI * 2, r = (430 + Math.random() * 60) * K, h = 60 + Math.random() * 90;
@@ -243,8 +245,8 @@ const clouds = [];
 
 // ---------- Lampposts with pools of light ----------
 (function lampPosts() {
-  const postM = toon(0x1b1f2c), bulbM = new THREE.MeshBasicMaterial({ color: 0xd8ecff });
-  const poolM = new THREE.MeshBasicMaterial({ color: 0x5f8fff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+  const postM = toon(0x1b1f2c), bulbM = new THREE.MeshBasicMaterial({ color: THEME.lamp[0] });
+  const poolM = new THREE.MeshBasicMaterial({ color: THEME.lamp[1], transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
   const poolG = new THREE.CircleGeometry(5.5, 12).rotateX(-Math.PI / 2);
   let k = 0;
   for (let i = 8; i < N; i += 34) {
@@ -270,6 +272,9 @@ const clouds = [];
     scene.add(pool);
   }
 })();
+
+// ---------- Interstellar track: skyline, floating glass cubes, MAMA billboards ----------
+if (SPACE) buildSpace();
 
 // ---------- Boost pads: [track index, lateral offset] ----------
 const padTex = canvasTex(16, 32, (g) => {
@@ -316,9 +321,10 @@ export function updateScenery(dt, now) {
   });
   clouds.forEach((c) => { c.position.x += c.userData.v * dt; if (c.position.x > 500 * WORLD_K) c.position.x = -480 * WORLD_K; });
   lightsticks.forEach((s, k) => { s.position.y = Math.max(0, Math.sin(now / 170 + k * 2)) * 0.35; });
+  if (SPACE) updateSpace(dt, now);
 }
 
 // Redraws the text once the pixel font has loaded.
 export function redrawText() {
-  [signTex, ...bannerTexs].forEach(redrawTex);
+  [signTex, ...bannerTexs, ...spaceTexts].forEach(redrawTex);
 }

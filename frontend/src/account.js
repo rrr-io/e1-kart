@@ -1,6 +1,7 @@
 // Runs and certificates: "free play" flag, balance, certificate upload and starting a race.
 import { $ } from './engine.js';
 import { settings, saveSettings } from './config.js';
+import { SPACE } from './theme.js';
 import { G } from './state.js';
 import * as api from './api.js';
 import { setupRace } from './race.js';
@@ -12,10 +13,12 @@ export const wallet = {
   freePlayAllowed: true,  // the server allows playing without a certificate
   balance: null,          // runs available
   busy: false,
+  checked: false,         // the first /config + /me answer (or failure) arrived
 };
 
-// Free play is on if the flag is active and the server allows it, or if the server is unreachable.
-export const isFreePlay = () => !wallet.online || (wallet.freePlayAllowed && settings.freePlay);
+// NIGHT CIRCUIT is always free. INTERSTELLAR costs a run (one MAMA voting certificate = one run),
+// unless the server allows free play and the player turned it on (testing).
+export const isFreePlay = () => !SPACE || (wallet.online && wallet.freePlayAllowed && settings.freePlay);
 
 function message(text, kind) {
   const el = $('certMsg');
@@ -30,7 +33,7 @@ const fmtVoteDate = (iso) => {
 
 export function renderAccount() {
   const free = isFreePlay();
-  $('freeRow').hidden = !wallet.online || !wallet.freePlayAllowed;
+  $('freeRow').hidden = !SPACE || !wallet.online || !wallet.freePlayAllowed;
   $('free').replaceChildren(...[[true, 'ON'], [false, 'OFF']].map(([v, l]) => {
     const b = document.createElement('button');
     b.className = 'chipbtn';
@@ -44,8 +47,12 @@ export function renderAccount() {
   $('runs').textContent = wallet.balance == null ? '–' : String(wallet.balance);
   $('uploadBtn').classList.toggle('busy', wallet.busy);
   $('start').disabled = wallet.busy;
-  $('runGo').disabled = wallet.busy || wallet.balance === 0;
-  if (!wallet.online) message((wallet.error || 'Server unreachable') + ' — for now you can only play without a certificate.');
+  $('runGo').disabled = wallet.busy || !wallet.online || wallet.balance === 0;
+  // Offline warning (cleared once the server answers; before the first answer we don't know yet).
+  const off = wallet.checked && !wallet.online && SPACE;
+  if (off) message((wallet.error || 'Server unreachable') + ' — the Interstellar track needs a certificate run: play the Night Circuit for now.', 'err');
+  else if ($('certMsg').dataset.offline) message('');
+  $('certMsg').dataset.offline = off ? '1' : '';
 }
 
 export async function initAccount() {
@@ -62,6 +69,7 @@ export async function initAccount() {
       ? 'Server unreachable' + (e.detail ? ' (' + e.detail + ')' : '')
       : 'Server error' + (e.status ? ' ' + e.status : '') + ': ' + e.message;
   }
+  wallet.checked = true;
   renderAccount();
 }
 

@@ -44,7 +44,7 @@ export function updateCamera(dt) {
   camLook.lerp(look, 1 - Math.exp(-dt * 10));
   camera.position.copy(camPos);
   camera.lookAt(camLook);
-  const f = 68 + (p.boost > 0 ? 12 : 0) + Math.min(6, (p.v / 34) * 6);
+  const f = 68 + (p.boost > 0 ? 12 : 0) + Math.min(6, (p.v / 46) * 6);
   camera.fov += (fitFov(f) - camera.fov) * Math.min(1, dt * 5);
   camera.updateProjectionMatrix();
 }
