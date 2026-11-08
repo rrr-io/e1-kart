@@ -73,7 +73,6 @@
       </header>
 
       <div class="m-corner m-right">
-        <button class="gear track" id="trackBtn" aria-label="Change track"><span class="lbl">TRACK</span><b id="trackName"></b><span class="cost" id="trackCost"></span><span aria-hidden="true">⇄</span></button>
         <button class="gear" id="optBtn" aria-expanded="false" aria-controls="optPanel">OPTIONS</button>
       </div>
 
@@ -90,6 +89,19 @@
         <div class="teams" id="teams" role="group" aria-label="Choose your team"></div>
         <button class="go" id="start">START ▶</button>
       </footer>
+
+      <div class="run-box track-box" id="trackBox" hidden>
+        <div class="run-card" role="dialog" aria-labelledby="trackTitle">
+          <div class="run-head"><span id="trackTitle">CHOOSE TRACK</span><button class="x" id="trackClose" aria-label="Back to team selection">✕</button></div>
+          <div class="tp-stage">
+            <button class="tp-arrow" id="tpPrev" aria-label="Previous track">◀</button>
+            <div class="tp-view" id="tpView"><div class="tp-strip" id="tpStrip"></div></div>
+            <button class="tp-arrow" id="tpNext" aria-label="Next track">▶</button>
+          </div>
+          <div class="tp-dots" id="tpDots" aria-hidden="true"></div>
+          <div class="row"><button class="go alt" id="trackBack">BACK</button><button class="go" id="trackGo">GO ▶</button></div>
+        </div>
+      </div>
 
       <div class="run-box" id="runBox" hidden>
         <div class="run-card" role="dialog" aria-labelledby="runTitle">

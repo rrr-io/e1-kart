@@ -6,6 +6,7 @@ import { G } from './state.js';
 import * as api from './api.js';
 import { setupRace } from './race.js';
 import { toMenu, openRunBox, closeRunBox } from './menu.js';
+import { openTrackBox, takeGoFlag } from './trackpick.js';
 
 export const wallet = {
   online: false,          // the server has responded
@@ -90,10 +91,17 @@ async function onCertificate(file) {
   }
 }
 
-/** Menu START: free play starts right away, certificate mode opens the entry ticket first. */
+/** Menu START: choose the track, then free tracks start right away and the certificate track opens the entry ticket. */
 export function menuStart() {
+  openTrackBox(afterTrack);
+}
+function afterTrack() {
   if (isFreePlay()) startGame();
   else { renderAccount(); openRunBox(); }
+}
+/** Called once at startup: if the page was reloaded to switch track, carry on to the race / entry ticket. */
+export function resumeTrackChoice() {
+  if (takeGoFlag()) afterTrack();
 }
 
 /** RACE (entry ticket) and PLAY AGAIN: in certificate mode, asks the server to consume a run before starting. */

@@ -22,7 +22,7 @@ import { talk } from './dialogue.js';
 import { tickCountdown } from './race.js';
 import { toMenu } from './menu.js';
 import { initInput } from './input.js';
-import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText } from './account.js';
+import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
 
 G.karts = TEAMS.map((t) => makeKart(t.color));
 
@@ -81,6 +81,7 @@ function frame(now) {
 resize();
 toMenu();
 initAccount();
+resumeTrackChoice();
 requestAnimationFrame(frame);
 
 registerSW({ immediate: true });

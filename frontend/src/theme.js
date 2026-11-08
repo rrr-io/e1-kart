@@ -6,6 +6,7 @@ export const TRACKS = {
   night: {
     name: 'NIGHT CIRCUIT',
     cost: false,   // free to play
+    desc: 'Night race under the blue moon, between pine woods and grandstands.',
     raw: [[0, 0], [70, -14], [130, 6], [158, 58], [128, 108], [70, 104], [36, 146], [-30, 150], [-84, 112], [-74, 58], [-118, 20], [-80, -34], [-30, -30]],
     scale: 2.25,
   },
@@ -13,12 +14,14 @@ export const TRACKS = {
   space: {
     name: 'INTERSTELLAR',
     cost: true,    // needs a run from a MAMA voting certificate
+    desc: 'MAMA 2026 "A Music Interstellar": neon skyline, giant moon, floating glass cubes.',
     raw: [[0, 0], [80, -10], [150, -6], [190, 30], [170, 80], [110, 86], [70, 120], [90, 170], [40, 200], [-30, 180], [-60, 130], [-120, 120], [-150, 70], [-110, 20], [-50, -10]],
     scale: 1.9,
   },
 };
 export const TRACK_IDS = Object.keys(TRACKS);
-export const TRACK = TRACKS[settings.track] || TRACKS.night;
+export const TRACK_ID = TRACKS[settings.track] ? settings.track : 'night';
+export const TRACK = TRACKS[TRACK_ID];
 export const SPACE = TRACK === TRACKS.space;
 
 export const THEME = SPACE ? {

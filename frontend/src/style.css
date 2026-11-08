@@ -187,13 +187,6 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .m-right{grid-area:right;justify-self:end}
 .gear{font-family:var(--display);font-size:8px;color:var(--paper);background:rgba(7,13,30,.86);border:2px solid var(--ink);outline:2px solid rgba(159,208,255,.35);padding:9px 10px;min-height:38px;cursor:pointer}
 .gear[aria-expanded="true"]{background:var(--paper);color:var(--ink)}
-.m-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.gear.track{display:inline-flex;align-items:center;gap:8px}
-.gear.track .lbl{font-size:6px;color:var(--moon-dim)}
-.gear.track b{font-weight:400;color:var(--paper)}
-.gear.track .cost{font-size:6px;padding:3px 4px;background:var(--red);color:var(--paper)}
-.gear.track .cost.free{background:#1f8a5b}
-.gear.track .cost:empty{display:none}
 .gear:focus-visible{outline-color:var(--moon)}
 
 /* The driver's line: a speech box pointing down at the kart */
@@ -355,3 +348,33 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
   .res-btns .go{width:auto;flex:1 1 0;min-height:40px;font-size:9px;padding:0 6px}
 }
 @media (prefers-reduced-motion:reduce){.res-head{animation:none}}
+
+/* Track choice (after START): one card per track, swipe or arrows */
+.track-box .run-card{width:min(460px,100%)}
+.tp-stage{display:flex;align-items:center;gap:6px}
+.tp-view{flex:1;min-width:0;overflow:hidden;touch-action:pan-y;cursor:grab}
+.tp-strip{display:flex;transition:transform .22s steps(5)}
+.tp-card{flex:0 0 100%;display:flex;flex-direction:column;gap:7px;padding:2px;user-select:none}
+.tp-preview{position:relative;display:block;width:100%;aspect-ratio:320/192;border:3px solid var(--ink);outline:2px solid rgba(159,208,255,.3);pointer-events:none;overflow:hidden;background:#05030f}
+.tp-preview img{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.tp-preview::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px)}
+.tp-map{position:absolute;right:6px;bottom:6px;width:64px;height:44px;image-rendering:pixelated;background:rgba(5,3,15,.72);border:2px solid var(--ink);outline:1px solid rgba(159,208,255,.35)}
+.tp-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tp-head b{font-family:var(--display);font-weight:400;font-size:12px;color:var(--paper)}
+.tp-badge{font-family:var(--display);font-size:7px;padding:4px 6px;background:var(--red);color:var(--paper);border:2px solid var(--ink)}
+.tp-badge.free{background:#1f8a5b}
+.tp-desc{margin:0;font-size:17px;line-height:1.05;color:var(--paper)}
+.tp-meta{margin:0;font-size:15px;color:var(--moon-dim)}
+.tp-arrow{flex:none;width:34px;height:52px;font-family:var(--display);font-size:10px;color:var(--paper);background:rgba(16,26,56,.94);border:2px solid var(--ink);outline:2px solid rgba(159,208,255,.3);cursor:pointer}
+.tp-arrow:active{transform:translateY(2px)}
+.tp-dots{display:flex;justify-content:center;gap:6px}
+.tp-dots i{width:8px;height:8px;background:rgba(159,208,255,.25);display:block}
+.tp-dots i.on{background:var(--team,var(--red))}
+@media (orientation:landscape) and (max-height:500px){
+  .track-box .run-card{width:min(620px,100%)}
+  .tp-card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:12px;row-gap:5px}
+  .tp-preview{grid-row:1 / span 3}
+  .tp-desc{font-size:15px}
+  .tp-meta{font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){.tp-strip{transition:none}}
