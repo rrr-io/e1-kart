@@ -388,7 +388,7 @@ function playRace(id) {
   decode(id + '-final');
   decode(id + '-race').then((buf) => {
     if (token !== raceToken) return;
-    if (!buf) { raceId = ''; songName = ''; playMusic(id); return; } // chiptune fallback
+    if (!buf) { console.warn('[audio] race music not loaded, using chiptune'); raceId = ''; songName = ''; playMusic(id); return; }
     // If loading took a while, start where the music would be by now.
     race = startSource('race', buf, m.race, Math.max(0, ctx.currentTime - asked), 0);
   });
@@ -462,25 +462,32 @@ export function setSound(on) {
 }
 
 // The first tap or key press unlocks audio (browser rule) and starts the music that should be playing.
-let wanted = 'menu';
+let wanted = 'menu', current = '';
 function start(name) {
+  current = name;
   if (TRACK_MUSIC[name]) playRace(name);
   else if (name === 'finish' && raceId) finishRace();
   else playMusic(name);
 }
+function resume() {
+  if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+}
 /** Asks for a piece of music: 'menu', a track id (race music from its intro), or 'finish'. */
 export function wantMusic(name) {
   wanted = name;
-  if (ctx && ctx.state === 'running') start(name);
+  // Start it even if the audio is still locked: it is scheduled and plays as soon as the first tap unlocks it.
+  if (ctx) start(name);
 }
 function unlock() {
   if (!ensure()) return;
-  if (ctx.state === 'suspended') ctx.resume();
-  if (!song && !raceId) start(wanted);
+  resume();
+  if (current !== wanted) start(wanted);
 }
-['pointerdown', 'keydown', 'touchstart'].forEach((e) => window.addEventListener(e, unlock, { passive: true }));
+// On phones a touch only counts as a user gesture when the finger lifts (touchend / pointerup / click),
+// so listen to those as well as the first contact.
+['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach((e) => window.addEventListener(e, unlock, { passive: true }));
 // Pause when the app goes to the background.
 document.addEventListener('visibilitychange', () => {
   if (!ctx) return;
-  if (document.hidden) ctx.suspend(); else ctx.resume();
+  if (document.hidden) ctx.suspend().catch(() => {}); else resume();
 });
