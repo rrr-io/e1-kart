@@ -15,6 +15,7 @@ export const TRACKS = {
     name: 'INTERSTELLAR',
     cost: true,    // needs a run from a MAMA voting certificate
     desc: 'MAMA 2026 "A Music Interstellar": neon skyline, giant moon, floating glass cubes.',
+    note: 'Your race results count for your team in the global E1 Kart GP leaderboard.',
     raw: [[0, 0], [80, -10], [150, -6], [190, 30], [170, 80], [110, 86], [70, 120], [90, 170], [40, 200], [-30, 180], [-60, 130], [-120, 120], [-150, 70], [-110, 20], [-50, -10]],
     scale: 1.9,
   },

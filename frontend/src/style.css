@@ -416,6 +416,7 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .tp-badge.free{background:#1f8a5b}
 .tp-desc{margin:0;font-size:17px;line-height:1.05;color:var(--paper)}
 .tp-meta{margin:0;font-size:15px;color:var(--moon-dim)}
+.tp-note{margin:0;font-size:16px;line-height:1.05;color:var(--moon)}
 .tp-arrow{flex:none;width:34px;height:52px;font-family:var(--display);font-size:10px;color:var(--paper);background:rgba(16,26,56,.94);border:2px solid var(--ink);outline:2px solid rgba(159,208,255,.3);cursor:pointer}
 .tp-arrow:active{transform:translateY(2px)}
 .tp-dots{display:flex;justify-content:center;gap:6px}
@@ -427,5 +428,6 @@ html.pwa #game,html.pwa #splash{bottom:auto}
   .tp-preview{grid-row:1 / span 3}
   .tp-desc{font-size:15px}
   .tp-meta{font-size:14px}
+  .tp-note{font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){.tp-strip{transition:none}}

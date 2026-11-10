@@ -59,7 +59,12 @@ function buildCards() {
     const desc = document.createElement('p'); desc.className = 'tp-desc'; desc.textContent = t.desc;
     const meta = document.createElement('p'); meta.className = 'tp-meta';
     meta.textContent = `${LAPS} LAPS` + (t.cost ? ' · 1 MAMA voting certificate = 1 run' : ' · unlimited races');
-    card.append(c, head, desc, meta);
+    card.append(c, head, desc);
+    if (t.note) {
+      const note = document.createElement('p'); note.className = 'tp-note'; note.textContent = t.note;
+      card.append(note);
+    }
+    card.append(meta);
     return card;
   }));
   $('tpDots').replaceChildren(...TRACK_IDS.map(() => document.createElement('i')));
