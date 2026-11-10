@@ -75,7 +75,23 @@ function frame(now) {
   updateSky(dt, now, focus);
 
   renderer.render(scene, camera);
+  if (!splashGone) hideSplash();
   requestAnimationFrame(frame);
+}
+
+// The splash in index.html goes away once the first frame is drawn and the pixel fonts are in,
+// staying at least ~0.8 s so it doesn't just flash.
+let splashGone = false;
+function hideSplash() {
+  splashGone = true;
+  const el = document.getElementById('splash');
+  if (!el) return;
+  const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+  const minTime = new Promise((r) => setTimeout(r, Math.max(0, 800 - performance.now())));
+  Promise.all([fonts, minTime]).then(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 400);
+  });
 }
 
 resize();

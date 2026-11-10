@@ -7,11 +7,29 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="E1-themed night kart racer: 6 teams, drifts and lightstick boost under the blue moon.">
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <title>E1 Kart GP</title>
+  <!-- Splash: inline so it shows at once, while the game code downloads. main.js fades it out after the first frame. -->
+  <style>
+    #splash{position:fixed;inset:0;z-index:100;background:#0b0b0d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity .35s}
+    #splash.out{opacity:0;pointer-events:none}
+    #splash img{height:auto;image-rendering:pixelated}
+    #splash .logo{width:360px}
+    #splash .sub{width:372px;margin-top:-6px}
+    #splash .load{width:180px;height:12px;border:3px solid #fff;padding:2px;box-sizing:content-box}
+    #splash .load i{display:block;height:100%;width:0;background:#E10600;animation:splashload 1.4s steps(10) infinite}
+    @keyframes splashload{to{width:100%}}
+    @media (max-height:420px),(max-width:420px){#splash{gap:16px}#splash .logo{width:180px}#splash .sub{width:186px;margin-top:-4px}}
+    @media (prefers-reduced-motion:reduce){#splash .load i{animation:none;width:60%}}
+  </style>
 </head>
 <body>
+<div id="splash" role="status" aria-label="Loading E1 Kart GP">
+  <img class="logo" alt="E1" width="90" height="44" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAAAsCAYAAADl06/eAAACcUlEQVR4nO2av1XDMBCHf/ZLZ5OWAegZgS0yAGMwAWNAT80CGYGeAdKSuDYFOUe2JVt/zifZ6GvCw+FknT/rTnoUEKaq7lrpMWPTNOdiJzHQMLmXy4/EsElQ13sAwKKJVhM8Su7zy5JDu/H2+vfJfU8UF0DBG/kGJbmXYGUip/fPpYZ24ogGh/YbAHAqHtnj1vV+maVDa/E1wakkV4WSzG1zF/cKq9Emi1NMMCBjM8BYDNdmMSFhc9OcC4CxGK7FYuKIBofrz5z3SnHJZiI40b3WbQUWE5I2A4Fr9HBN5lznlkRybaZrpW/QUeFLqS+eQdpmIMDoqrpr1SS7LBdHNL7DskAJ+SgetNefUDnHnLIZ8Ex0z2aPwnfffvkMK4bPckJzog3K8Lp3MezWZcckm6pyCviewdjMyTnRui7Dhal1LBYSc/IqhiE2A2nbvNScnIzmfPKjeALobJN6Q51eXbXTCCkYMTAVqZA5zXUaKtZGhz75oL8LRTkXVpGsN9ZGh9oci+G5sHpNymbAshiy2ByJYV0gpLsn667DtyrHZK4jkOyeZhO9FZtV62LsBayMzjbbxzUxmehss33cOWaNzjbbx53CmOhss31cG4xfDu0xY2LqbyX75iHanSH3mUYsUrEZMBjN+eRjkorNgMbo2E9+CVKYk7YY5vPmG1xz6hmdz5vHcL2hbKdZwP8+b56jMzqfN4/hrDcsVTkmqZw3z1HSDXW/WfEuUCUlmwGl68hnGvZxfSi3YnNKu0AdJZBtdonry23DshGbeyRiMwAUVJlN/1mZKlMdQcicODsNlUJtgdaGzSaFM24IOwq8NVKb0y+kaoA3JbV0/gAAAABJRU5ErkJggg==">
+  <img class="sub" alt="ENHYPEN MAMA GRAND PRIX" width="186" height="10" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAKCAYAAAADxESEAAAD4klEQVR4AeyUW3LrMAxDze5/z704jMFQiuQkbacfd5oRTBIgKPnRfnxe/A79LCut1bmeu2Hmrmprc5xnzTo1PURAblAD11eRPtB7qMGK2/Gr3hU3+3vPVY5vBv0z5xqtwzxxxe84+mf03mf57HVtn+s5WifOmuuukRtdN/fhJCKOiBHSPoVcmDMZL6WL7rnKXDO3rSPue+Oc94u46xG3XH01b+6Xxiqd4gr2O5696TcXEUm7zuK8mHM0TTQXsffTt0P3R0S9J/Xn+RSLiwjKwx4K5xGPGjpwD3nDw3y0TS/SFhFRZ6RpnhGx1+P2w5ZQmbNU1PmmXGWu0utDT/o44jgecPg3H878D0bv75F10JOw3uMpHcPLLfKNZHV/5ni4jFJk7+Ve7qXPMCdfUopbfzZMl9kvGX+HqFrmTWDPZ6h9k1Ok5+Xzp+l+wb7139u2GV7ghjybC0U0oDRX1zuPSN3PA1f3JSFrX+pD1xPJJsVcbnC0EdFcj+LL33lyeTkUOsjDi0N6GX2+8pzRzZ630nrfLrffcdOX99G0Ood9jq2np1t/b7rIg/szVn1oK/7ktvv73E/855gKdf/FfDN5c//cTWfP+7JXdfK6JK941IeO2CHx4Sakl1H6sKQdxiCchbTyKj/ZozgdMv8IFHPf1pO91B0is0+xlvSaV+QPJTrXcL53x37X7/2me6xn4Pn0qecA5IZ1xfJYc5Tn156f9vK2GXWufL4UaID8Fcib92SPamzDvdSHjiIgdogal4ahj+S9QgN3Zp8NfZqbL8fxtA094qg7RI1LfvSRfLG68kqr8+3GqWe7t7TTv21ZjpUvDefLW/ZAqo+QOHvxgeTQjSQ2F/WUZ9Wi2cNHtepZcZpb909+9tRejeODR0YD5FvM59Gc9Ji3sT50CWygcF9u+sXIITtqa53qt87H/rXvlKCBiR7KKx0NDIZnRX95eg75oa087kPb9LE3oOUtaF4+f0zahwDenUV/BzMKmouWtfar+yQHKeiivM6isq/yn2TN+GC4MPy1uVbzp3KW0vuCEJJQZGXuC4TgsqI4VtUkEALpEtJYXz7fcmgjGS405mAvUbdnRiIc/aealRSJkLkvqllZkgiZ+6Ka5fKliEHgbAWM4likCQohe0R8+/1pFivnKcmouazbAyK7gDysbQeiULpylvfJDxVCSK5HmZ7en3py+T86h96BRmvkRud6vtLNEd/ppR/Ys4pdJzfc6/oqrno713PP6VzPv6Lb8yx6nx7xuCYHrom9JjfQADURkBvUgJo4A/5V2Lvrn3XXRHvIV0A3T24MnD90i3/x7wn8l0/gHwAAAP///s4dyQAAAAZJREFUAwCirCRC6Fjf/gAAAABJRU5ErkJggg==">
+  <div class="load" aria-hidden="true"><i></i></div>
+</div>
 <div id="game">
   <canvas id="c" aria-label="3D race track"></canvas>
 
