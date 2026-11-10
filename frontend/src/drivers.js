@@ -10,6 +10,7 @@
 //             end:     the dialogue after the finish, off the podium (missing = neutral)
 //           The drawings are traced at double resolution (about 110×157) and shown 1:1, to keep the
 //           fine detail of hair and eyes; scale: 2 doubles a drawing made at normal resolution.
+//           thumb: zoom-out of the small square portrait (menu bubble, radio), e.g. 1.1 = head 10% farther.
 //           null = placeholder silhouette drawn by the game.
 //
 // Each key of "lines" is a list of variants: one is picked at random.
@@ -130,6 +131,7 @@ export const DRIVERS = [
     portrait: {
       neutral: ['alpinoo-1.png', 'alpinoo-2.png'],
       podium: ['alpinoo-3.png', 'alpinoo-4.png'],
+      thumb: 1.1,
     },
     lines: {
       select: ["Engene! We're going to have so much fun. And win."],
@@ -185,6 +187,7 @@ export const DRIVERS = [
     portrait: {
       neutral: ['meowcedes-1.png', 'meowcedes-2.png'],
       podium: ['meowcedes-3.png'],
+      thumb: 1.1,
     },
     lines: {
       select: ["Engene, you picked us? Good choice. Now let's not waste it."],

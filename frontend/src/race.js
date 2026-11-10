@@ -10,7 +10,9 @@ import { placePlayer } from './physics.js';
 import { banner } from './hud.js';
 import { talk } from './dialogue.js';
 import { resetItems } from './items.js';
-import { wantMusic, prepareMusic, setTempo, sfx } from './audio.js';
+import { wantMusic, prepareMusic, fadeOutMusic, setTempo, sfx } from './audio.js';
+
+const FADE = 0.7; // seconds of menu-music fade between the dialogue and the countdown
 import { TRACK_ID } from './theme.js';
 
 const COUNTDOWN = 3.6;
@@ -55,10 +57,14 @@ export function setupRace() {
   updateCpus(0);
   placePlayer(0);
   setTempo(1);
-  // Quiet during the drivers' dialogue and the 3-2-1; the race music starts on the GO.
-  wantMusic('');
+  // The menu tune carries on under the drivers' dialogue, fades out before the 3-2-1 beeps,
+  // and the race music starts on the GO.
+  wantMusic('menu');
   prepareMusic(TRACK_ID);
-  talk(settings.teamIdx, 'start').then(startCountdown);
+  talk(settings.teamIdx, 'start').then(() => {
+    fadeOutMusic(FADE);
+    setTimeout(startCountdown, FADE * 1000);
+  });
 }
 
 export function startCountdown() {

@@ -8,6 +8,7 @@
 import { settings, saveSettings } from './config.js';
 import { TRACK_ID } from './theme.js';
 
+const MUSIC_GAIN = 0.55;
 let ctx = null, master = null, musicBus = null, sfxBus = null, trackBus = null, noiseBuf = null;
 const waves = {};
 
@@ -281,7 +282,7 @@ function ensure() {
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -18; comp.knee.value = 6; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
   master.connect(comp); comp.connect(ctx.destination);
-  musicBus = ctx.createGain(); musicBus.gain.value = 0.55; musicBus.connect(master);
+  musicBus = ctx.createGain(); musicBus.gain.value = MUSIC_GAIN; musicBus.connect(master);
   sfxBus = ctx.createGain(); sfxBus.gain.value = 0.8; sfxBus.connect(master);
   trackBus = ctx.createGain(); trackBus.gain.value = 0.9; trackBus.connect(master);
   // Pulse waves with NES-like duty cycles.
@@ -383,6 +384,9 @@ export function playMusic(name) {
   stopRace();
   songName = name;
   if (!ensure()) return;
+  fadeTok++; // cancel a fade-out still in progress
+  musicBus.gain.cancelScheduledValues(ctx.currentTime);
+  musicBus.gain.setValueAtTime(MUSIC_GAIN, ctx.currentTime);
   song = SONGS[name]; step = 0; tempo = 1;
   nextT = ctx.currentTime + 0.06;
   timer = setInterval(schedule, 25);
@@ -567,6 +571,7 @@ export function setSound(on) {
 
 // The first tap or key press unlocks audio (browser rule) and starts the music that should be playing.
 let wanted = 'menu', current = '';
+let fadeTok = 0;
 function start(name) {
   current = name;
   if (!name) { stopMusic(); stopRace(); }
@@ -576,6 +581,23 @@ function start(name) {
 }
 function resume() {
   if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+}
+/** Fades out whatever music is playing (chiptune or race file) over `sec` seconds, then stays silent. */
+export function fadeOutMusic(sec = 0.7) {
+  wanted = ''; current = '';
+  if (!ctx) return;
+  if (race) { fadeOut(race, sec); race = null; raceId = ''; raceToken++; }
+  if (!song) return;
+  const t = ctx.currentTime, tok = ++fadeTok;
+  musicBus.gain.cancelScheduledValues(t);
+  musicBus.gain.setValueAtTime(musicBus.gain.value, t);
+  musicBus.gain.linearRampToValueAtTime(0, t + sec);
+  setTimeout(() => {
+    if (tok !== fadeTok) return;
+    stopMusic();
+    // Notes already scheduled ahead are still silent; then the bus is ready for the next tune.
+    musicBus.gain.setValueAtTime(MUSIC_GAIN, ctx.currentTime + 0.2);
+  }, sec * 1000 + 30);
 }
 /** Decodes a track's race music ahead of time, so it starts right on the GO. */
 export function prepareMusic(id) {

@@ -102,12 +102,39 @@ export async function drawPortrait(canvas, teamIdx, mood, slot = 'neutral', pick
   const file = list[Math.min(list.length - 1, Math.floor(pick * list.length))];
   const img = await loadImage(import.meta.env.BASE_URL + 'drivers/' + file);
   if (!img || canvas._token !== token) return;
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  if (twice) canvas.style.width = img.naturalWidth * (set.scale || 1) + 'px';
   const g = canvas.getContext('2d');
+  if (twice) {
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.style.width = img.naturalWidth * (set.scale || 1) + 'px';
+    g.imageSmoothingEnabled = false;
+    g.drawImage(img, 0, 0);
+    return;
+  }
+  // Small square portraits (menu bubble, radio): drop the empty columns beside the head, so every
+  // driver's head fills the square the same way whatever the drawing's canvas width;
+  // thumb (drivers.js) widens the square around the head to show the driver a little farther away.
+  const [x0, w] = headSpan(img);
+  const W = Math.round(w * (set.thumb || 1)), pad = Math.round((W - w) / 2);
+  canvas.width = W;
+  canvas.height = Math.round(img.naturalHeight * (set.thumb || 1));
   g.imageSmoothingEnabled = false;
-  g.drawImage(img, 0, 0);
+  g.drawImage(img, x0, 0, w, img.naturalHeight, pad, Math.round(pad * 0.5), w, img.naturalHeight);
+}
+
+// Horizontal extent of the opaque pixels in the head band (top ~45% of the drawing), cached per image.
+const spans = new WeakMap();
+function headSpan(img) {
+  if (spans.has(img)) return spans.get(img);
+  const W = img.naturalWidth, H = Math.round(img.naturalHeight * 0.45);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, W, H).data;
+  let a = W, b = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 0) { if (x < a) a = x; if (x > b) b = x; }
+  const span = b < a ? [0, W] : [a, b - a + 1];
+  spans.set(img, span);
+  return span;
 }
 
 export function applyTeam(el, teamIdx) {
