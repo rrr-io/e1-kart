@@ -30,9 +30,13 @@ public class Run {
     @Column(name = "finished_at")
     private Instant finishedAt;
 
-    /** Total race time in milliseconds, for a future leaderboard. */
+    /** Total race time in milliseconds. */
     @Column(name = "time_ms")
     private Long timeMs;
+
+    /** Finishing position (1..6), for the team standings. Null for races finished by older versions. */
+    @Column(name = "position")
+    private Integer position;
 
     protected Run() {
     }
@@ -44,8 +48,9 @@ public class Run {
         this.startedAt = startedAt;
     }
 
-    public void finish(long timeMs, Instant at) {
+    public void finish(long timeMs, Integer position, Instant at) {
         this.timeMs = timeMs;
+        this.position = position;
         this.finishedAt = at;
     }
 
@@ -75,5 +80,9 @@ public class Run {
 
     public Long getTimeMs() {
         return timeMs;
+    }
+
+    public Integer getPosition() {
+        return position;
     }
 }

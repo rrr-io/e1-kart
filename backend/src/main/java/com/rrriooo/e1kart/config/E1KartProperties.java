@@ -20,7 +20,8 @@ public record E1KartProperties(
         List<VoteWindow> voteWindows,
         String enhypenRefsDir,
         String statsToken,
-        String statsZone) {
+        String statsZone,
+        String standingsSince) {
 
     public E1KartProperties {
         voteWindows = voteWindows == null ? List.of() : List.copyOf(voteWindows);

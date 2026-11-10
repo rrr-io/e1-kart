@@ -59,9 +59,9 @@ function frame(now) {
     // After the finish line: the driver's line, then the results window.
     if (G.doneT > 2 && !G.ending) {
       G.ending = true;
-      reportFinish(player.finish);
       $('controls').hidden = true;
       const pos = playerPosition();
+      reportFinish(player.finish, pos);
       talk(player.team, pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'lose').then(() => {
         showResults();
         $('resRuns').textContent = runsLeftText();

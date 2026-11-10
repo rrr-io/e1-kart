@@ -9,6 +9,7 @@ import { showTeamIntro, hideRadio, applyTeam, nameOf } from './dialogue.js';
 import { resetItems } from './items.js';
 import { closeTrackBox } from './trackpick.js';
 import { wantMusic, setTempo, setSound } from './audio.js';
+import { renderStandings } from './standings.js';
 
 $('logoE1').src = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 $('logoE1sm').src = new URL('./assets/brand/e1-logo-pixel-sm.png', import.meta.url).href;
@@ -25,7 +26,12 @@ function setOptions(open) {
 }
 function setE1(open) {
   setPanel('e1', open);
-  if (open) setPanel('opt', false);
+  if (open) { setPanel('opt', false); loadStandings(); }
+}
+
+// E1 Kart GP leaderboard inside "What is E1?": hidden when the server can't be reached.
+function loadStandings() {
+  renderStandings($('e1StandList')).then((ok) => { if (ok) $('e1Stand').hidden = false; });
 }
 $('optBtn').onclick = () => setOptions($('optPanel').hidden);
 $('optClose').onclick = () => setOptions(false);

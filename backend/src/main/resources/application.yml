@@ -41,6 +41,9 @@ e1kart:
   stats-token: ${E1KART_STATS_TOKEN:}
   # Time zone of the stats days.
   stats-zone: ${E1KART_STATS_ZONE:Europe/Rome}
+  # Team standings: only races finished from this day on count (yyyy-MM-dd, Korean time). Empty = every race.
+  # Change it to start a new season.
+  standings-since: ${E1KART_STANDINGS_SINCE:}
   # Voting periods (Korean time). With the lenient check a vote date outside them is only logged.
   vote-windows:
     - label: "FANS' CHOICE · 1st VOTE"

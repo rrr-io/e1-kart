@@ -132,12 +132,18 @@ export async function startGame() {
   }
 }
 
-/** Reports the time of the race just finished (only for races paid for with a run). */
-export function reportFinish(timeSeconds) {
+/**
+ * Reports the time and position of the race just finished (only for races paid for with a run: Interstellar,
+ * the races that count for the E1 Kart GP leaderboard), then offers the leaderboard on the results.
+ */
+export function reportFinish(timeSeconds, position) {
+  $('resBoard').hidden = true;
   if (!G.runId) return;
   const id = G.runId;
   G.runId = null;
-  api.finishRun(id, Math.round(timeSeconds * 1000)).catch(() => { /* non-blocking */ });
+  api.finishRun(id, Math.round(timeSeconds * 1000), position)
+    .then(() => { $('resBoard').hidden = false; })
+    .catch(() => { /* non-blocking */ });
 }
 
 export function runsLeftText() {

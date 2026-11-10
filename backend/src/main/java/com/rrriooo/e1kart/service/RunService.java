@@ -52,10 +52,10 @@ public class RunService {
     }
 
     @Transactional
-    public void finish(Player player, String runId, long timeMs) {
+    public void finish(Player player, String runId, long timeMs, Integer position) {
         Run run = runs.findByIdAndPlayerId(runId, player.getId()).orElseThrow(() -> new ApiException(ErrorCode.RUN_NOT_FOUND));
         if (!run.isFinished()) {
-            run.finish(timeMs, Instant.now());
+            run.finish(timeMs, position, Instant.now());
         }
     }
 }

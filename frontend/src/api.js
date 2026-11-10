@@ -70,4 +70,7 @@ export function uploadCertificate(file) {
 
 export const startRun = (team) => withPlayer(() => call('/runs', json({ team })));
 
-export const finishRun = (runId, timeMs) => call('/runs/' + encodeURIComponent(runId) + '/finish', json({ timeMs }));
+export const finishRun = (runId, timeMs, position) => call('/runs/' + encodeURIComponent(runId) + '/finish', json({ timeMs, position }));
+
+/** E1 team standings: [{ team, rank }] for the six teams, rank null for a team with no races yet. */
+export const getStandings = () => call('/standings');

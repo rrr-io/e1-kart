@@ -198,6 +198,18 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .e1-panel .hint{color:var(--paper);opacity:.88}
 .e1-links{display:flex;flex-direction:column;gap:10px}
 .e1-links .go{min-height:40px;font-size:10px;text-decoration:none;min-width:0}
+.e1-stand{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--panel-edge);padding-top:10px}
+.e1-stand ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.e1-stand li{display:flex;align-items:center;gap:8px;font-family:var(--display);font-size:9px;line-height:1.4;min-height:22px}
+.e1-stand .p{width:16px;text-align:right;color:var(--moon)}
+.e1-stand .chip{width:6px;height:16px;flex-shrink:0;outline:1px solid var(--ink)}
+.e1-stand .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e1-stand .dr{font-family:var(--body);font-size:18px;color:var(--paper);opacity:.75}
+.res-board{font-family:var(--display);font-size:8px;line-height:1.6;color:var(--moon);background:none;border:none;padding:4px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:center}
+.res-board[hidden]{display:none}
+.e1-stand li.wait{font-family:var(--body);font-size:18px;color:var(--moon-dim)}
+#boardView .e1-stand{border-top:none;padding-top:14px}
+.e1-stand[hidden]{display:none}
 .credits a{color:var(--moon)}
 
 /* The driver's line: a speech box pointing down at the kart */

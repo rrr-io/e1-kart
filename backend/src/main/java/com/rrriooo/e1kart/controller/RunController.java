@@ -14,6 +14,7 @@ import com.rrriooo.e1kart.dto.StartRunRequest;
 import com.rrriooo.e1kart.dto.StartRunResponse;
 import com.rrriooo.e1kart.service.PlayerService;
 import com.rrriooo.e1kart.service.RunService;
+import com.rrriooo.e1kart.service.StandingsService;
 
 import jakarta.validation.Valid;
 
@@ -23,10 +24,12 @@ public class RunController {
 
     private final PlayerService playerService;
     private final RunService runService;
+    private final StandingsService standings;
 
-    public RunController(PlayerService playerService, RunService runService) {
+    public RunController(PlayerService playerService, RunService runService, StandingsService standings) {
         this.playerService = playerService;
         this.runService = runService;
+        this.standings = standings;
     }
 
     /** Consumes a run when the race starts. 402 if the balance is zero. */
@@ -37,12 +40,13 @@ public class RunController {
         return runService.start(playerService.requirePlayer(token), body.team());
     }
 
-    /** Records the race's final time (for a future leaderboard). */
+    /** Records the race's final time and position (for the team standings). */
     @PostMapping("/{runId}/finish")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void finish(@RequestHeader(value = PlayerController.TOKEN_HEADER, required = false) String token,
                        @PathVariable String runId,
                        @Valid @RequestBody FinishRunRequest body) {
-        runService.finish(playerService.requirePlayer(token), runId, body.timeMs());
+        runService.finish(playerService.requirePlayer(token), runId, body.timeMs(), body.position());
+        standings.invalidate(); // the player sees the standings with their race right after
     }
 }

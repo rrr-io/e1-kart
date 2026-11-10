@@ -172,7 +172,8 @@ export async function prepareShare(r) {
     const blob = await drawCard(r);
     if (my !== token || !blob) return;
     const team = TEAMS[r.team];
-    const text = (r.pos === 1 ? 'I won' : 'I finished ' + ordinal(r.pos).toLowerCase()) + ' the ' + TRACK.name.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) +
+    // Longest case ~224 of X's 280 (link 23, 🏁 2): 6th, NI-KI (RIKSTON DRIFT), live-vote line. Fine for Threads and Bluesky too.
+    const text = (r.pos === 1 ? 'I won' : 'I finished ' + ordinal(r.pos).toLowerCase()) + ' on ' + TRACK.name.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) +
       ' with ' + nameOf(r.team) + ' (' + team.name + ') in ' + fmt(r.time) + ' 🏁 Can you beat me in E1 Kart GP? ' +
       (liveVote() ? LIVE_VOTE.post : 'Vote ENHYPEN at the MAMA AWARDS!') + ' #EMGP2026 #2026MAMAVOTE #ENHYPEN';
     ready = { blob, file: new File([blob], 'e1-kart-gp.png', { type: 'image/png' }), text, url: LINK };

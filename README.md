@@ -141,6 +141,15 @@ Anonymous usage stats are counted by the API itself, in its database: no externa
 - **The stats page** is `https://e1kart.rrriooo.com/stats.html` (not linked anywhere, not indexed). It asks for the token set in `.env` as `E1KART_STATS_TOKEN` (generate it with `openssl rand -hex 24`, then `docker compose up -d`). Without a token the page is off; the events are still counted.
 - To see which post brings players, share links with a source, e.g. `https://e1kart.rrriooo.com/?utm_source=x-launch`.
 
+## E1 Kart GP leaderboard
+
+The game's own team leaderboard, from the Interstellar races (the ones paid for with a run). It is separate from the official E1 standings, which are based on voting certificates, and the game says so.
+
+- At the finish the game sends the race's position with its time (`POST /api/runs/{id}/finish`). Each race gives its team points by position, F1-style, and teams are ranked by points, then by number of races.
+- `GET /api/standings` returns only the order (`[{ team, rank }]`, `rank` null for a team with no races yet): the points never leave the server.
+- Players see it in **WHAT IS E1?** (E1 KART GP LEADERBOARD) and, after an Interstellar race, from "CHECK THE GLOBAL E1 KART GP LEADERBOARD" on the results. Nothing on the share card.
+- `E1KART_STANDINGS_SINCE` in `.env` (e.g. `2026-11-12`, Korean date) counts only races from that day on, to start from zero at launch after the tests. Empty: all races.
+
 ## How certificate redemption works
 
 The checks are those of the collab verifier (`e1-social-race`, `/collab-verify`), ported to Java, but **lenient**: when in doubt the certificate is accepted. It is refused only when it is surely not an ENHYPEN certificate, or surely a duplicate. The cases the verifier sends to manual review are accepted here.
