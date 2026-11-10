@@ -128,7 +128,7 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 
 ## Sharing
 
-- **Link preview**: `index.html` has Open Graph and Twitter Card tags with `frontend/public/og-image.jpg` (1200×630), so a link to the game shows the E1 logo, the red kart on the Night Circuit and "ENGENEs racing as one for ENHYPEN · vote ENHYPEN at the MAMA AWARDS" on X, Instagram, Discord, KakaoTalk and WhatsApp. The tags use the absolute address `https://e1kart.rrriooo.com/`: change it there if the domain changes.
+- **Link preview**: `index.html` has Open Graph and Twitter Card tags with `frontend/public/og-image.jpg` (1200×630), so a link to the game shows the E1 logo, the red kart on the Night Circuit and "ENGENEs racing as one for ENHYPEN · vote ENHYPEN at the MAMA AWARDS" on X, Instagram, Discord, KakaoTalk and WhatsApp. The tags use the absolute address `https://e1-kart.ensite.org/`: change it there if the domain changes.
 - **Result card** (`frontend/src/share.js`): on the results screen, SHARE RESULT opens the phone's share sheet with a 1080×1350 image (race scene, position, driver drawing cut at mid-leg, track, times, the call to vote, link and a tiny signature) and a ready-made text. The card is drawn as soon as the results appear, because iOS only opens the share sheet straight from a tap. Where files can't be shared (desktop, some in-app browsers) the card opens in a window to long-press or download, with COPY LINK.
 - **Call to vote**: until the end of Nov 20 (KST) the card has a red band "NOV 20 · MAMA AWARDS LIVE VOTING / VOTE ENHYPEN ON MNET PLUS" for the live voting during the MAMA broadcast, and the post text says the same; then both go back to "VOTE ENHYPEN AT THE MAMA AWARDS" on their own. `LIVE_VOTE` at the top of `share.js` sets the text and the end date for the next event.
 
@@ -138,8 +138,8 @@ Anonymous usage stats are counted by the API itself, in its database: no externa
 
 - The game sends a few events (`frontend/src/stats.js`): the visit with its source (Instagram, X, TikTok, KakaoTalk… from the app's built-in browser, the referring site or `?utm_source=`), the device, how it is opened (browser, in-app browser, installed app), races started (track and team), races finished (win, podium, finished), shares and app installs. The API counts certificate uploads by outcome (accepted, not ENHYPEN, already used…).
 - Only daily totals are stored (`stat_counter`). Unique visitors are counted with a hash of IP + browser + day and a random salt kept in memory that changes every day: nobody can be recognised from one day to the next, and nothing personal reaches the disk.
-- **The stats page** is `https://e1kart.rrriooo.com/stats.html` (not linked anywhere, not indexed). It asks for the token set in `.env` as `E1KART_STATS_TOKEN` (generate it with `openssl rand -hex 24`, then `docker compose up -d`). Without a token the page is off; the events are still counted.
-- To see which post brings players, share links with a source, e.g. `https://e1kart.rrriooo.com/?utm_source=x-launch`.
+- **The stats page** is `https://e1-kart.ensite.org/stats.html` (or on the debug domain) (not linked anywhere, not indexed). It asks for the token set in `.env` as `E1KART_STATS_TOKEN` (generate it with `openssl rand -hex 24`, then `docker compose up -d`). Without a token the page is off; the events are still counted.
+- To see which post brings players, share links with a source, e.g. `https://e1-kart.ensite.org/?utm_source=x-launch`.
 
 ## E1 Kart GP leaderboard
 
@@ -224,7 +224,12 @@ API tests: `cd backend && mvn test`. `CertificateParserTest` uses the real OCR t
 
 ## Deploying to rio-server
 
-Example subdomain: `e1kart.rrriooo.com`. To change it, just update the DNS record and the Caddy block.
+The game answers on two addresses, same files and same API (`deploy/Caddyfile.snippet`):
+
+- **`e1-kart.ensite.org`**: the official one. Share card, post text, link preview and canonical link all point here. DNS: an `A` record to the server's IP (or a `CNAME` to `e1kart.rrriooo.com`) in the ensite.org zone; if the zone is on Cloudflare, keep it "DNS only" (grey cloud) so Caddy can get the certificate.
+- **`e1kart.rrriooo.com`**: debug, for testing where ensite.org is blocked. Not indexed (`X-Robots-Tag`).
+
+Each address is its own site for the browser: the player token (and so the runs from certificates), settings and the installed app are separate on the two. The database is the same: certificates already used, leaderboard and stats are shared.
 
 ### 1. One-time, on the server
 
@@ -271,7 +276,7 @@ The API's first startup on the server downloads the Java image and installs Tess
 Quick check:
 
 ```bash
-curl https://e1kart.rrriooo.com/api/config
+curl https://e1-kart.ensite.org/api/config
 docker logs e1kart-api --tail 50
 ```
 

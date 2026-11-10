@@ -1,7 +1,9 @@
 # Add this to /srv/caddy/Caddyfile on the server.
-# Replace e1kart.rrriooo.com with the chosen subdomain.
+# The game answers on two addresses with the same files and the same API:
+#   e1-kart.ensite.org  the official one (links, share card, link preview)
+#   e1kart.rrriooo.com  debug, for testing where ensite.org is blocked; not indexed by search engines
 
-e1kart.rrriooo.com {
+(e1kart) {
 	encode zstd gzip
 
 	# API: Spring Boot inside the e1kart-api container, on Caddy's same "web" Docker network.
@@ -26,4 +28,13 @@ e1kart.rrriooo.com {
 
 		file_server
 	}
+}
+
+e1-kart.ensite.org {
+	import e1kart
+}
+
+e1kart.rrriooo.com {
+	header X-Robots-Tag "noindex, nofollow"
+	import e1kart
 }

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// The game is served at the root of a subdomain (e.g. e1kart.rrriooo.com), hence base '/'.
+// The game is served at the root of a subdomain (e1-kart.ensite.org, and e1kart.rrriooo.com for debugging), hence base '/'.
 export default defineConfig({
   base: '/',
   // In development, /api calls go to the local Spring Boot backend.

@@ -12,8 +12,9 @@ import { TRACK_ID } from './theme.js';
 import { track } from './stats.js';
 
 const W = 1080, H = 1350;
-const URL_TEXT = 'e1kart.rrriooo.com';
-const LINK = 'https://e1kart.rrriooo.com';
+// Always the official address, also when the game is opened on the debug domain (e1kart.rrriooo.com).
+const URL_TEXT = 'e1-kart.ensite.org';
+const LINK = 'https://e1-kart.ensite.org';
 // The next action for ENHYPEN: the live voting during the MAMA AWARDS broadcast. Until it ends the card
 // reminds it; afterwards it falls back to the general call to vote. Update for the next event.
 const LIVE_VOTE = { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · MAMA AWARDS LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
