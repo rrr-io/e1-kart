@@ -85,6 +85,16 @@ function loadImage(url) {
   return imgCache.get(url);
 }
 
+/** The full drawing of the driver for a moment ('neutral', 'win', 'podium', 'end'), or null (no drawings). */
+export async function portraitImage(teamIdx, slot = 'neutral', pick = Math.random()) {
+  const set = DRIVERS[teamIdx] && DRIVERS[teamIdx].portrait;
+  if (!set) return null;
+  const list = set[slot] || (slot === 'win' && (set.podium || set.end)) || (slot === 'podium' && set.end) || set.neutral;
+  if (!list || !list.length) return null;
+  const file = list[Math.min(list.length - 1, Math.floor(pick * list.length))];
+  return loadImage(import.meta.env.BASE_URL + 'drivers/' + file);
+}
+
 /** Draws the driver's portrait on the canvas: one of the driver's drawings for that moment
  *  ('neutral', 'win', 'podium' or 'end', see drivers.js), otherwise a silhouette with the mood glyph.
  *  pick (0..1) chooses among the drawings of the moment. The dialogue portrait (behind the box)

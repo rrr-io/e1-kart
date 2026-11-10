@@ -191,6 +191,14 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .gear{font-family:var(--display);font-size:8px;color:var(--paper);background:rgba(7,13,30,.86);border:2px solid var(--ink);outline:2px solid rgba(159,208,255,.35);padding:9px 10px;min-height:38px;cursor:pointer}
 .gear[aria-expanded="true"]{background:var(--paper);color:var(--ink)}
 .gear:focus-visible{outline-color:var(--moon)}
+.m-tools{display:flex;gap:10px;align-items:center}
+.m-tools .gear{white-space:nowrap}
+/* What is E1? */
+.e1-tag{margin:0;font-family:var(--display);font-size:9px;line-height:1.6;color:var(--paper)}
+.e1-panel .hint{color:var(--paper);opacity:.88}
+.e1-links{display:flex;flex-direction:column;gap:10px}
+.e1-links .go{min-height:40px;font-size:10px;text-decoration:none;min-width:0}
+.credits a{color:var(--moon)}
 
 /* The driver's line: a speech box pointing down at the kart */
 .m-bubble{grid-area:bubble;justify-self:center;align-self:start;margin-top:16px;display:flex;align-items:flex-end;gap:8px;width:min(440px,100%)}
@@ -255,6 +263,17 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .opt-head .x{font-family:var(--display);font-size:10px;color:var(--paper);background:none;border:2px solid rgba(159,208,255,.3);width:34px;height:34px;cursor:pointer}
 .opt{display:flex;align-items:center;justify-content:space-between;gap:6px 8px;flex-wrap:wrap}
 .opt .lbl,.howto .lbl{font-size:7px}
+/* Credits: folded by default so the options stay short */
+.credits{border-top:1px solid var(--panel-edge);padding-top:10px}
+.credits summary{font-size:7px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.credits summary::-webkit-details-marker{display:none}
+.credits summary::after{content:'▸';font-size:9px;color:var(--moon-dim)}
+.credits[open] summary::after{content:'▾'}
+.credits .by{margin:10px 0 6px;font-size:18px;color:var(--paper)}
+.credits .by b{color:var(--moon)}
+.credits dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0 0 8px;font-size:16px;line-height:1.1}
+.credits dt{color:var(--moon-dim)}
+.credits dd{margin:0;color:var(--paper);text-align:right}
 .opt .chipbtn{min-height:34px;padding:6px 9px;font-size:8px}
 .howto .hint{margin-top:6px;font-size:16px}
 
@@ -334,6 +353,15 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .res-stats dd{margin:0;font-family:var(--display);font-size:11px;font-variant-numeric:tabular-nums;color:var(--paper)}
 .res-side .hint:empty{display:none}
 .res-btns{display:flex;flex-direction:column;gap:12px;margin-top:2px}
+.res-btns .go.share{min-height:40px;font-size:11px;box-shadow:0 4px 0 var(--ink)}
+.res-btns .go.share:disabled{opacity:.5;cursor:default}
+/* Share window: the result card, to long-press or download where the share sheet can't take files */
+.share-view{z-index:30}
+.share-win{width:min(420px,100%)}
+.share-win .bar .x{font-family:var(--display);font-size:10px;color:var(--paper);background:none;border:2px solid rgba(159,208,255,.3);width:28px;height:24px;cursor:pointer}
+.share-win img{display:block;width:100%;max-height:min(62vh,520px);object-fit:contain;image-rendering:auto;background:#0b0b0d}
+.share-btns{display:flex;gap:10px}
+.share-btns .go{min-width:0;min-height:44px;font-size:11px;text-decoration:none}
 .res-btns .go{flex:none;width:100%;min-height:46px;font-size:12px}
 
 @media (max-width:699px){
@@ -349,6 +377,9 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
   .res-side{padding:8px;gap:7px}
   .res-btns{flex-direction:row;gap:8px}
   .res-btns .go{width:auto;flex:1 1 0;min-height:40px;font-size:9px;padding:0 6px}
+  .res-btns{flex-wrap:wrap}
+  .res-btns .go{min-width:0}
+  .res-btns .go.share{flex:1 1 100%;min-height:32px;font-size:9px}
 }
 @media (prefers-reduced-motion:reduce){.res-head{animation:none}}
 

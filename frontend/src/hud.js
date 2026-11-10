@@ -5,6 +5,7 @@ import { N, P, spacing } from './track.js';
 import { G, player, playerProgress } from './state.js';
 import { ITEM_NAMES, isReady, drawItemIcon } from './itemdefs.js';
 import { nameOf } from './dialogue.js';
+import { prepareShare } from './share.js';
 
 export function toast(msg) {
   const el = $('toast');
@@ -117,6 +118,7 @@ export function showResults() {
   $('resTeam').textContent = TEAMS[player.team].name;
   $('resTime').textContent = fmt(player.finish);
   $('resBest').textContent = fmt(G.bestLap);
+  prepareShare({ pos, time: player.finish, best: G.bestLap, team: player.team });
   $('results').hidden = false;
   $('hud').hidden = true;
   $('controls').hidden = true;

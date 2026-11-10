@@ -112,6 +112,12 @@ Layouts and colours live in `frontend/src/theme.js`; the interstellar scenery is
 
 ## Credits
 
+E1, the ENHYPEN MAMA Grand Prix, is a fan-organized campaign to promote voting for ENHYPEN at the MAMA AWARDS ([e1.ensite.org](https://e1.ensite.org), [@ENMamaGrandPrix](https://x.com/ENMamaGrandPrix)). The menu's WHAT IS E1? button explains it and links there.
+
+A fan game by **rrr.i.ooo**: game, code, pixel art, driver portraits, music and sound. In the game the credits are in OPTIONS → CREDITS, and the splash screen has "a fan game by rrr.i.ooo" as a small footer. Unofficial: not affiliated with ENHYPEN, BELIFT LAB, Mnet or the MAMA AWARDS.
+
+Fonts: Press Start 2P and VT323 (SIL Open Font License). 3D engine: three.js (MIT).
+
 Skyline of the INTERSTELLAR track (`frontend/src/assets/space/`): "Neon City" by Kelench, recoloured; free for free and commercial projects, not to be redistributed or resold as an asset pack.
 
 
@@ -119,6 +125,11 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 
 - `boom.png`: "Explosion pack 1" by Luis Zuno (Ansimuz), CC0.
 - `flare.png`, `sparkle.png`, `ring.png`, `swirl.png`: "Retro Pixel Effects 32x32" (free version) by BDragon1727, free for non-commercial games, not to be resold or redistributed as an asset pack.
+
+## Sharing
+
+- **Link preview**: `index.html` has Open Graph and Twitter Card tags with `frontend/public/og-image.jpg` (1200×630), so a link to the game shows the E1 logo, the red kart on the Night Circuit and "ENGENEs racing as one for ENHYPEN · vote ENHYPEN at the MAMA AWARDS" on X, Instagram, Discord, KakaoTalk and WhatsApp. The tags use the absolute address `https://e1kart.rrriooo.com/`: change it there if the domain changes.
+- **Result card** (`frontend/src/share.js`): on the results screen, SHARE RESULT opens the phone's share sheet with a 1080×1350 image (race scene, position, driver drawing, track, times, "vote ENHYPEN at the MAMA AWARDS", link and a tiny signature) and a ready-made text. The card is drawn as soon as the results appear, because iOS only opens the share sheet straight from a tap. Where files can't be shared (desktop, some in-app browsers) the card opens in a window to long-press or download, with COPY LINK.
 
 ## How certificate redemption works
 

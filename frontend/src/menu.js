@@ -13,13 +13,24 @@ import { wantMusic, setTempo, setSound } from './audio.js';
 $('logoE1').src = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 $('logoE1sm').src = new URL('./assets/brand/e1-logo-pixel-sm.png', import.meta.url).href;
 
-// Options panel (assist, free play, how to play): opened from the ⚙ button.
+// Options panel (assist, free play, how to play, credits) and the "What is E1?" panel:
+// two buttons top right, one panel open at a time.
+function setPanel(id, open) {
+  $(id + 'Panel').hidden = !open;
+  $(id + 'Btn').setAttribute('aria-expanded', String(open));
+}
 function setOptions(open) {
-  $('optPanel').hidden = !open;
-  $('optBtn').setAttribute('aria-expanded', String(open));
+  setPanel('opt', open);
+  setPanel('e1', false); // closing the options (START, back to menu) closes "What is E1?" too
+}
+function setE1(open) {
+  setPanel('e1', open);
+  if (open) setPanel('opt', false);
 }
 $('optBtn').onclick = () => setOptions($('optPanel').hidden);
 $('optClose').onclick = () => setOptions(false);
+$('e1Btn').onclick = () => setE1($('e1Panel').hidden);
+$('e1Close').onclick = () => setE1(false);
 
 // Entry ticket: in certificate mode START opens this box (runs, upload, RACE) after the team is chosen.
 export function openRunBox() {

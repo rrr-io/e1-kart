@@ -7,6 +7,21 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="E1-themed night kart racer: 6 teams, drifts and lightstick boost under the blue moon.">
+  <!-- Link previews (X, Instagram, Discord, KakaoTalk, WhatsApp...) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="E1 Kart GP">
+  <meta property="og:title" content="E1 Kart GP · ENHYPEN MAMA Grand Prix">
+  <meta property="og:description" content="ENGENEs racing as one for ENHYPEN: pixel kart racing with the six E1 teams, free in your browser. Vote ENHYPEN at the MAMA AWARDS!">
+  <meta property="og:url" content="https://e1kart.rrriooo.com/">
+  <meta property="og:image" content="https://e1kart.rrriooo.com/og-image.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="E1 Kart GP: a red pixel kart on the Night Circuit, with the E1 logo">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="E1 Kart GP · ENHYPEN MAMA Grand Prix">
+  <meta name="twitter:description" content="ENGENEs racing as one for ENHYPEN. Play free in your browser, and vote ENHYPEN at the MAMA AWARDS!">
+  <meta name="twitter:image" content="https://e1kart.rrriooo.com/og-image.jpg">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <title>E1 Kart GP</title>
@@ -17,10 +32,11 @@
     #splash img{height:auto;image-rendering:pixelated}
     #splash .logo{width:360px}
     #splash .sub{width:372px;margin-top:-6px}
+    #splash .by{width:186px;margin-top:-12px}
     #splash .load{width:180px;height:12px;border:3px solid #fff;padding:2px;box-sizing:content-box}
     #splash .load i{display:block;height:100%;width:0;background:#E10600;animation:splashload 1.4s steps(10) infinite}
     @keyframes splashload{to{width:100%}}
-    @media (max-height:420px),(max-width:420px){#splash{gap:16px}#splash .logo{width:180px}#splash .sub{width:186px;margin-top:-4px}}
+    @media (max-height:420px),(max-width:420px){#splash{gap:16px}#splash .logo{width:180px}#splash .sub{width:186px;margin-top:-4px}#splash .by{margin-top:-8px}}
     @media (prefers-reduced-motion:reduce){#splash .load i{animation:none;width:60%}}
   </style>
 </head>
@@ -28,7 +44,8 @@
 <div id="splash" role="status" aria-label="Loading E1 Kart GP">
   <img class="logo" alt="E1" width="90" height="44" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAAAsCAYAAADl06/eAAACcUlEQVR4nO2av1XDMBCHf/ZLZ5OWAegZgS0yAGMwAWNAT80CGYGeAdKSuDYFOUe2JVt/zifZ6GvCw+FknT/rTnoUEKaq7lrpMWPTNOdiJzHQMLmXy4/EsElQ13sAwKKJVhM8Su7zy5JDu/H2+vfJfU8UF0DBG/kGJbmXYGUip/fPpYZ24ogGh/YbAHAqHtnj1vV+maVDa/E1wakkV4WSzG1zF/cKq9Emi1NMMCBjM8BYDNdmMSFhc9OcC4CxGK7FYuKIBofrz5z3SnHJZiI40b3WbQUWE5I2A4Fr9HBN5lznlkRybaZrpW/QUeFLqS+eQdpmIMDoqrpr1SS7LBdHNL7DskAJ+SgetNefUDnHnLIZ8Ex0z2aPwnfffvkMK4bPckJzog3K8Lp3MezWZcckm6pyCviewdjMyTnRui7Dhal1LBYSc/IqhiE2A2nbvNScnIzmfPKjeALobJN6Q51eXbXTCCkYMTAVqZA5zXUaKtZGhz75oL8LRTkXVpGsN9ZGh9oci+G5sHpNymbAshiy2ByJYV0gpLsn667DtyrHZK4jkOyeZhO9FZtV62LsBayMzjbbxzUxmehss33cOWaNzjbbx53CmOhss31cG4xfDu0xY2LqbyX75iHanSH3mUYsUrEZMBjN+eRjkorNgMbo2E9+CVKYk7YY5vPmG1xz6hmdz5vHcL2hbKdZwP8+b56jMzqfN4/hrDcsVTkmqZw3z1HSDXW/WfEuUCUlmwGl68hnGvZxfSi3YnNKu0AdJZBtdonry23DshGbeyRiMwAUVJlN/1mZKlMdQcicODsNlUJtgdaGzSaFM24IOwq8NVKb0y+kaoA3JbV0/gAAAABJRU5ErkJggg==">
   <img class="sub" alt="ENHYPEN MAMA GRAND PRIX" width="186" height="10" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAKCAYAAAADxESEAAAD4klEQVR4AeyUW3LrMAxDze5/z704jMFQiuQkbacfd5oRTBIgKPnRfnxe/A79LCut1bmeu2Hmrmprc5xnzTo1PURAblAD11eRPtB7qMGK2/Gr3hU3+3vPVY5vBv0z5xqtwzxxxe84+mf03mf57HVtn+s5WifOmuuukRtdN/fhJCKOiBHSPoVcmDMZL6WL7rnKXDO3rSPue+Oc94u46xG3XH01b+6Xxiqd4gr2O5696TcXEUm7zuK8mHM0TTQXsffTt0P3R0S9J/Xn+RSLiwjKwx4K5xGPGjpwD3nDw3y0TS/SFhFRZ6RpnhGx1+P2w5ZQmbNU1PmmXGWu0utDT/o44jgecPg3H878D0bv75F10JOw3uMpHcPLLfKNZHV/5ni4jFJk7+Ve7qXPMCdfUopbfzZMl9kvGX+HqFrmTWDPZ6h9k1Ok5+Xzp+l+wb7139u2GV7ghjybC0U0oDRX1zuPSN3PA1f3JSFrX+pD1xPJJsVcbnC0EdFcj+LL33lyeTkUOsjDi0N6GX2+8pzRzZ630nrfLrffcdOX99G0Ood9jq2np1t/b7rIg/szVn1oK/7ktvv73E/855gKdf/FfDN5c//cTWfP+7JXdfK6JK941IeO2CHx4Sakl1H6sKQdxiCchbTyKj/ZozgdMv8IFHPf1pO91B0is0+xlvSaV+QPJTrXcL53x37X7/2me6xn4Pn0qecA5IZ1xfJYc5Tn156f9vK2GXWufL4UaID8Fcib92SPamzDvdSHjiIgdogal4ahj+S9QgN3Zp8NfZqbL8fxtA094qg7RI1LfvSRfLG68kqr8+3GqWe7t7TTv21ZjpUvDefLW/ZAqo+QOHvxgeTQjSQ2F/WUZ9Wi2cNHtepZcZpb909+9tRejeODR0YD5FvM59Gc9Ji3sT50CWygcF9u+sXIITtqa53qt87H/rXvlKCBiR7KKx0NDIZnRX95eg75oa087kPb9LE3oOUtaF4+f0zahwDenUV/BzMKmouWtfar+yQHKeiivM6isq/yn2TN+GC4MPy1uVbzp3KW0vuCEJJQZGXuC4TgsqI4VtUkEALpEtJYXz7fcmgjGS405mAvUbdnRiIc/aealRSJkLkvqllZkgiZ+6Ka5fKliEHgbAWM4likCQohe0R8+/1pFivnKcmouazbAyK7gDysbQeiULpylvfJDxVCSK5HmZ7en3py+T86h96BRmvkRud6vtLNEd/ppR/Ys4pdJzfc6/oqrno713PP6VzPv6Lb8yx6nx7xuCYHrom9JjfQADURkBvUgJo4A/5V2Lvrn3XXRHvIV0A3T24MnD90i3/x7wn8l0/gHwAAAP///s4dyQAAAAZJREFUAwCirCRC6Fjf/gAAAABJRU5ErkJggg==">
-  <div class="load" aria-hidden="true"><i></i></div>
+<img class="by" alt="a fan game by rrr.i.ooo" width="186" height="10" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAKCAYAAAADxESEAAAC7UlEQVR4AeyWS5LbMBBDPXOw3Cn7LLPPnXKxCR4ssEhaoilLrrKTTAlGs9ENfkS75vNy8t+PX7+/gpOt39LuXzqLV97rqRedjXIbf37/dgGKv4T/z/UE/vqz0Dv/ENjty+3VF50L2oPVziK9qdf4AjT+EIjLr7zyjsmDjHtGm0Xfm3H6M655pFEXHWbcg/weqL85h/Qq35wH+bUc+S3U9Ynh1BMDxnDAGNTjxDDaLKhfQIvfO8EMlj6fQ+K6L7ma9+jU+qLrW+hvoji/xH4pFMxAfe5Prcbx8TdbY+vi5G/8o8H4sCn4HlJHX1D1TM1PX3oSxzdMPqA2eeIZpBemfqXfa0WrsJar5DbEU/7lrKU2/Ud1+W0+zFuJzbxV/iZkTSTV77sBM04+TD7Yo1MLfNExE7h8BsKC6QWrvv8WMwZ48m2FDdXm6f2pB1t68ltML2h07W12/qZPg7I+eXjtsPJ5ip7EHWZtIGV7+9O3ylwECXgyR6DU9TmqX12e+tmvmb3UEz6sf+rF2YxDCGrno/Gz/bVmNp9LyIX2frLus+bXPOUXJ3Hm2MdttbyG62+rp0b2G1Q+pHOOYOA7lOgFw6Inip/dQfvCnDnfs/1ZK3MI5SKSC5T3i9Uhe29wtBle61888AVDm66/fBGVL32Ky78bikv+RYPmh4Q16jzKvpYxZ31ThyY0ee3XZygP94itK6/SC+/0kG4TffhfF5k2B60xE0je96jPPn1X8mL7hqlTfNOzlqN2CxyOwEEZ1MkDMhR7DvHq/BRJc00f12PVlH7l/ULEdx/12Vtc99OXl8hF8drZBwK18AxUa/+t2qM6viOPaOKyP2L1lTPSeHON0cSlX708Ph/l3St+SMfIF51AwHQNknY98eibku+ZuuSIg7VctIZ1AMODWIrj1zMyufBaXGvoAflZpKdm906u37WDj/hulRzV8R15ROuZviBaxjVHq/k0vb7otek7xvUBJX6nfWTNNb/T+l96rX8AAAD//zkHlpMAAAAGSURBVAMAyJWqMxV74ukAAAAASUVORK5CYII=">
+    <div class="load" aria-hidden="true"><i></i></div>
 </div>
 <div id="game">
   <canvas id="c" aria-label="3D race track"></canvas>
@@ -91,7 +108,7 @@
       </header>
 
       <div class="m-corner m-right">
-        <button class="gear" id="optBtn" aria-expanded="false" aria-controls="optPanel">OPTIONS</button>
+        <div class="m-tools"><button class="gear" id="e1Btn" aria-expanded="false" aria-controls="e1Panel">WHAT IS E1?</button><button class="gear" id="optBtn" aria-expanded="false" aria-controls="optPanel">OPTIONS</button></div>
       </div>
 
       <div class="m-bubble" id="teamIntro">
@@ -137,6 +154,16 @@
         </div>
       </div>
 
+      <div class="opt-panel e1-panel" id="e1Panel" role="dialog" aria-label="What is E1?" hidden>
+        <div class="opt-head"><span>WHAT IS E1?</span><button class="x" id="e1Close" aria-label="Close">✕</button></div>
+        <p class="e1-tag">ENGENES RACING AS ONE FOR ENHYPEN</p>
+        <p class="hint">E1, the ENHYPEN MAMA Grand Prix, is a fan-organized campaign to promote voting for ENHYPEN at the MAMA AWARDS. ENGENEs race in six F1-style teams to bring ENHYPEN to the podium.</p>
+        <p class="hint">This game is part of the fun: vote, upload your voting certificate and unlock the Interstellar track.</p>
+        <div class="e1-links">
+          <a class="go" href="https://e1.ensite.org" target="_blank" rel="noopener">E1 WEBSITE ↗</a>
+          <a class="go alt" href="https://x.com/ENMamaGrandPrix" target="_blank" rel="noopener">@ENMamaGrandPrix ↗</a>
+        </div>
+      </div>
       <div class="opt-panel" id="optPanel" role="dialog" aria-label="Options" hidden>
         <div class="opt-head"><span>OPTIONS</span><button class="x" id="optClose" aria-label="Close options">✕</button></div>
         <div class="opt" id="freeRow" hidden><span class="lbl">PLAY WITHOUT A CERTIFICATE</span><span class="row" id="free"></span></div>
@@ -146,6 +173,22 @@
           <span class="lbl">HOW TO PLAY</span>
           <p class="hint">Acceleration is automatic. Phone in landscape: touch anywhere on the left half of the screen and slide left or right to steer, hold DRIFT in corners. Keyboard: ← → steer, ↓ brake, SPACE drift, E item.</p>
         </div>
+        <details class="credits">
+          <summary class="lbl">CREDITS</summary>
+          <p class="by">A fan game by <b>rrr.i.ooo</b></p>
+          <p class="hint">Made for E1, the fan-organized campaign that promotes voting for ENHYPEN at the MAMA AWARDS: <a href="https://e1.ensite.org" target="_blank" rel="noopener">e1.ensite.org</a> · <a href="https://x.com/ENMamaGrandPrix" target="_blank" rel="noopener">@ENMamaGrandPrix</a></p>
+          <dl>
+            <dt>Game, code &amp; pixel art</dt><dd>rrr.i.ooo</dd>
+            <dt>Driver portraits</dt><dd>rrr.i.ooo</dd>
+            <dt>Music &amp; sound</dt><dd>rrr.i.ooo</dd>
+            <dt>Neon city skyline</dt><dd>Kelench</dd>
+            <dt>Pixel effects</dt><dd>BDragon1727</dd>
+            <dt>Explosions</dt><dd>Ansimuz (CC0)</dd>
+            <dt>Fonts</dt><dd>Press Start 2P, VT323 (SIL OFL)</dd>
+            <dt>3D engine</dt><dd>three.js</dd>
+          </dl>
+          <p class="hint">Unofficial fan game. Not affiliated with ENHYPEN, BELIFT LAB, Mnet or the MAMA AWARDS.</p>
+        </details>
       </div>
     </div>
   </div>
@@ -165,8 +208,18 @@
           <div><dt>FASTEST LAP</dt><dd id="resBest">--:--.--</dd></div>
         </dl>
         <p class="hint" id="resRuns"></p>
-        <div class="res-btns"><button class="go alt" id="toMenu">CHANGE TEAM</button><button class="go" id="again">PLAY AGAIN ▶</button></div>
+        <div class="res-btns"><button class="go alt share" id="share" disabled>SHARE RESULT ↗</button><button class="go alt" id="toMenu">CHANGE TEAM</button><button class="go" id="again">PLAY AGAIN ▶</button></div>
       </aside>
+    </div>
+  </div>
+  <div class="overlay share-view" id="shareView" role="dialog" aria-label="Share your result" hidden>
+    <div class="win share-win">
+      <div class="bar"><span>SHARE YOUR RESULT</span><button class="x" id="shareClose" aria-label="Close">✕</button></div>
+      <div class="wbody">
+        <img id="shareImg" alt="Your E1 Kart GP result card">
+        <p class="hint">Long-press the image to save it, or download it, then post it with the link.</p>
+        <div class="share-btns"><a class="go alt" id="shareDl" download="e1-kart-gp.png">DOWNLOAD</a><button class="go" id="shareCopy">COPY LINK</button></div>
+      </div>
     </div>
   </div>
 </div>
