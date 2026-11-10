@@ -1,13 +1,17 @@
 // Teams, race rules and settings saved on the device.
 
+// The six teams, in the members' age order (Jay, Jake, Sunghoon, Sunoo, Jungwon, Ni-ki): menu, leaderboard ties
+// and the team index the server stores all follow it. DRIVERS in drivers.js is in the same order.
 export const TEAMS = [
-  { name: 'MCJAKEY', color: '#EE8A1A' },
   { name: 'JAYBULL RACING', color: '#F5D21E' },
-  { name: 'ALPINOO', color: '#F06EB0' },
+  { name: 'MCJAKEY', color: '#EE8A1A' },
   { name: 'HOONRARI', color: '#C8110E' },
+  { name: 'ALPINOO', color: '#F06EB0' },
   { name: 'MEOWCEDES', color: '#12A09C' },
   { name: 'RIKSTON DRIFT', color: '#0E8040' },
 ];
+// Team order before Nov 2026, to read a team saved by number in an older version.
+const OLD_ORDER = ['MCJAKEY', 'JAYBULL RACING', 'ALPINOO', 'HOONRARI', 'MEOWCEDES', 'RIKSTON DRIFT'];
 
 export const LAPS = 3;
 
@@ -21,11 +25,14 @@ const KEY = 'e1kart';
 
 // freePlay: the menu's "Play without a certificate" flag.
 // pixelScale is fixed at 2× (the sharpest pixel look); it is no longer a menu option.
-export const settings = { teamIdx: 2, pixelScale: 2, assist: true, freePlay: true, track: 'night', sound: true };
+export const settings = { teamIdx: 3, pixelScale: 2, assist: true, freePlay: true, track: 'night', sound: true };
 
 try {
   const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-  if (s.team >= 0 && s.team < TEAMS.length) settings.teamIdx = s.team;
+  // Saved by name now; an older save has only the number, in the old order.
+  const name = s.teamName || OLD_ORDER[s.team];
+  const k = TEAMS.findIndex((t) => t.name === name);
+  if (k >= 0) settings.teamIdx = k;
   if (typeof s.assist === 'boolean') settings.assist = s.assist;
   if (typeof s.free === 'boolean') settings.freePlay = s.free;
   if (s.track === 'night' || s.track === 'space') settings.track = s.track;
@@ -34,6 +41,6 @@ try {
 
 export function saveSettings() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ team: settings.teamIdx, assist: settings.assist, free: settings.freePlay, track: settings.track, sound: settings.sound }));
+    localStorage.setItem(KEY, JSON.stringify({ teamName: TEAMS[settings.teamIdx].name, assist: settings.assist, free: settings.freePlay, track: settings.track, sound: settings.sound }));
   } catch (e) { /* storage unavailable */ }
 }

@@ -18,7 +18,7 @@ const LINK = 'https://e1-kart.ensite.org';
 // The next action for ENHYPEN: the live voting during the MAMA AWARDS broadcast. Until it ends the card
 // reminds it; afterwards it falls back to the general call to vote. Update for the next event.
 const LIVE_VOTE = { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · MAMA AWARDS LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
-  post: 'Nov 20: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' };
+  post: '🚨 Nov 20: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' };
 const liveVote = () => Date.now() < LIVE_VOTE.until;
 const logoUrl = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 
@@ -173,7 +173,7 @@ export async function prepareShare(r) {
     const blob = await drawCard(r);
     if (my !== token || !blob) return;
     const team = TEAMS[r.team];
-    // Longest case ~224 of X's 280 (link 23, 🏁 2): 6th, NI-KI (RIKSTON DRIFT), live-vote line. Fine for Threads and Bluesky too.
+    // Longest case ~227 of X's 280 (link 23, 🏁 2): 6th, NI-KI (RIKSTON DRIFT), live-vote line. Fine for Threads and Bluesky too.
     const text = (r.pos === 1 ? 'I won' : 'I finished ' + ordinal(r.pos).toLowerCase()) + ' on ' + TRACK.name.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) +
       ' with ' + nameOf(r.team) + ' (' + team.name + ') in ' + fmt(r.time) + ' 🏁 Can you beat me in E1 Kart GP? ' +
       (liveVote() ? LIVE_VOTE.post : 'Vote ENHYPEN at the MAMA AWARDS!') + ' #EMGP2026 #2026MAMAVOTE #ENHYPEN';

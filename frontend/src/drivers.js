@@ -64,37 +64,9 @@ export const COMMON = {
 };
 
 // Each team is inspired by an ENHYPEN member; the lines follow that member's personality.
+// Same order as TEAMS in config.js (the members by age).
 // The player is always an ENGENE talking to their driver over the team radio.
 export const DRIVERS = [
-  {
-    // Jake: chill, but secretly very competitive.
-    team: 'MCJAKEY',
-    driver: 'JAKE',
-    portrait: {
-      neutral: ['mcjakey-1.png', 'mcjakey-2.png'],
-      win: ['mcjakey-4.png'],
-      podium: ['mcjakey-3.png'],
-    },
-    lines: {
-      select: ["Engene, relax. We're just going to win!"],
-      start: [
-        ['Easy. Deep breath.', { t: "Okay. Now let's beat everyone.", mood: 'hype' }],
-        ['No pressure, Engene.', { t: '…Little bit of pressure. We want P1.', mood: 'hype' }],
-      ],
-      miniTurbo: ['Smooth. Very smooth.'],
-      lastLap: ['Final lap. Stay chill. But also, go.'],
-      takeLead: ["P1. Chill. Stay chill. …Okay, but also don't let them pass you."],
-      overtake: ["Nice. Smooth."],
-      overtaken: ["Huh. He passed you. That's fine. Get him back."],
-      attack: ["A little gift for whoever's behind us."],
-      slip: ["Oh, no! That's embarrassing!"],
-      batsHit: ["Bats. Cool. Cool, cool. Where's the road?"],
-      comeback: ["Okay, mate! Parallel world, here I come!"],
-      win: [['P1. No wayyy.', 'You were amazing.']],
-      podium: ["Podium's nice. Winning's nicer. Next one."],
-      lose: [['Huh. Okay. No problem.', { t: 'Rematch. We can do it, together.', mood: 'hype' }]],
-    },
-  },
   {
     // Jay: F1 nerd, loves explaining things, humble, always a friend to ENGENE.
     team: 'JAYBULL RACING',
@@ -125,32 +97,32 @@ export const DRIVERS = [
     },
   },
   {
-    // Sunoo: the brightest sunshine, ENGENE's best confidant. Cute, but fierce.
-    team: 'ALPINOO',
-    driver: 'SUNOO',
+    // Jake: chill, but secretly very competitive.
+    team: 'MCJAKEY',
+    driver: 'JAKE',
     portrait: {
-      neutral: ['alpinoo-1.png', 'alpinoo-2.png'],
-      win: ['alpinoo-4.png'],
-      podium: ['alpinoo-3.png', 'alpinoo-4.png'],
-      thumb: 1.1,
+      neutral: ['mcjakey-1.png', 'mcjakey-2.png'],
+      win: ['mcjakey-4.png'],
+      podium: ['mcjakey-3.png'],
     },
     lines: {
-      select: ["Engene! We're going to have so much fun. And win."],
+      select: ["Engene, relax. We're just going to win!"],
       start: [
-        ["You look nervous. It's okay, I'm right here.", { t: "Now let's show them how it's done.", mood: 'hype' }],
+        ['Easy. Deep breath.', { t: "Okay. Now let's beat everyone.", mood: 'hype' }],
+        ['No pressure, Engene.', { t: '…Little bit of pressure. We want P1.', mood: 'hype' }],
       ],
-      miniTurbo: ['Ooh, that was pretty. And fast!'],
-      lastLap: ["Final lap! I'm cheering the loudest, you know that."],
-      takeLead: ["We're first! Selfie? Nah, maybe later."],
-      overtake: ["Bye-bye! Sorry! Not sorry!"],
-      overtaken: ["Hey, rude! Go get them back."],
-      attack: ["A little treat for the ones behind us~"],
-      slip: ["Whoa! Slippery! You okay?"],
-      batsHit: ["It's dark! But I know you can do it blind. Go!"],
-      comeback: ["Legendary! A parallel world, go go go!"],
-      win: [['P1! I knew it, I knew it!', 'Mint choco ice cream to celebrate?']],
-      podium: ['Podium! You were amazing. I mean it.'],
-      lose: [['Hey, look at me. You did great.', { t: "And next time? We'll show our speed.", mood: 'hype' }]],
+      miniTurbo: ['Smooth. Very smooth.'],
+      lastLap: ['Final lap. Stay chill. But also, go.'],
+      takeLead: ["P1. Chill. Stay chill. …Okay, but also don't let them pass you."],
+      overtake: ["Nice. Smooth."],
+      overtaken: ["Huh. He passed you. That's fine. Get him back."],
+      attack: ["A little gift for whoever's behind us."],
+      slip: ["Oh, no! That's embarrassing!"],
+      batsHit: ["Bats. Cool. Cool, cool. Where's the road?"],
+      comeback: ["Okay, mate! Parallel world, here I come!"],
+      win: [['P1. No wayyy.', 'You were amazing.']],
+      podium: ["Podium's nice. Winning's nicer. Next one."],
+      lose: [['Huh. Okay. No problem.', { t: 'Rematch. We can do it, together.', mood: 'hype' }]],
     },
   },
   {
@@ -179,6 +151,35 @@ export const DRIVERS = [
       win: [['P1.', 'That was fun. Thank you, Engene.']],
       podium: ['Podium. Good race. I liked that one.'],
       lose: [['Close one.', { t: "Again? I'm in.", mood: 'normal' }]],
+    },
+  },
+  {
+    // Sunoo: the brightest sunshine, ENGENE's best confidant. Cute, but fierce.
+    team: 'ALPINOO',
+    driver: 'SUNOO',
+    portrait: {
+      neutral: ['alpinoo-1.png', 'alpinoo-2.png'],
+      win: ['alpinoo-4.png'],
+      podium: ['alpinoo-3.png', 'alpinoo-4.png'],
+      thumb: 1.1,
+    },
+    lines: {
+      select: ["Engene! We're going to have so much fun. And win."],
+      start: [
+        ["You look nervous. It's okay, I'm right here.", { t: "Now let's show them how it's done.", mood: 'hype' }],
+      ],
+      miniTurbo: ['Ooh, that was pretty. And fast!'],
+      lastLap: ["Final lap! I'm cheering the loudest, you know that."],
+      takeLead: ["We're first! Selfie? Nah, maybe later."],
+      overtake: ["Bye-bye! Sorry! Not sorry!"],
+      overtaken: ["Hey, rude! Go get them back."],
+      attack: ["A little treat for the ones behind us~"],
+      slip: ["Whoa! Slippery! You okay?"],
+      batsHit: ["It's dark! But I know you can do it blind. Go!"],
+      comeback: ["Legendary! A parallel world, go go go!"],
+      win: [['P1! I knew it, I knew it!', 'Mint choco ice cream to celebrate?']],
+      podium: ['Podium! You were amazing. I mean it.'],
+      lose: [['Hey, look at me. You did great.', { t: "And next time? We'll show our speed.", mood: 'hype' }]],
     },
   },
   {

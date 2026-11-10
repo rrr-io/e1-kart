@@ -58,9 +58,9 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 #steerZone{pointer-events:auto;position:absolute;left:0;top:34%;bottom:0;width:50%;touch-action:none}
 /* Pixel slider: a capsule with a knob that slides left/right. Idle it rests bottom-left; a touch anywhere in the
    zone moves it under the thumb, and while in use it turns see-through so it doesn't hide the track. */
-#steerPad{--w:184px;position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:var(--w);height:calc(var(--w) * 18 / 56);opacity:.9}
+#steerPad{--w:168px;position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:var(--w);height:calc(var(--w) * 14 / 56);opacity:.9}
 #steerBase{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;transition:opacity .12s}
-#steerKnob{position:absolute;left:50%;top:50%;height:120%;aspect-ratio:1;transform:translate(-50%,-50%);image-rendering:pixelated;will-change:transform;transition:opacity .12s}
+#steerKnob{position:absolute;left:50%;top:50%;height:130%;aspect-ratio:1;transform:translate(-50%,-50%);image-rendering:pixelated;will-change:transform;transition:opacity .12s}
 #steerZone.on #steerBase{opacity:.4}
 #steerZone.on #steerKnob{opacity:.75}
 #bD{right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:88px;height:88px;background:var(--red);font-size:11px}
@@ -82,7 +82,7 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .chipbtn[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--paper);box-shadow:0 0 16px -5px var(--red)}
 .hint{font-size:18px;color:var(--moon-dim);line-height:1.1;margin:0}
 @media (max-height:420px){.wbody{gap:8px;padding:10px}}
-@media (max-width:600px){.stand{display:none}.speed{right:max(16px,env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:600px){#steerPad{--w:144px}.stand{display:none}.speed{right:max(16px,env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
 @media (prefers-reduced-motion:reduce){#banner{text-shadow:4px 4px 0 var(--red)}}
 
 /* Certificates and runs */
@@ -154,7 +154,7 @@ html.pwa #game,html.pwa #splash{bottom:auto}
   .speed span{font-size:15px}
   #toast{top:calc(60px + env(safe-area-inset-top,0px))}
 
-  #steerPad{--w:152px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  #steerPad{--w:140px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   #bD{width:70px;height:70px;font-size:9px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
   #bI{width:58px;height:40px;font-size:8px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
   #bB{width:58px;height:32px;font-size:7px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(58px + env(safe-area-inset-bottom,0px));border-width:2px}

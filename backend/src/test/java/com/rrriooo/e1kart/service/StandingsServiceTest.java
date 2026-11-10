@@ -23,10 +23,10 @@ class StandingsServiceTest {
     @Test
     void teamsAreRankedByPointsThenRaces() {
         List<Run> runs = new ArrayList<>();
-        runs.add(race(3, 1));                    // HOONRARI 25
-        runs.add(race(0, 2));                    // MCJAKEY 18 + 8 = 26, two races
+        runs.add(race(3, 1));                    // ALPINOO 25
+        runs.add(race(0, 2));                    // JAYBULL RACING 18 + 8 = 26, two races
         runs.add(race(0, 6));
-        runs.add(race(2, 1));                    // ALPINOO 25, same as HOONRARI
+        runs.add(race(2, 1));                    // HOONRARI 25, same as ALPINOO
         List<StandingRow> s = StandingsService.rank(runs);
         assertEquals(0, s.get(0).team());
         assertEquals(Integer.valueOf(1), s.get(0).rank());

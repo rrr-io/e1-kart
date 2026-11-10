@@ -4,6 +4,11 @@ Mobile single-player kart racer inspired by E1 / Enhypen MAMA Grand Prix: a nigh
 
 The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run per race: runs are earned by uploading a screenshot of a MAMA voting certificate (**1 certificate = 1 run**, each certificate can only be used once). When the server allows it (`E1KART_FREE_PLAY`), OPTIONS shows **PLAY WITHOUT A CERTIFICATE** to race the Interstellar track for free, for testing.
 
+**Where things are**
+
+- Game: https://e1-kart.ensite.org (official) · https://e1kart.rrriooo.com (debug, same game and data)
+- **Stats: https://e1kart.rrriooo.com/stats.html** (or `/stats.html` on the official domain). The token is `E1KART_STATS_TOKEN` in `/opt/e1kart-api/.env` on rio-server; the page remembers it in that browser.
+
 ## Tech stack
 
 | Part | Built with |
