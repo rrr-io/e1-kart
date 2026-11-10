@@ -34,7 +34,20 @@ $('toMenu').onclick = toMenu;
 initInput();
 initAccountUi();
 
-window.addEventListener('resize', resize);
+// Installed app: see html.pwa in style.css.
+if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches)) {
+  document.documentElement.classList.add('pwa');
+}
+// iOS updates the size late after a rotation (and sometimes fires no resize at all in the installed app):
+// recompute now, and again once the rotation has settled.
+function resizeSoon() {
+  resize();
+  setTimeout(resize, 120);
+  setTimeout(resize, 450);
+}
+window.addEventListener('resize', resizeSoon);
+window.addEventListener('orientationchange', resizeSoon);
+if (window.visualViewport) visualViewport.addEventListener('resize', resizeSoon);
 if (document.fonts && document.fonts.load) {
   document.fonts.load('8px "Press Start 2P"').then(redrawText).catch(() => {});
 }

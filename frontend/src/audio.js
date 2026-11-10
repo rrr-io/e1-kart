@@ -567,6 +567,11 @@ export function setSound(on) {
   settings.sound = on;
   saveSettings();
   if (ctx) master.gain.setTargetAtTime(on ? 0.5 : 0, ctx.currentTime, 0.05);
+  if (on) playbackSession();
+  else {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* not supported */ }
+    if (keepAlive) keepAlive.pause();
+  }
 }
 
 // The first tap or key press unlocks audio (browser rule) and starts the music that should be playing.
@@ -609,7 +614,36 @@ export function wantMusic(name) {
   // Start it even if the audio is still locked: it is scheduled and plays as soon as the first tap unlocks it.
   if (ctx) start(name);
 }
+// 0.1 s of silence (8 kHz, 8-bit WAV), built here so there's no file to download.
+function silence() {
+  const n = 800, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+  const str = (o, t) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+  str(0, 'RIFF'); v.setUint32(4, 36 + n, true); str(8, 'WAVEfmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+  v.setUint16(32, 1, true); v.setUint16(34, 8, true); str(36, 'data'); v.setUint32(40, n, true);
+  b.fill(128, 44);
+  return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+}
+// iPhone: with the ring/silent switch on silent, iOS mutes Web Audio (games included) unless the page says it
+// plays media. iOS 17+: audioSession 'playback'. Older iOS: a silent <audio> loop puts the page in the same mode.
+// Only with the sound on: 'playback' also pauses other apps' music, so with the sound off the game stays 'ambient'.
+let keepAlive = null;
+function playbackSession() {
+  if (!settings.sound) return;
+  try {
+    if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; }
+  } catch (e) { /* not supported */ }
+  if (!/iP(hone|ad|od)|Macintosh/.test(navigator.userAgent) || !('ontouchend' in document)) return;
+  if (!keepAlive) {
+    keepAlive = new Audio(silence());
+    keepAlive.loop = true;
+    keepAlive.setAttribute('playsinline', '');
+    keepAlive.setAttribute('x-webkit-airplay', 'deny');
+  }
+  if (keepAlive.paused) keepAlive.play().catch(() => {});
+}
 function unlock() {
+  playbackSession();
   if (!ensure()) return;
   resume();
   if (current !== wanted) start(wanted);
@@ -620,5 +654,11 @@ function unlock() {
 // Pause when the app goes to the background.
 document.addEventListener('visibilitychange', () => {
   if (!ctx) return;
-  if (document.hidden) ctx.suspend().catch(() => {}); else resume();
+  if (document.hidden) {
+    ctx.suspend().catch(() => {});
+    if (keepAlive) keepAlive.pause();
+  } else {
+    resume();
+    if (keepAlive && settings.sound) keepAlive.play().catch(() => {});
+  }
 });

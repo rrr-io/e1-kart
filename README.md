@@ -143,7 +143,7 @@ Anonymous usage stats are counted by the API itself, in its database: no externa
 
 ## E1 Kart GP leaderboard
 
-The game's own team leaderboard, from the Interstellar races (the ones paid for with a run). It is separate from the official E1 standings, which are based on voting certificates, and the game says so.
+The game's own team leaderboard, from the Interstellar races (the ones paid for with a run). It is separate from the official E1 standings, which are based on voting certificates.
 
 - At the finish the game sends the race's position with its time (`POST /api/runs/{id}/finish`). Each race gives its team points by position, F1-style, and teams are ranked by points, then by number of races.
 - `GET /api/standings` returns only the order (`[{ team, rank }]`, `rank` null for a team with no races yet): the points never leave the server.
