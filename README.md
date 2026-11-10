@@ -12,7 +12,7 @@ The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run 
 | Build | [Vite](https://vitejs.dev) 5, [vite-plugin-pwa](https://vite-pwa-org.netlify.app) (installable, offline-capable) |
 | API | Java 21, Spring Boot 3.3 (web, data-jpa, validation), package-by-layer |
 | Database | SQLite (file in a Docker volume) |
-| Certificate reading | Tesseract OCR 5 (CLI inside the container), regex over the text |
+| Certificate reading | Tesseract OCR 5 (CLI inside the container); card detection, ENHYPEN photo check and ID voting ported from the collab verifier |
 | CI/CD | GitHub Actions: one workflow for the game, one for the API |
 | Hosting | rio-server (Oracle, arm64): Caddy serves the game and proxies `/api` to the `e1kart-api` container |
 
@@ -43,6 +43,7 @@ e1-kart-gp/
 │  └─ src/main/java/com/rrriooo/e1kart/
 │     ├─ controller/             Config, Player, Certificate, Run, ApiExceptionHandler
 │     ├─ service/                CertificateService, CertificateParser, CertificateIdHasher,
+│     │                          CertificateImage, PixelImage, EnhypenMatcher, IdReader, IdVotes,
 │     │                          OcrService, RunService, PlayerService, RateLimiter
 │     ├─ repository/             Player, Certificate, Run
 │     ├─ model/                  JPA entities
@@ -121,15 +122,35 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 
 ## How certificate redemption works
 
-1. The game sends the screenshot to `POST /api/certificates`.
-2. `OcrService` resizes it to 1000px wide, converts it to grayscale, and reads it with Tesseract. The image is never saved: the temp file is deleted right after.
-3. `CertificateParser` checks that it's a certificate (`VOTING CERTIFICATE`, `MAMA`, `Mnet Plus`) and extracts:
-   - the ID after `No.` (16 alphanumeric A-Z/0-9 characters),
-   - the `Participation Date` (Korean time),
-   - the category, e.g. `FANS' CHOICE CATEGORY 1ST VOTE`.
-4. The date must fall inside one of the voting windows (`e1kart.vote-windows` in `application.yml`).
-5. The ID is normalized (O→0, I→1) and stored only as an **HMAC-SHA256** keyed with a server secret, under a `UNIQUE` constraint: the same certificate can never be redeemed twice, and the plain ID never touches the database.
-6. The balance is always `runs granted by certificates − runs started`, so it can never drift out of sync.
+The checks are those of the collab verifier (`e1-social-race`, `/collab-verify`), ported to Java, but **lenient**: when in doubt the certificate is accepted. It is refused only when it is surely not an ENHYPEN certificate, or surely a duplicate. The cases the verifier sends to manual review are accepted here.
+
+1. The game sends the screenshot to `POST /api/certificates`. The image stays in memory only for the call, it is never saved.
+2. **The card** (`CertificateImage`): an exported certificate (930×1410 proportions) is used as it is; a phone screenshot (status bar, ad banner, *Save Image* button) is cut down to the certificate card, found as the large tinted area with the certificate proportions or, when the card is drawn plain white, from its row of three thumbnails.
+3. **ENHYPEN** (`EnhypenMatcher`): the last thumbnail is compared with the ENHYPEN references (24×24 colour vectors; ≥ 0.85 is ENHYPEN); screenshots are tried at small offsets, and thumbnails drawn wider or moved by other devices are searched for. Refused only when the layout is standard and the last image is clearly something else (< 0.60): `NOT_ENHYPEN`, or `ENHYPEN_NOT_LAST` when ENHYPEN is on it but not last. An unclear photo, a cropped screenshot or a card that can't be found is accepted.
+4. `OcrService` reads the whole image with Tesseract. Refused as `NOT_A_CERTIFICATE` only when nothing looks like a certificate: no certificate layout, none of the words `VOTING CERTIFICATE` / `MAMA` / `Mnet Plus`, no ENHYPEN photo. `CertificateParser` extracts the `Participation Date` (Korean time) and the category, e.g. `FANS' CHOICE CATEGORY 1ST VOTE`. An unreadable date (the upload time is stored instead) or a date outside `e1kart.vote-windows` is only logged.
+5. **The ID** (`IdReader`, `IdVotes`): the `No. <ID>` line of the card is read 3 times (up to 8 when the readings disagree) at different sizes, plain and binarised, in single-line mode with no dictionaries. Each reading votes for every 16-character ID it can stand for (the `No.` prefix and stray characters the OCR inserts are voted away). Without agreement: the best guess (a leader, or candidates differing only in look-alike characters), then the candidate with the most votes, then the full-page reading. With no readable ID at all, the file itself is the key: the same file can't be used twice.
+6. **Unique**: the ID is normalized (O→0, I→1) and stored only as an **HMAC-SHA256** keyed with a server secret, under a `UNIQUE` constraint: the same certificate can never be redeemed twice (`ALREADY_USED`), whether it arrives as an export or a screenshot.
+7. The balance is always `runs granted by certificates − runs started`, so it can never drift out of sync.
+
+### ENHYPEN references
+
+The ENHYPEN check needs references in the folder `e1kart.enhypen-refs-dir` (env `E1KART_ENHYPEN_REFS`, default `/data/enhypen-refs`, inside the `e1kart-data` volume). They are loaded at startup; with no references the check is off and the log says so (`certificates are NOT checked for ENHYPEN`).
+
+- **Certificate images**: PNG/JPG of a correct certificate (an export, or a screenshot showing the whole card). Its last image becomes a reference. Add one per version if the photo changes between rounds.
+- **The verifier's references**, exported as JSON (the same vectors the verifier uses):
+
+```bash
+# on the server, in the e1-social-race folder
+docker compose -f deploy/compose.production.yaml exec -T social-pulse python -c "import json,sqlite3; c=sqlite3.connect('/app/data/pulse.sqlite3'); print(json.dumps([{'label': l, 'vec': json.loads(v)} for l, v in c.execute('SELECT label, vec FROM collab_refs WHERE collab_id IS NULL')]))" > enhypen-refs.json
+
+# into the game's volume, then restart the API
+docker exec -u 0 e1kart-api mkdir -p /data/enhypen-refs
+docker cp enhypen-refs.json e1kart-api:/data/enhypen-refs/
+docker exec -u 0 e1kart-api chown -R e1kart /data/enhypen-refs
+docker restart e1kart-api
+```
+
+The startup log lists what was loaded (`ENHYPEN references: N vectors from enhypen-refs.json`).
 
 ### API
 
@@ -142,14 +163,15 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 | POST | `/api/runs` | `{team}`: consumes a run and returns `runId` |
 | POST | `/api/runs/{id}/finish` | `{timeMs}`: final time, for a future leaderboard |
 
-The token goes in the `X-Player-Token` header. Errors are JSON `{code, message}` with a message already meant to be shown as-is (e.g. `ALREADY_USED` 409, `NO_RUNS` 402, `ID_NOT_FOUND` 422, `RATE_LIMITED` 429).
+The token goes in the `X-Player-Token` header. Errors are JSON `{code, message}` with a message already meant to be shown as-is (e.g. `ALREADY_USED` 409, `NO_RUNS` 402, `NOT_ENHYPEN` 422, `RATE_LIMITED` 429).
 
 ### Main settings (`backend/src/main/resources/application.yml`)
 
 - `e1kart.free-play-allowed` (env `E1KART_FREE_PLAY`): if `false` the flag disappears from the menu and the game can only be played with runs.
 - `e1kart.runs-per-certificate`: runs per certificate (currently 1).
-- `e1kart.vote-windows`: valid voting periods. Add future rounds here.
+- `e1kart.vote-windows`: voting periods. With the lenient check a date outside them is only logged, not refused.
 - `e1kart.upload-rate-limit-per-minute`: uploads per minute, per player and per IP.
+- `e1kart.enhypen-refs-dir` (env `E1KART_ENHYPEN_REFS`): folder of the ENHYPEN references (see above).
 
 ## Local development
 
@@ -168,7 +190,7 @@ npm run dev
 
 If the API isn't reachable the game still works, just in free-play mode.
 
-API tests: `cd backend && mvn test`. `CertificateParserTest` uses the real OCR text of a certificate (`src/test/resources/certificate-ocr.txt`).
+API tests: `cd backend && mvn test`. `CertificateParserTest` uses the real OCR text of a certificate (`src/test/resources/certificate-ocr.txt`). The image checks run on the synthetic certificates and screenshots of the verifier's tests (`src/test/resources/certificates/`) and expect the verifier's own results; `IdReaderTest` uses the real Tesseract and is skipped where it isn't installed.
 
 ## Deploying to rio-server
 

@@ -43,6 +43,11 @@ public class OcrService {
         this.slots = new Semaphore(Math.max(1, props.maxConcurrentOcr()));
     }
 
+    /** The OCR budget, shared with the ID-line readings. */
+    Semaphore slots() {
+        return slots;
+    }
+
     public String readText(byte[] imageBytes) {
         BufferedImage image = decode(imageBytes);
         BufferedImage prepared = toGray(image);

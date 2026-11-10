@@ -35,40 +35,55 @@ public class CertificateParser {
     private static final Pattern CATEGORY = Pattern.compile("AWARDS\\s+([A-Z][A-Z' ]*?CATEGORY\\s+\\d+(?:ST|ND|RD|TH))\\s+VOTE");
 
     public ParsedCertificate parse(String ocrText) {
-        if (ocrText == null || ocrText.isBlank()) {
+        if (!isCertificateText(ocrText)) {
             throw new ApiException(ErrorCode.NOT_A_CERTIFICATE);
         }
-        String upper = ocrText.toUpperCase(Locale.ROOT).replace('’', '\'').replace('‘', '\'');
-        String flat = upper.replaceAll("\\s+", " ");
-        String compact = upper.replaceAll("[^A-Z0-9]", "");
-
-        if (!compact.contains("VOTINGCERTIFICATE") || !compact.contains("MAMA") || !compact.contains("MNETPLUS")) {
-            throw new ApiException(ErrorCode.NOT_A_CERTIFICATE);
-        }
-
-        Matcher id = ID.matcher(flat);
-        if (!id.find()) {
+        ParsedCertificate parsed = parseFields(ocrText);
+        if (parsed.rawId() == null) {
             throw new ApiException(ErrorCode.ID_NOT_FOUND);
         }
-        String rawId = id.group(1);
-
-        Matcher date = DATE.matcher(flat);
-        if (!date.find()) {
+        if (parsed.participationAt() == null) {
             throw new ApiException(ErrorCode.DATE_NOT_FOUND);
         }
-        LocalDateTime participationAt;
-        try {
-            participationAt = LocalDateTime.of(
-                    Integer.parseInt(date.group(1)), Integer.parseInt(date.group(2)), Integer.parseInt(date.group(3)),
-                    Integer.parseInt(date.group(4)), Integer.parseInt(date.group(5)));
-        } catch (DateTimeException e) {
-            throw new ApiException(ErrorCode.DATE_NOT_FOUND, e);
+        return parsed;
+    }
+
+    /** True when the text has the words of a certificate: "VOTING CERTIFICATE", "MAMA" and "Mnet Plus". */
+    public boolean isCertificateText(String ocrText) {
+        if (ocrText == null || ocrText.isBlank()) {
+            return false;
+        }
+        String compact = ocrText.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return compact.contains("VOTINGCERTIFICATE") && compact.contains("MAMA") && compact.contains("MNETPLUS");
+    }
+
+    /**
+     * ID, date and category, each null when it can't be read; never throws. Used by the lenient redemption,
+     * where the ID is read from the "No." line of the card (IdReader) and an unreadable date is not an error.
+     */
+    public ParsedCertificate parseFields(String ocrText) {
+        String upper = (ocrText == null ? "" : ocrText).toUpperCase(Locale.ROOT).replace('’', '\'').replace('‘', '\'');
+        String flat = upper.replaceAll("\\s+", " ");
+
+        Matcher id = ID.matcher(flat);
+        String rawId = id.find() ? id.group(1) : null;
+
+        Matcher date = DATE.matcher(flat);
+        LocalDateTime participationAt = null;
+        if (date.find()) {
+            try {
+                participationAt = LocalDateTime.of(
+                        Integer.parseInt(date.group(1)), Integer.parseInt(date.group(2)), Integer.parseInt(date.group(3)),
+                        Integer.parseInt(date.group(4)), Integer.parseInt(date.group(5)));
+            } catch (DateTimeException e) {
+                participationAt = null;
+            }
         }
 
         Matcher cat = CATEGORY.matcher(flat);
         String category = cat.find() ? cat.group(1).trim().replaceAll(" +", " ") + " VOTE" : null;
 
-        return new ParsedCertificate(rawId, normalizeId(rawId), participationAt, category);
+        return new ParsedCertificate(rawId, rawId == null ? null : normalizeId(rawId), participationAt, category);
     }
 
     /**

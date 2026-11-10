@@ -10,6 +10,8 @@ public enum ErrorCode {
     ID_NOT_FOUND(422, "Couldn't read the certificate number (No. …). Try a sharper, uncropped screenshot."),
     DATE_NOT_FOUND(422, "Couldn't read the vote date. Try a sharper, uncropped screenshot."),
     OUTSIDE_VOTING_WINDOW(422, "The vote date isn't within a valid voting period."),
+    NOT_ENHYPEN(422, "This certificate isn't a vote for ENHYPEN: the last photo on it must be ENHYPEN."),
+    ENHYPEN_NOT_LAST(422, "ENHYPEN must be the last photo on the certificate."),
     ALREADY_USED(409, "This certificate has already been used."),
     NO_RUNS(402, "You have no runs left. Upload a new voting certificate."),
     RUN_NOT_FOUND(404, "Race not found."),

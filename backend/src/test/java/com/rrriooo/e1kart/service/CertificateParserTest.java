@@ -51,6 +51,19 @@ class CertificateParserTest {
     }
 
     @Test
+    void fieldParsingNeverThrows() {
+        ParsedCertificate c = parser.parseFields(
+                "VOTING CERTIFICATE 2026 MAMA AWARDS Participation Date 2026.10.13 21:42 issued by Mnet Plus.");
+        assertEquals(null, c.rawId());
+        assertEquals(LocalDateTime.of(2026, 10, 13, 21, 42), c.participationAt());
+        ParsedCertificate blurry = parser.parseFields("VOTING CERTIFICATE MAMA Mnet Plus No. 61013P5EM74JDMJZ");
+        assertEquals("61013P5EM74JDMJZ", blurry.rawId());
+        assertEquals(null, blurry.participationAt());
+        assertEquals(true, parser.isCertificateText("Voting Certificate 2026 MAMA AWARDS issued by Mnet Plus"));
+        assertEquals(false, parser.isCertificateText("Screenshot of a cat"));
+    }
+
+    @Test
     void rejectsMissingId() {
         ApiException e = assertThrows(ApiException.class, () -> parser.parse(
                 "VOTING CERTIFICATE 2026 MAMA AWARDS Participation Date 2026.10.13 21:42 issued by Mnet Plus."));

@@ -30,7 +30,7 @@ jobs:
           java-version: 21
           cache: maven
 
-      # Also runs the tests (certificate parser, hashing, rate limit).
+      # Also runs the tests (certificate parser and image checks, ID voting, hashing, rate limit).
       - name: Build
         run: mvn -B package
 

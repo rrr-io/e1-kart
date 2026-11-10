@@ -34,7 +34,10 @@ e1kart:
   ocr-timeout-seconds: 20
   max-concurrent-ocr: 2
   upload-rate-limit-per-minute: 6
-  # Valid voting periods (Korean time). Add future rounds here.
+  # ENHYPEN references for the "last image is ENHYPEN" check (certificate images and/or JSON vectors exported
+  # from the collab verifier). Empty or missing folder = the check is off (a warning is logged at startup).
+  enhypen-refs-dir: ${E1KART_ENHYPEN_REFS:/data/enhypen-refs}
+  # Voting periods (Korean time). With the lenient check a vote date outside them is only logged.
   vote-windows:
     - label: "FANS' CHOICE · 1st VOTE"
       start: 2026-10-12T00:00:00
