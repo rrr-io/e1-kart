@@ -51,11 +51,13 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
 .ctl.on{background:var(--paper);color:var(--ink)}
 .ctl svg{width:24px;height:24px}
 #steerZone{pointer-events:auto;position:absolute;left:0;top:34%;bottom:0;width:50%;touch-action:none}
-/* Round pixel joystick. Idle it rests bottom-left; a touch anywhere in the zone moves it under the thumb. */
-#steerPad{--pad:136px;position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:var(--pad);height:var(--pad);opacity:.85;transition:opacity .15s}
-#steerZone.on #steerPad{opacity:1}
-#steerBase{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
-#steerKnob{position:absolute;left:50%;top:50%;width:48%;height:48%;margin:-24% 0 0 -24%;image-rendering:pixelated;will-change:transform}
+/* Pixel slider: a capsule with a knob that slides left/right. Idle it rests bottom-left; a touch anywhere in the
+   zone moves it under the thumb, and while in use it turns see-through so it doesn't hide the track. */
+#steerPad{--w:184px;position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:var(--w);height:calc(var(--w) * 18 / 56);opacity:.9}
+#steerBase{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;transition:opacity .12s}
+#steerKnob{position:absolute;left:50%;top:50%;height:120%;aspect-ratio:1;transform:translate(-50%,-50%);image-rendering:pixelated;will-change:transform;transition:opacity .12s}
+#steerZone.on #steerBase{opacity:.4}
+#steerZone.on #steerKnob{opacity:.75}
 #bD{right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:88px;height:88px;background:var(--red);font-size:11px}
 #bD.on{background:var(--paper);color:var(--red)}
 #bI{right:calc(max(16px,env(safe-area-inset-right,0px)) + 100px);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:72px;height:50px;font-size:9px}
@@ -147,7 +149,7 @@ body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select
   .speed span{font-size:15px}
   #toast{top:calc(60px + env(safe-area-inset-top,0px))}
 
-  #steerPad{--pad:112px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  #steerPad{--w:152px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   #bD{width:70px;height:70px;font-size:9px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
   #bI{width:58px;height:40px;font-size:8px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
   #bB{width:58px;height:32px;font-size:7px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(58px + env(safe-area-inset-bottom,0px));border-width:2px}
