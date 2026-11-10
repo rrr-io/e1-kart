@@ -10,7 +10,7 @@ import { placePlayer } from './physics.js';
 import { banner } from './hud.js';
 import { talk } from './dialogue.js';
 import { resetItems } from './items.js';
-import { wantMusic, setTempo, sfx } from './audio.js';
+import { wantMusic, prepareMusic, setTempo, sfx } from './audio.js';
 import { TRACK_ID } from './theme.js';
 
 const COUNTDOWN = 3.6;
@@ -55,7 +55,9 @@ export function setupRace() {
   updateCpus(0);
   placePlayer(0);
   setTempo(1);
-  wantMusic(TRACK_ID);
+  // Quiet during the drivers' dialogue and the 3-2-1; the race music starts on the GO.
+  wantMusic('');
+  prepareMusic(TRACK_ID);
   talk(settings.teamIdx, 'start').then(startCountdown);
 }
 
@@ -78,5 +80,6 @@ export function tickCountdown(dt) {
     startLights.forEach((l) => l.material.color.set(0x29ff5a));
     banner('GO!', 0.8);
     sfx('go');
+    wantMusic(TRACK_ID);
   }
 }

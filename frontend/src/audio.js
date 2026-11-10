@@ -40,30 +40,42 @@ const D = {
 };
 
 const SONGS = {
-  // Menu: half-time trap groove, A harmonic minor, menacing and cool.
+  // Menu: bouncy and playful, F major (I-V-vi-IV), staccato hook, bubbly arpeggios, octave-hopping bass.
   menu: {
-    bpm: 140,
-    lead: rep(1,
-      'A4 - - . E5 - . . C5 - B4 - . . G#4 -',
-      'A4 - - - - - - - . . . . . . . .',
-      'F5 - - . E5 - . . D5 - C5 - . . B4 -',
-      'C5 - - - B4 - - - G#4 - - - E4 - - -'),
-    lead2: rep(1,
-      '. . . . . . . . . . . . . . . .',
-      '. . . . E5 . A5 . C6 . B5 . A5 . G#5 .',
-      '. . . . . . . . . . . . . . . .',
-      '. . . . . . . . . . . . . . . .'),
-    arp: rep(1,
-      'A3 C4 E4 C4 A3 C4 E4 C4 A3 C4 E4 C4 A3 C4 E4 C4',
-      'A3 C4 E4 C4 A3 C4 E4 C4 A3 C4 E4 C4 A3 C4 E4 C4',
-      'F3 A3 C4 A3 F3 A3 C4 A3 D3 F3 A3 F3 D3 F3 A3 F3',
-      'E3 G#3 B3 G#3 E3 G#3 B3 G#3 E3 G#3 B3 G#3 E3 G#3 B3 E4'),
-    bass: rep(1,
-      'A1 - - - - - A1 - . . A2 . . . A1 -',
-      'A1 - - - - - A1 - . . C2 . . . E2 -',
-      'F1 - - - - - F1 - . . D2 . . . D2 -',
-      'E1 - - - - - E1 - . . G#1 . . . B1 -'),
-    drums: cat(bars(D.half, D.half, D.half, D.halfFill)),
+    bpm: 128,
+    lead: bars(
+      'C5 . F5 . A5 . G5 F5 . . A5 . C6 - . .',
+      'G5 . E5 . C5 . E5 G5 . . C6 . G5 - . .',
+      'A5 . F5 . D5 . F5 A5 . . D6 . C6 . A5 .',
+      'A#5 - A5 - G5 - F5 - G5 . A5 . C6 - - -',
+      'C6 . A5 . C6 . A5 . F5 . G5 . A5 . C6 .',
+      'D6 . C6 . G5 . E5 . G5 - - - . . . .',
+      'F5 . A5 . D6 . A5 . F5 . A5 . D6 . E6 .',
+      'F6 - - . E6 - - . D6 . C6 . A#5 . G5 .'),
+    lead2: bars(
+      '. . . . . . . . . . F6 . . . . .',
+      '. . . . . . . . . . E6 . . . . .',
+      '. . . . . . . . . . F6 . . . . .',
+      '. . . . . . . . . . . . E6 . F6 .',
+      'A5 . F5 . A5 . F5 . C5 . E5 . F5 . A5 .',
+      'G5 . E5 . C5 . C5 . E5 - - - . . . .',
+      'D5 . F5 . A5 . F5 . D5 . F5 . A5 . C6 .',
+      'D6 - - . C6 - - . A#5 . A5 . G5 . E5 .'),
+    arp: rep(2,
+      'F4 A4 C5 F5 C5 A4 F4 A4 C5 F5 C5 A4 F4 A4 C5 A4',
+      'C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 E4',
+      'D4 F4 A4 D5 A4 F4 D4 F4 A4 D5 A4 F4 D4 F4 A4 F4',
+      'A#3 D4 F4 A#4 F4 D4 A#3 D4 C4 E4 G4 C5 G4 E4 C4 E4'),
+    bass: rep(2,
+      'F2 . F3 . F2 . F3 . F2 . F3 . F2 . F3 .',
+      'C2 . C3 . C2 . C3 . C2 . C3 . C2 . C3 .',
+      'D2 . D3 . D2 . D3 . D2 . D3 . D2 . D3 .',
+      'A#1 . A#2 . A#1 . A#2 . C2 . C3 . C2 . E2 .'),
+    drums: rep(2,
+      'x . h . s . h . x . h x s . h .',
+      'x . h . s . h . x . h x s . h o',
+      'x . h . s . h . x . h x s . h .',
+      'x . h . s . h . x . s . s s s s'),
   },
 
   // Night Circuit: A harmonic minor, 158 bpm. Build-up, then an 8-bar drop with the hook.
@@ -465,14 +477,19 @@ export function setSound(on) {
 let wanted = 'menu', current = '';
 function start(name) {
   current = name;
-  if (TRACK_MUSIC[name]) playRace(name);
+  if (!name) { stopMusic(); stopRace(); }
+  else if (TRACK_MUSIC[name]) playRace(name);
   else if (name === 'finish' && raceId) finishRace();
   else playMusic(name);
 }
 function resume() {
   if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
 }
-/** Asks for a piece of music: 'menu', a track id (race music from its intro), or 'finish'. */
+/** Decodes a track's race music ahead of time, so it starts right on the GO. */
+export function prepareMusic(id) {
+  if (ctx && TRACK_MUSIC[id]) { decode(id + '-race'); decode(id + '-final'); }
+}
+/** Asks for a piece of music: 'menu', a track id (race music from its intro), 'finish', or '' for silence. */
 export function wantMusic(name) {
   wanted = name;
   // Start it even if the audio is still locked: it is scheduled and plays as soon as the first tap unlocks it.
