@@ -55,11 +55,11 @@ export const DEFAULT_MOOD = {
 export const COMMON = {
   lightstick: [
     'ENGENEs in the stands just lit their lightsticks. Boost.',
-    'Boost from the grandstand. Thank them later.',
+    'Is that our FANCHANT? BOOOst!',
     'Copy, boost received.',
   ],
   lastLap: [
-    'Final lap. No mistakes.',
+    'Final lap. GAME ON!',
   ],
 };
 
@@ -76,23 +76,23 @@ export const DRIVERS = [
       podium: ['mcjakey-3.png'],
     },
     lines: {
-      select: ["Relax. We're just going to win, that's all."],
+      select: ["Engene, relax. We're just going to win!"],
       start: [
         ['Easy. Deep breath.', { t: "Okay. Now let's beat everyone.", mood: 'hype' }],
         ['No pressure, Engene.', { t: '…Little bit of pressure. We want P1.', mood: 'hype' }],
       ],
       miniTurbo: ['Smooth. Very smooth.'],
       lastLap: ['Final lap. Stay chill. But also, go.'],
-      takeLead: ["P1. Chill. Stay chill. …Okay, but also don't lose it."],
+      takeLead: ["P1. Chill. Stay chill. …Okay, but also don't let them pass you."],
       overtake: ["Nice. Smooth."],
       overtaken: ["Huh. He passed you. That's fine. Get him back."],
       attack: ["A little gift for whoever's behind us."],
-      slip: ["Hey, that's embarrassing!"],
+      slip: ["Oh, no! That's embarrassing!"],
       batsHit: ["Bats. Cool. Cool, cool. Where's the road?"],
       comeback: ["Okay, mate! Parallel world, here I come!"],
-      win: [['P1. Told you, no stress.', '…Okay, I was a little stressed.']],
+      win: [['P1. No wayyy.', 'You were amazing.']],
       podium: ["Podium's nice. Winning's nicer. Next one."],
-      lose: [['Huh. Okay.', { t: 'Rematch. Right now.', mood: 'hype' }]],
+      lose: [['Huh. Okay. No problem.', { t: 'Rematch. We can do it, together.', mood: 'hype' }]],
     },
   },
   {
@@ -105,7 +105,7 @@ export const DRIVERS = [
       podium: ['jaybull-2.png'],
     },
     lines: {
-      select: ["I've studied this track a lot. Like, a lot. Let's go, Engene."],
+      select: ["I've studied this track a lot. Like, a LOT. Let's go, Engene!"],
       start: [
         ['Fun fact: most overtakes here happen into turn one.', { t: "So let's make one.", mood: 'hype' }],
         ['Tyres are cold for the first half lap.', 'Take it easy, then trust the grip. I trust you.'],
@@ -121,7 +121,7 @@ export const DRIVERS = [
       comeback: ["Parallel world! Let's take the lead. We earned it!"],
       win: [['P1. The data said we could do it.', "But the data didn't drive. You did."]],
       podium: ["Podium. Good points. I'll go through the telemetry with you later."],
-      lose: [['Not our day. It happens to the best teams.', { t: "I'll look at the data. One more vote and we go again.", mood: 'normal' }]],
+      lose: [['Not our day. It happens to the best teams.', { t: "I'll look at the data. We can do it next time.", mood: 'normal' }]],
     },
   },
   {
@@ -147,10 +147,10 @@ export const DRIVERS = [
       attack: ["A little treat for the ones behind us~"],
       slip: ["Whoa! Slippery! You okay?"],
       batsHit: ["It's dark! But I know you can do it blind. Go!"],
-      comeback: ["Legendary! A parallel world, and we're blooming! Go go go!"],
-      win: [['P1! I knew it, I knew it!', 'Victory hug. Over the radio. It counts.']],
+      comeback: ["Legendary! A parallel world, go go go!"],
+      win: [['P1! I knew it, I knew it!', 'Mint choco ice cream to celebrate?']],
       podium: ['Podium! You were amazing. I mean it.'],
-      lose: [['Hey, look at me. You did great.', { t: "And next time? We don't lose. Promise.", mood: 'hype' }]],
+      lose: [['Hey, look at me. You did great.', { t: "And next time? We'll show our speed.", mood: 'hype' }]],
     },
   },
   {
@@ -163,18 +163,18 @@ export const DRIVERS = [
       end: ['hoonrari-3.png'],
     },
     lines: {
-      select: ["Fast laps? Let's go."],
+      select: ["Engene, fast laps? Let's go. We can do it."],
       start: [
         ['Ready?', { t: 'Good. Me too.', mood: 'hype' }],
       ],
-      miniTurbo: ['Nice. Again.'],
+      miniTurbo: ['Nice. Again!'],
       lastLap: ['Last lap. Enjoy it.'],
       takeLead: ["P1. Feels good, right?"],
       overtake: ["Yes. That's the feeling."],
-      overtaken: ["He's quick. Good. Make it a race."],
+      overtaken: ["He's quick. But we're better!"],
       attack: ["Enjoy the view from behind."],
       slip: ["Slippery. Fun. Go again."],
-      batsHit: ["Can't see. I love chaos."],
+      batsHit: ["UAAA! I can't see."],
       comeback: ["Parallel world. Now we're talking."],
       win: [['P1.', 'That was fun. Thank you, Engene.']],
       podium: ['Podium. Good race. I liked that one.'],
@@ -191,7 +191,7 @@ export const DRIVERS = [
       thumb: 1.1,
     },
     lines: {
-      select: ["Engene, you picked us? Good choice. Now let's not waste it."],
+      select: ["Engene, you picked us? Good choice."],
       start: [
         ['Radio check. Engene, you there?', "Okay. Mirrors, focus, hands on the wheel. I'm serious.", { t: "…Mostly serious. Let's go.", mood: 'hype' }],
         ['Three laps. I believe in you.', { t: 'Now prove me right.', mood: 'hype' }],
@@ -204,9 +204,9 @@ export const DRIVERS = [
       attack: ["Sorry, not sorry."],
       slip: ["You slipped on a popsicle. Really?"],
       batsHit: ["AAA Bats! Stay calm, you know this track by heart."],
-      comeback: ["Parallel world, activated. Time to bloom."],
+      comeback: ["YOIII Parallel world, activated."],
       win: [['P1! Engene, you did that!', "I'm not crying. The visor is fogged."]],
-      podium: ["Podium. I'm proud of you. Next time, top step. That's an order."],
+      podium: ["Podium. I'm proud of you. Next time, top step."],
       lose: [["Hey. Don't be sad.", { t: 'We learn, we go again. Together.', mood: 'normal' }]],
     },
   },
@@ -220,7 +220,7 @@ export const DRIVERS = [
       podium: ['rikston-3.png', 'rikston-4.png'],
     },
     lines: {
-      select: ["…Let's win."],
+      select: ["Engene. Let's win. Together."],
       start: [
         ['Ready.', "I've got your back. Whole race."],
       ],
@@ -233,9 +233,9 @@ export const DRIVERS = [
       slip: ["Forget it. Next corner. I'm with you."],
       batsHit: ["Can't see? Don't stop. I'm here by your side."],
       comeback: ["Parallel world. Last place isn't where we end."],
-      win: [['P1.', '…Knew you could.']],
-      podium: ['Podium. Not enough. Again.'],
-      lose: [['No.', { t: "Again. I'm not leaving until we win. You're not either.", mood: 'hype' }]],
+      win: [['P1.', "…Knew you could. You're amazing, Engene."]],
+      podium: ['Podium. Not bad. What about 1st place next time?'],
+      lose: [['Uhm.', { t: "I'm not leaving until we win, because Engene deserves 1st place.", mood: 'hype' }]],
     },
   },
 ];
