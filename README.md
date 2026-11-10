@@ -132,6 +132,15 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 - **Result card** (`frontend/src/share.js`): on the results screen, SHARE RESULT opens the phone's share sheet with a 1080×1350 image (race scene, position, driver drawing cut at mid-leg, track, times, the call to vote, link and a tiny signature) and a ready-made text. The card is drawn as soon as the results appear, because iOS only opens the share sheet straight from a tap. Where files can't be shared (desktop, some in-app browsers) the card opens in a window to long-press or download, with COPY LINK.
 - **Call to vote**: until the end of Nov 20 (KST) the card has a red band "NOV 20 · MAMA AWARDS LIVE VOTING / VOTE ENHYPEN ON MNET PLUS" for the live voting during the MAMA broadcast, and the post text says the same; then both go back to "VOTE ENHYPEN AT THE MAMA AWARDS" on their own. `LIVE_VOTE` at the top of `share.js` sets the text and the end date for the next event.
 
+## Stats
+
+Anonymous usage stats are counted by the API itself, in its database: no external service, no cookies, no IPs stored.
+
+- The game sends a few events (`frontend/src/stats.js`): the visit with its source (Instagram, X, TikTok, KakaoTalk… from the app's built-in browser, the referring site or `?utm_source=`), the device, how it is opened (browser, in-app browser, installed app), races started (track and team), races finished (win, podium, finished), shares and app installs. The API counts certificate uploads by outcome (accepted, not ENHYPEN, already used…).
+- Only daily totals are stored (`stat_counter`). Unique visitors are counted with a hash of IP + browser + day and a random salt kept in memory that changes every day: nobody can be recognised from one day to the next, and nothing personal reaches the disk.
+- **The stats page** is `https://e1kart.rrriooo.com/stats.html` (not linked anywhere, not indexed). It asks for the token set in `.env` as `E1KART_STATS_TOKEN` (generate it with `openssl rand -hex 24`, then `docker compose up -d`). Without a token the page is off; the events are still counted.
+- To see which post brings players, share links with a source, e.g. `https://e1kart.rrriooo.com/?utm_source=x-launch`.
+
 ## How certificate redemption works
 
 The checks are those of the collab verifier (`e1-social-race`, `/collab-verify`), ported to Java, but **lenient**: when in doubt the certificate is accepted. It is refused only when it is surely not an ENHYPEN certificate, or surely a duplicate. The cases the verifier sends to manual review are accepted here.

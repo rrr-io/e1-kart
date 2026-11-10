@@ -18,7 +18,9 @@ public record E1KartProperties(
         int maxConcurrentOcr,
         int uploadRateLimitPerMinute,
         List<VoteWindow> voteWindows,
-        String enhypenRefsDir) {
+        String enhypenRefsDir,
+        String statsToken,
+        String statsZone) {
 
     public E1KartProperties {
         voteWindows = voteWindows == null ? List.of() : List.copyOf(voteWindows);

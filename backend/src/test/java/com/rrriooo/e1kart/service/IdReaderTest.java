@@ -22,7 +22,7 @@ class IdReaderTest {
     }
 
     private static String id(String name) throws IOException {
-        E1KartProperties props = new E1KartProperties("x".repeat(32), true, 1, "Asia/Seoul", "tesseract", 20, 2, 6, List.of(), "");
+        E1KartProperties props = new E1KartProperties("x".repeat(32), true, 1, "Asia/Seoul", "tesseract", 20, 2, 6, List.of(), "", "", "Europe/Rome");
         IdReader reader = new IdReader(props, new OcrService(props));
         return IdVotes.consensus(reader.read(CertificateImage.normalise(CertificateImageTest.image(name)).image()));
     }

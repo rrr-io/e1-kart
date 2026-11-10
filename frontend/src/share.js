@@ -8,6 +8,8 @@ import { TEAMS } from './config.js';
 import { TRACK } from './theme.js';
 import { portraitImage, nameOf } from './dialogue.js';
 import { fmt } from './hud.js';
+import { TRACK_ID } from './theme.js';
+import { track } from './stats.js';
 
 const W = 1080, H = 1350;
 const URL_TEXT = 'e1kart.rrriooo.com';
@@ -158,6 +160,7 @@ async function drawCard(r) {
 
 /** Called when the results appear: draws the card in the background and enables SHARE. */
 export async function prepareShare(r) {
+  track('race_finish', TRACK_ID + ':' + (r.pos === 1 ? 'win' : r.pos <= 3 ? 'podium' : 'finished'));
   const my = ++token;
   ready = null;
   const btn = $('share');
@@ -171,7 +174,7 @@ export async function prepareShare(r) {
     const team = TEAMS[r.team];
     const text = (r.pos === 1 ? 'I won' : 'I finished ' + ordinal(r.pos).toLowerCase()) + ' the ' + TRACK.name.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) +
       ' with ' + nameOf(r.team) + ' (' + team.name + ') in ' + fmt(r.time) + ' 🏁 Can you beat me in E1 Kart GP? ' +
-      (liveVote() ? LIVE_VOTE.post : 'Vote ENHYPEN at the MAMA AWARDS!') + ' #E1KartGP #ENHYPEN';
+      (liveVote() ? LIVE_VOTE.post : 'Vote ENHYPEN at the MAMA AWARDS!') + ' #EMGP2026 #2026MAMAVOTE #ENHYPEN';
     ready = { blob, file: new File([blob], 'e1-kart-gp.png', { type: 'image/png' }), text, url: LINK };
     btn.disabled = false;
   } catch (e) {
@@ -194,11 +197,13 @@ $('share').onclick = async () => {
   if (navigator.canShare && navigator.canShare(data)) {
     try {
       await navigator.share(data);
+      track('share', 'sheet');
       return;
     } catch (e) {
       if (e && e.name === 'AbortError') return; // the player closed the share sheet
     }
   }
+  track('share', 'window');
   showCard();
 };
 $('shareClose').onclick = () => { $('shareView').hidden = true; };
@@ -206,6 +211,7 @@ $('shareCopy').onclick = async () => {
   const btn = $('shareCopy'), s = ready ? ready.text + ' ' + ready.url : LINK;
   try {
     await navigator.clipboard.writeText(s);
+    track('share', 'copy-link');
     btn.textContent = 'COPIED ✓';
   } catch (e) {
     btn.textContent = URL_TEXT; // no clipboard: at least show the address

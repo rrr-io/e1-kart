@@ -16,6 +16,8 @@ public enum ErrorCode {
     NO_RUNS(402, "You have no runs left. Upload a new voting certificate."),
     RUN_NOT_FOUND(404, "Race not found."),
     RATE_LIMITED(429, "Too many uploads in a short time. Try again in a minute."),
+    NOT_FOUND(404, "Not found."),
+    NOT_AUTHORIZED(401, "Wrong or missing stats token."),
     OCR_FAILED(503, "Couldn't read the certificate. Try again shortly.");
 
     private final int status;

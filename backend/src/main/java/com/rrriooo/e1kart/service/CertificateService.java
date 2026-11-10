@@ -57,10 +57,11 @@ public class CertificateService {
     private final RunService runService;
     private final RateLimiter rateLimiter;
     private final E1KartProperties props;
+    private final StatsService stats;
 
     public CertificateService(OcrService ocr, IdReader idReader, EnhypenMatcher enhypen, CertificateParser parser,
                               CertificateIdHasher hasher, CertificateRepository certificates,
-                              RunService runService, RateLimiter rateLimiter, E1KartProperties props) {
+                              RunService runService, RateLimiter rateLimiter, E1KartProperties props, StatsService stats) {
         this.ocr = ocr;
         this.idReader = idReader;
         this.enhypen = enhypen;
@@ -70,10 +71,23 @@ public class CertificateService {
         this.runService = runService;
         this.rateLimiter = rateLimiter;
         this.props = props;
+        this.stats = stats;
     }
 
+    /** Redeems the certificate and counts the outcome in the stats (accepted, or the error code). */
     public RedeemResponse redeem(Player player, MultipartFile file, String clientIp) {
         rateLimiter.check("player:" + player.getId(), "ip:" + clientIp);
+        try {
+            RedeemResponse r = check(player, file);
+            stats.count("certificate", "accepted");
+            return r;
+        } catch (ApiException e) {
+            stats.count("certificate", e.code().name());
+            throw e;
+        }
+    }
+
+    private RedeemResponse check(Player player, MultipartFile file) {
 
         if (file == null || file.isEmpty() || file.getContentType() == null || !ACCEPTED_TYPES.contains(file.getContentType().toLowerCase())) {
             throw new ApiException(ErrorCode.UNSUPPORTED_FILE);

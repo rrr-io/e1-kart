@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>E1 Kart GP · Stats</title>
+  <style>
+    :root { --ink:#0b0b0d; --panel:#0d1630; --edge:rgba(159,208,255,.18); --moon:#9fd0ff; --dim:#7c8fc2; --paper:#fff; --red:#E10600; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--ink); color: var(--paper); font: 15px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 18px; letter-spacing: 2px; margin: 0 0 4px; }
+    h1 b { color: var(--red); }
+    p.sub { margin: 0 0 18px; color: var(--dim); font-size: 13px; }
+    form, .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+    input, select, button { font: inherit; color: var(--paper); background: var(--panel); border: 1px solid var(--edge); padding: 8px 10px; }
+    button { cursor: pointer; background: var(--red); border-color: var(--red); }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 22px; }
+    .tile { background: var(--panel); border: 1px solid var(--edge); padding: 10px 12px; }
+    .tile span { display: block; color: var(--dim); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .tile b { font-size: 26px; font-variant-numeric: tabular-nums; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    section { background: var(--panel); border: 1px solid var(--edge); padding: 12px; overflow-x: auto; }
+    section.wide { grid-column: 1 / -1; }
+    h2 { margin: 0 0 8px; font-size: 12px; letter-spacing: 1.5px; color: var(--moon); text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid rgba(159,208,255,.08); white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--dim); font-weight: normal; font-size: 12px; }
+    td.barcell { width: 45%; }
+    .b { height: 8px; background: var(--moon); opacity: .75; }
+    .err { color: #ff8a80; }
+    .empty { color: var(--dim); }
+  </style>
+</head>
+<body>
+<main>
+  <h1><b>E1</b> KART GP · STATS</h1>
+  <p class="sub">Anonymous daily totals counted by the game's server: no cookies, no IPs stored. Unique visitors are counted per day.</p>
+
+  <form id="login">
+    <input id="token" type="password" placeholder="Stats token" autocomplete="current-password" size="30">
+    <select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select>
+    <button>SHOW</button>
+    <span id="msg"></span>
+  </form>
+
+  <div id="out"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+try { $('token').value = localStorage.getItem('e1kart.statsToken') || ''; } catch (e) { /* no storage */ }
+
+const LABELS = {
+  accepted: 'accepted', not_enhypen: 'not ENHYPEN', enhypen_not_last: 'not ENHYPEN (not last)', already_used: 'already used',
+  not_a_certificate: 'not a certificate', rate_limited: 'too many uploads', unsupported_file: 'not an image', file_too_large: 'too large',
+  ocr_failed: 'server busy (OCR)', no_runs: 'no runs',
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function load(e) {
+  if (e) e.preventDefault();
+  const token = $('token').value.trim();
+  $('msg').textContent = 'Loading…'; $('msg').className = '';
+  try {
+    const res = await fetch('/api/stats?days=' + $('days').value, { headers: { 'X-Stats-Token': token } });
+    if (res.status === 404) throw new Error('Stats page is off: set E1KART_STATS_TOKEN on the server.');
+    if (res.status === 401) throw new Error('Wrong token.');
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const rows = await res.json();
+    try { localStorage.setItem('e1kart.statsToken', token); } catch (err) { /* no storage */ }
+    $('msg').textContent = '';
+    render(rows);
+  } catch (err) {
+    $('msg').textContent = err.message; $('msg').className = 'err';
+  }
+}
+$('login').addEventListener('submit', load);
+if ($('token').value) load();
+
+function sum(rows, name, dim) {
+  return rows.filter((r) => r.name === name && (dim === undefined || r.dim === dim)).reduce((a, r) => a + r.count, 0);
+}
+function byDim(rows, name, map) {
+  const m = new Map();
+  rows.filter((r) => r.name === name).forEach((r) => { const k = map ? map(r.dim) : r.dim; m.set(k, (m.get(k) || 0) + r.count); });
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+function table(title, entries, wide) {
+  const max = Math.max(1, ...entries.map((e) => e[1]));
+  const body = entries.length
+    ? entries.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td><td class="barcell"><div class="b" style="width:${(v / max * 100).toFixed(1)}%"></div></td></tr>`).join('')
+    : '<tr><td class="empty" colspan="3">No data yet</td></tr>';
+  return `<section${wide ? ' class="wide"' : ''}><h2>${esc(title)}</h2><table>${body}</table></section>`;
+}
+
+function render(rows) {
+  const tiles = [
+    ['Unique visitors', sum(rows, 'visitor')], ['Visits', sum(rows, 'visit')], ['Races started', sum(rows, 'race_start')],
+    ['Races finished', sum(rows, 'race_finish')], ['Certificates accepted', sum(rows, 'certificate', 'accepted')],
+    ['Certificates refused', sum(rows, 'certificate') - sum(rows, 'certificate', 'accepted')], ['Shares', sum(rows, 'share')], ['App installs', sum(rows, 'install')],
+  ].map(([k, v]) => `<div class="tile"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  const days = [...new Set(rows.map((r) => r.day))].sort().reverse();
+  const daily = days.map((d) => {
+    const r = rows.filter((x) => x.day === d);
+    return `<tr><td>${d}</td><td>${sum(r, 'visitor')}</td><td>${sum(r, 'visit')}</td><td>${sum(r, 'race_start')}</td><td>${sum(r, 'race_finish')}</td><td>${sum(r, 'certificate', 'accepted')}</td><td>${sum(r, 'share')}</td></tr>`;
+  }).join('') || '<tr><td class="empty" colspan="7">No data yet</td></tr>';
+
+  $('out').innerHTML = `<div class="tiles">${tiles}</div><div class="grid">
+    <section class="wide"><h2>Day by day</h2><table><tr><th>Day</th><th>Visitors</th><th>Visits</th><th>Races</th><th>Finished</th><th>Certificates</th><th>Shares</th></tr>${daily}</table></section>
+    ${table('Where visits come from', byDim(rows, 'visit'))}
+    ${table('Device', byDim(rows, 'device'))}
+    ${table('Opened as', byDim(rows, 'mode'))}
+    ${table('Races by track', byDim(rows, 'race_start', (d) => d.split(':')[0]))}
+    ${table('Races by team', byDim(rows, 'race_start', (d) => d.split(':')[1] || d))}
+    ${table('Race results', byDim(rows, 'race_finish', (d) => d.replace(':', ' · ')))}
+    ${table('Certificate uploads', byDim(rows, 'certificate', (d) => LABELS[d] || d))}
+    ${table('Shares', byDim(rows, 'share'))}
+  </div>`;
+}
+</script>
+</body>
+</html>

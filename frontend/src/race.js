@@ -14,11 +14,13 @@ import { wantMusic, prepareMusic, fadeOutMusic, setTempo, sfx } from './audio.js
 
 const FADE = 0.7; // seconds of menu-music fade between the dialogue and the countdown
 import { TRACK_ID } from './theme.js';
+import { track } from './stats.js';
 
 const COUNTDOWN = 3.6;
 const PLAYER_SLOT = 3;
 
 export function setupRace() {
+  track('race_start', TRACK_ID + ':' + TEAMS[settings.teamIdx].name.split(' ')[0]);
   const others = [...TEAMS.keys()].filter((k) => k !== settings.teamIdx);
   G.cpus = [];
   let ck = 0;
