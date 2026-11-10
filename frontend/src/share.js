@@ -12,6 +12,11 @@ import { fmt } from './hud.js';
 const W = 1080, H = 1350;
 const URL_TEXT = 'e1kart.rrriooo.com';
 const LINK = 'https://e1kart.rrriooo.com';
+// The next action for ENHYPEN: the live voting during the MAMA AWARDS broadcast. Until it ends the card
+// reminds it; afterwards it falls back to the general call to vote. Update for the next event.
+const LIVE_VOTE = { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · MAMA AWARDS LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
+  post: 'Nov 20: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' };
+const liveVote = () => Date.now() < LIVE_VOTE.until;
 const logoUrl = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 
 let ready = null;   // { blob, file, text, url } of the last results, or null while drawing
@@ -37,6 +42,33 @@ function text(g, s, x, y, font, color, shadow = 6, align = 'left') {
   g.fillText(s, x + shadow, y + shadow);
   g.fillStyle = color;
   g.fillText(s, x, y);
+}
+
+/**
+ * Row where the drawing is cut, at mid-leg: the belt (the longest dark run across the middle of the
+ * lower body) plus 17% of its height, since bigger drawings have longer legs. Some drawings already end
+ * at mid-leg, others show the feet: this way every card cuts the driver at the same point.
+ */
+function legCut(img) {
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, w, h).data;
+  let belt = -1, longest = 0;
+  for (let y = Math.round(h * 0.67); y < h; y++) {
+    let run = 0;
+    for (let x = Math.round(w * 0.2); x < Math.round(w * 0.8); x++) {
+      const i = (y * w + x) * 4;
+      if (d[i + 3] > 0 && d[i] < 70 && d[i + 1] < 70 && d[i + 2] < 70) {
+        run++;
+        if (run > longest) { longest = run; belt = y; }
+      } else run = 0;
+    }
+  }
+  if (belt < 0 || longest < w * 0.2) return h; // no belt found: the whole drawing
+  return Math.min(h, belt + Math.round(belt * 0.17));
 }
 
 async function drawCard(r) {
@@ -79,11 +111,12 @@ async function drawCard(r) {
   if (logo) g.drawImage(logo, 56, 56, logo.width * 4, logo.height * 4);
   text(g, 'MAMA GRAND PRIX 2026', 60, 290, '24px "Press Start 2P"', '#ffffff', 4);
 
-  // Driver drawing, large, standing on the panel
+  // Driver drawing, large, cut at mid-leg by the panel (the same cut for every driver)
   if (portrait) {
     const s = Math.max(1, Math.floor(640 / portrait.naturalHeight));
-    const pw = portrait.naturalWidth * s, ph = portrait.naturalHeight * s;
-    g.drawImage(portrait, W - pw - 30, 960 - ph, pw, ph);
+    const cut = legCut(portrait);
+    const pw = portrait.naturalWidth * s, ph = cut * s;
+    g.drawImage(portrait, 0, 0, portrait.naturalWidth, cut, W - pw - 30, 960 - ph, pw, ph);
   }
 
   // Position and verdict
@@ -108,8 +141,16 @@ async function drawCard(r) {
   });
 
   // Footer: what E1 is about, the link, and a tiny signature
-  text(g, 'VOTE ENHYPEN AT THE MAMA AWARDS', W / 2, 1262, '24px "Press Start 2P"', '#ffffff', 4, 'center');
-  text(g, URL_TEXT, W / 2, 1312, '40px "VT323"', '#9fd0ff', 0, 'center');
+  if (liveVote()) {
+    // a red band, like a race flag, with the date of the live voting
+    g.fillStyle = '#E10600';
+    g.fillRect(40, 1222, W - 80, 76);
+    text(g, LIVE_VOTE.card[0], W / 2, 1253, '20px "Press Start 2P"', '#ffffff', 3, 'center');
+    text(g, LIVE_VOTE.card[1], W / 2, 1285, '20px "Press Start 2P"', '#ffffff', 3, 'center');
+  } else {
+    text(g, 'VOTE ENHYPEN AT THE MAMA AWARDS', W / 2, 1268, '24px "Press Start 2P"', '#ffffff', 4, 'center');
+  }
+  text(g, URL_TEXT, W / 2, 1334, '36px "VT323"', '#9fd0ff', 0, 'center');
   text(g, 'by rrr.i.ooo', W - 24, H - 14, '22px "VT323"', '#4a5578', 0, 'right');
 
   return new Promise((resolve) => c.toBlob(resolve, 'image/png'));
@@ -129,7 +170,8 @@ export async function prepareShare(r) {
     if (my !== token || !blob) return;
     const team = TEAMS[r.team];
     const text = (r.pos === 1 ? 'I won' : 'I finished ' + ordinal(r.pos).toLowerCase()) + ' the ' + TRACK.name.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) +
-      ' with ' + nameOf(r.team) + ' (' + team.name + ') in ' + fmt(r.time) + ' 🏁 Can you beat me in E1 Kart GP? Vote ENHYPEN at the MAMA AWARDS! #E1KartGP #ENHYPEN';
+      ' with ' + nameOf(r.team) + ' (' + team.name + ') in ' + fmt(r.time) + ' 🏁 Can you beat me in E1 Kart GP? ' +
+      (liveVote() ? LIVE_VOTE.post : 'Vote ENHYPEN at the MAMA AWARDS!') + ' #E1KartGP #ENHYPEN';
     ready = { blob, file: new File([blob], 'e1-kart-gp.png', { type: 'image/png' }), text, url: LINK };
     btn.disabled = false;
   } catch (e) {

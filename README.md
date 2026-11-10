@@ -129,7 +129,8 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 ## Sharing
 
 - **Link preview**: `index.html` has Open Graph and Twitter Card tags with `frontend/public/og-image.jpg` (1200×630), so a link to the game shows the E1 logo, the red kart on the Night Circuit and "ENGENEs racing as one for ENHYPEN · vote ENHYPEN at the MAMA AWARDS" on X, Instagram, Discord, KakaoTalk and WhatsApp. The tags use the absolute address `https://e1kart.rrriooo.com/`: change it there if the domain changes.
-- **Result card** (`frontend/src/share.js`): on the results screen, SHARE RESULT opens the phone's share sheet with a 1080×1350 image (race scene, position, driver drawing, track, times, "vote ENHYPEN at the MAMA AWARDS", link and a tiny signature) and a ready-made text. The card is drawn as soon as the results appear, because iOS only opens the share sheet straight from a tap. Where files can't be shared (desktop, some in-app browsers) the card opens in a window to long-press or download, with COPY LINK.
+- **Result card** (`frontend/src/share.js`): on the results screen, SHARE RESULT opens the phone's share sheet with a 1080×1350 image (race scene, position, driver drawing cut at mid-leg, track, times, the call to vote, link and a tiny signature) and a ready-made text. The card is drawn as soon as the results appear, because iOS only opens the share sheet straight from a tap. Where files can't be shared (desktop, some in-app browsers) the card opens in a window to long-press or download, with COPY LINK.
+- **Call to vote**: until the end of Nov 20 (KST) the card has a red band "NOV 20 · MAMA AWARDS LIVE VOTING / VOTE ENHYPEN ON MNET PLUS" for the live voting during the MAMA broadcast, and the post text says the same; then both go back to "VOTE ENHYPEN AT THE MAMA AWARDS" on their own. `LIVE_VOTE` at the top of `share.js` sets the text and the end date for the next event.
 
 ## How certificate redemption works
 

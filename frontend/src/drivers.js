@@ -130,6 +130,7 @@ export const DRIVERS = [
     driver: 'SUNOO',
     portrait: {
       neutral: ['alpinoo-1.png', 'alpinoo-2.png'],
+      win: ['alpinoo-4.png'],
       podium: ['alpinoo-3.png', 'alpinoo-4.png'],
       thumb: 1.1,
     },
