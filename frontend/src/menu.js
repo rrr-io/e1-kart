@@ -8,6 +8,7 @@ import { renderAccount } from './account.js';
 import { showTeamIntro, hideRadio, applyTeam, nameOf } from './dialogue.js';
 import { resetItems } from './items.js';
 import { closeTrackBox } from './trackpick.js';
+import { wantMusic, setTempo, setSound } from './audio.js';
 
 $('logoE1').src = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 $('logoE1sm').src = new URL('./assets/brand/e1-logo-pixel-sm.png', import.meta.url).href;
@@ -72,12 +73,18 @@ export function buildMenu() {
     saveSettings();
     buildMenu();
   })));
+  $('snd').replaceChildren(...[[true, 'ON'], [false, 'OFF']].map(([v, l]) => chip('chipbtn', 'snd' + l, l, v === settings.sound, () => {
+    setSound(v);
+    buildMenu();
+  })));
   showTeamIntro(settings.teamIdx);
   renderAccount();
 }
 
 export function toMenu() {
   G.state = 'menu';
+  setTempo(1);
+  wantMusic('menu');
   setOptions(false);
   closeRunBox();
   closeTrackBox();

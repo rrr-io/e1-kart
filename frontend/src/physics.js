@@ -10,6 +10,7 @@ import { toast, banner, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
 import { rollFor, isReady, SLIP_T } from './itemdefs.js';
 import { useItem } from './items.js';
+import { sfx, setTempo, wantMusic } from './audio.js';
 
 // Driving parameters: tweak these to change the feel.
 export const TUNING = {
@@ -47,8 +48,8 @@ export function updatePlayer(dt) {
     p.drifting = true; p.ddir = Math.sign(steer); p.dT = 0; p.hop = 0.45;
   }
   if (p.drifting && (!input.drift || p.v < 9 || auto)) {
-    if (p.dT > TUNING.miniTurbo[1]) { boostFor(p, 1.35); toast('SUPER MINI-TURBO'); radio(p.team, 'miniTurbo'); }
-    else if (p.dT > TUNING.miniTurbo[0]) { boostFor(p, 0.75); toast('MINI-TURBO'); }
+    if (p.dT > TUNING.miniTurbo[1]) { boostFor(p, 1.35); toast('SUPER MINI-TURBO'); sfx('turbo'); radio(p.team, 'miniTurbo'); }
+    else if (p.dT > TUNING.miniTurbo[0]) { boostFor(p, 0.75); toast('MINI-TURBO'); sfx('turbo'); }
     p.drifting = false;
   }
 
@@ -98,8 +99,9 @@ export function updatePlayer(dt) {
       if (G.bestLap === null || lt < G.bestLap) G.bestLap = lt;
     }
     G.lapStart = G.raceT;
-    if (p.laps >= LAPS && G.state === 'race') { G.state = 'done'; p.finish = G.raceT; G.doneT = 0; banner('FINISH!', 1.8); }
-    else if (p.laps === LAPS - 1 && G.state === 'race') { banner('FINAL LAP', 1.4); radio(p.team, 'lastLap', true); }
+    if (p.laps >= LAPS && G.state === 'race') { G.state = 'done'; p.finish = G.raceT; G.doneT = 0; banner('FINISH!', 1.8); setTempo(1); wantMusic('finish'); }
+    else if (p.laps === LAPS - 1 && G.state === 'race') { banner('FINAL LAP', 1.4); radio(p.team, 'lastLap', true); sfx('finalLap'); setTempo(1.08); }
+    else if (p.laps >= 1 && G.state === 'race') sfx('lap');
   }
   p.prevIdx = i;
 
@@ -107,7 +109,7 @@ export function updatePlayer(dt) {
     pads.forEach((pd) => {
       let d = Math.abs(i - pd[0]);
       d = Math.min(d, N - d);
-      if (d < 5 && Math.abs(lat2 - pd[1]) < 2.4) { if (p.boost < 0.6) { toast('BOOST!'); burst('flare', p.x, 0.9, p.z, 4.5); } boostFor(p, 0.9); }
+      if (d < 5 && Math.abs(lat2 - pd[1]) < 2.4) { if (p.boost < 0.6) { toast('BOOST!'); sfx('boost'); burst('flare', p.x, 0.9, p.z, 4.5); } boostFor(p, 0.9); }
     });
   }
 
@@ -118,6 +120,7 @@ export function updatePlayer(dt) {
       b.m.visible = false; b.t = 4;
       burst('sparkle', b.m.position.x, 1.4, b.m.position.z, 4);
       for (let k = 0; k < 8; k++) spawn(b.m.position.x, 1.3, b.m.position.z, k % 2 ? '#E10600' : '#ffffff', (Math.random() - 0.5) * 8, Math.random() * 6, (Math.random() - 0.5) * 8, 0.6);
+      if (racing) sfx('pickup');
       if (!p.item && racing) { p.item = 'roll'; p.rollT = 0.9; }
     }
   });

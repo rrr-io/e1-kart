@@ -36,6 +36,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,woff,woff2}'],
         // API calls never go through the service worker cache.
         navigateFallbackDenylist: [/^\/api\//],
+        // Music files are big: not precached, but kept once played so the next races (and offline play) have them.
+        runtimeCaching: [{
+          urlPattern: /\/music\/.*\.mp3$/,
+          handler: 'CacheFirst',
+          options: { cacheName: 'e1kart-music', expiration: { maxEntries: 20 } },
+        }],
       },
     }),
   ],

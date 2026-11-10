@@ -13,6 +13,7 @@ import { spawn } from './particles.js';
 import { burst } from './fx.js';
 import { toast, playerPosition } from './hud.js';
 import { radio } from './dialogue.js';
+import { sfx } from './audio.js';
 import { rollFor, isReady, makeBatSheet, makeFlowerCanvas, FLOWER_PALETTES, SLIP_T, BATS_T, FLOWER_T, STICK_T } from './itemdefs.js';
 
 const POP_LIFE = 30;        // seconds a popsicle stays on the track
@@ -75,6 +76,7 @@ function dropPop(owner, x, z) {
 function slip(o) {
   if (o.ghost > 0 || o.slip > 0) return;
   o.slip = SLIP_T;
+  if (o === player) sfx('slip');
   burst('boom', o.x, 1.8, o.z, 7);
   for (let k = 0; k < 10; k++) spawn(o.x, 0.8, o.z, k % 2 ? '#E10600' : '#ffffff', (Math.random() - 0.5) * 9, 2 + Math.random() * 5, (Math.random() - 0.5) * 9, 0.6);
   if (o === player) {
@@ -187,6 +189,7 @@ function hitBats(o) {
   o.bats = BATS_T;
   burst('ring', o.x, 1.4, o.z, 7);
   if (o === player) {
+    sfx('bats');
     toast('BATS!');
     radio(o.team, 'batsHit', true);
   }
@@ -246,6 +249,7 @@ export function useItem(o) {
   const kind = o.item;
   o.item = null;
   const me = o === player;
+  if (me) sfx(kind === 'stick' || kind === 'flower' ? 'boost' : 'item');
   if (kind === 'stick') {
     boostFor(o, STICK_T);
     burst('flare', o.x, 1, o.z, 4.5);

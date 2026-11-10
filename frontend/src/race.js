@@ -10,6 +10,8 @@ import { placePlayer } from './physics.js';
 import { banner } from './hud.js';
 import { talk } from './dialogue.js';
 import { resetItems } from './items.js';
+import { wantMusic, setTempo, sfx } from './audio.js';
+import { TRACK_ID } from './theme.js';
 
 const COUNTDOWN = 3.6;
 const PLAYER_SLOT = 3;
@@ -52,6 +54,8 @@ export function setupRace() {
   $('results').hidden = true;
   updateCpus(0);
   placePlayer(0);
+  setTempo(1);
+  wantMusic(TRACK_ID);
   talk(settings.teamIdx, 'start').then(startCountdown);
 }
 
@@ -59,6 +63,7 @@ export function startCountdown() {
   if (G.state !== 'intro') return;
   G.state = 'count';
   $('controls').hidden = false;
+  sfx('countdown');
 }
 
 export function tickCountdown(dt) {
@@ -67,10 +72,11 @@ export function tickCountdown(dt) {
   startLights.forEach((l, k) => l.material.color.set(k < lit ? 0xff1a0a : 0x330000));
   const n = Math.ceil(G.countT - 0.6);
   const txt = n >= 1 && n <= 3 ? String(n) : '';
-  if (txt && $('banner').textContent !== txt) banner(txt, 0.7);
+  if (txt && $('banner').textContent !== txt) { banner(txt, 0.7); sfx('count'); }
   if (G.countT <= 0.6) {
     G.state = 'race';
     startLights.forEach((l) => l.material.color.set(0x29ff5a));
     banner('GO!', 0.8);
+    sfx('go');
   }
 }
