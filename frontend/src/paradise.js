@@ -18,6 +18,7 @@ import cloudsUrl from './assets/bloody/clouds.png';
 import atlasUrl from './assets/bloody/facade-atlas.png';
 import ATLAS from './assets/bloody/facade-atlas.json';
 import adsUrl from './assets/bloody/billboards.png';
+import shoreUrl from './assets/bloody/shore.png';
 import ADS from './assets/bloody/billboards.json';
 
 export const paradiseTexts = [];
@@ -35,13 +36,15 @@ const SEASIDE = [[650, 720], [0, 112]];
 const MARKET = [150, 276];
 const PRISON = [298, 472];
 const WEST = [492, 636];
-const SEA_Z = -40;           // the shore: the ocean starts south of here
+const SEA_Z = -24;           // the coast: the beach starts south of here
+const BEACH = 22;            // metres of dry sand before the shore strip (whose wet sand and water start ~15 m in)
 
 // ---------- Graffiti: our own colourful tags and blobs on a pale wall.
 function graffiti(seed, base = '#d8d2cc') {
   let s = seed;
   const r = () => ((s = (s * 48271) % 2147483647) / 2147483647);
-  return canvasTex(64, 16, (g, w, h) => {
+  const t = canvasTex(64, 16, (g, w, h) => {
+    s = seed;   // the same picture when redrawn
     g.fillStyle = base; g.fillRect(0, 0, w, h);
     const cols = ['#C8110E', '#2f8ad6', '#f2c12e', '#2fae6a', '#f06eb0', '#7a3fd0', '#1b1b20'];
     for (let k = 0; k < 9; k++) {
@@ -52,8 +55,23 @@ function graffiti(seed, base = '#d8d2cc') {
     }
     g.fillStyle = '#1b1b20';
     for (let k = 0; k < 14; k++) { const x = (r() * w) | 0, y = 2 + ((r() * (h - 4)) | 0); g.fillRect(x, y, 2 + ((r() * 4) | 0), 1); }
+    // The tag: ENHYPEN in a bright colour with a dark outline, a little off-centre and tilted.
+    s = seed;
+    const tag = ['#C8110E', '#f2c12e', '#f06eb0', '#2fae6a', '#2f8ad6'][(r() * 5) | 0];
+    g.save();
+    g.translate(w / 2 + (r() - 0.5) * 6, h / 2 + 1);
+    g.rotate((r() - 0.5) * 0.18);
+    g.font = '8px "Press Start 2P", monospace';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#1b1418';
+    [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]].forEach(([dx, dy]) => g.fillText('ENHYPEN', dx, dy));
+    g.fillStyle = tag;
+    g.fillText('ENHYPEN', 0, 0);
+    g.restore();
     g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, h - 2, w, 2);
   });
+  paradiseTexts.push(t);   // redrawn once the pixel font has loaded
+  return t;
 }
 
 // ---------- Buildings: one facade atlas, every building a different piece of it ----------
@@ -152,33 +170,76 @@ function adBoard(name, hgt) {
 }
 const frameM = tm(0x1b1418);
 /** A billboard on two legs beside the road at sample i, angled toward the oncoming karts. */
-function roadsideAd(i, side) {
-  const g = new THREE.Group(), name = nextAd();
+function roadsideAd(i, side, name = nextAd()) {
+  const g = new THREE.Group();
   const [board, bw] = adBoard(name, name === 'route' ? 9 : 7);
   const y = 8 + (name === 'route' ? 1 : 0);
   board.position.y = y; g.add(board);
   const frame = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.8, (name === 'route' ? 9 : 7) + 0.8, 0.3), frameM);
   frame.position.set(0, y, -0.2); g.add(frame);
-  [-bw / 3, bw / 3].forEach((x) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, y, 0.5), frameM); l.position.set(x, y / 2, -0.4); l.castShadow = true; g.add(l); });
+  // Seen from behind: a grey steel back with a grid of struts, so it reads as a billboard and not a black slab.
+  const backM = tm(0x7a726c), bh = name === 'route' ? 9 : 7;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.6, bh + 0.6, 0.1), backM); back.position.set(0, y, -0.4); g.add(back);
+  for (let k = -1; k <= 1; k++) { const st = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.6, 0.25, 0.25), frameM); st.position.set(0, y + k * bh / 3, -0.55); g.add(st); }
+  const footM = tm(0xb8ada0);
+  [-bw / 3, bw / 3].forEach((x) => {
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.8, y, 0.8), frameM); l.position.set(x, y / 2, -0.75); l.castShadow = true; g.add(l);
+    const f = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 1.6), footM); f.position.set(x, 0.3, -0.75); g.add(f);   // concrete footing
+  });
+  const cross = new THREE.Mesh(new THREE.BoxGeometry((bw * 2) / 3, 0.3, 0.3), frameM); cross.position.set(0, y * 0.45, -0.75); g.add(cross);
+  const walk = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.12, 0.8), frameM); walk.position.set(0, y - (name === 'route' ? 4.6 : 3.6), 0.25); g.add(walk);
   const lamp = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.8, 0.3, 0.6), bm(0xffe0a0));
   lamp.position.set(0, y + (name === 'route' ? 4.9 : 3.9), 0.4); g.add(lamp);
-  const o = off(i, side * (HALF + 13));
+  const o = off(i, side * (HALF + 7 + bw / 4));
   g.position.set(o[0], 0, o[1]);
-  g.rotation.y = yawAt(i) + Math.PI - side * 0.5;
+  g.rotation.y = yawAt(i) + Math.PI - side * 0.3;
   add(g);
 }
-/** A billboard on a building's roof, facing the road (and a little toward the oncoming karts). */
-function roofAd(grp, d, h, side) {
-  const name = nextAd(), hgt = name === 'route' ? 6 : 4.5;
+/** A billboard hung over the road from a gantry at sample i, facing the oncoming karts: impossible to miss. */
+function overheadAd(i, name) {
+  const g = new THREE.Group(), hgt = name === 'route' ? 8 : 6;
   const [board, bw] = adBoard(name, hgt);
-  const b = new THREE.Group();
-  board.position.y = h + 1.6 + hgt / 2; b.add(board);
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.5, hgt + 0.5, 0.2), frameM);
-  frame.position.set(0, board.position.y, -0.15); b.add(frame);
-  [-bw / 3, bw / 3].forEach((x) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.8, 0.25), frameM); l.position.set(x, h + 0.9, -0.3); b.add(l); });
+  const y = 6.5 + hgt / 2;
+  board.position.y = y; g.add(board);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.8, hgt + 0.8, 0.3), frameM);
+  frame.position.set(0, y, -0.2); g.add(frame);   // behind the picture (the group faces the karts)
+  const span = HALF * 2 + 6;
+  [-1, 1].forEach((sx) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.7, y + hgt / 2 + 1, 0.7), frameM); p.position.set(sx * span / 2, (y + hgt / 2 + 1) / 2, -0.4); p.castShadow = true; g.add(p);
+    const f = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 1.4), tm(0xb8ada0)); f.position.set(sx * span / 2, 0.25, -0.4); g.add(f); });
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(span, 0.6, 0.6), frameM); beam.position.set(0, y + hgt / 2 + 0.7, -0.4); g.add(beam);
+  const o = off(i, 0);
+  g.position.set(o[0], 0, o[1]);
+  g.rotation.y = yawAt(i) + Math.PI;
+  add(g);
+}
+/**
+ * A billboard standing on a building's roof, parallel to its street front and facing the road: never wider than the
+ * roof, on legs and braces down to the roof, with a catwalk and two lamps, so it sits on the building.
+ */
+function roofAd(grp, d, h, w, side) {
+  const name = nextAd(), [,, pw, ph] = ADS.rects[name];
+  const hgt = Math.min(name === 'route' ? 6 : 4.5, ((Math.min(w, d) - 1.6) * ph) / pw);
+  const [board, bw] = adBoard(name, hgt);
+  // Raised well above the roof, so it clears the neighbouring buildings.
+  const b = new THREE.Group(), base = h + 3.2, cy = base + hgt / 2;
+  board.position.y = cy; b.add(board);
+  const box = (sx, sy, sz, x, y, z, rx = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), frameM); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; b.add(m); return m; };
+  box(bw + 0.4, hgt + 0.4, 0.2, 0, cy, -0.15);                                   // frame behind the picture
+  [-bw / 2 + 0.4, 0, bw / 2 - 0.4].forEach((x) => {
+    box(0.22, base - h + hgt * 0.7, 0.22, x, h + (base - h + hgt * 0.7) / 2, -0.35);   // leg from the roof
+    box(0.16, 2.6, 0.16, x, h + 1.1, -1.1, 0.62);                                 // brace back to the roof
+  });
+  box(bw + 0.2, 0.12, 0.8, 0, base - 0.1, 0.35);                                  // catwalk
+  [-bw / 4, bw / 4].forEach((x) => {
+    box(0.1, 0.1, 0.9, x, base + hgt + 0.25, 0.3);                                // lamp arm
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.2, 0.3), bm(0xffe0a0)); l.position.set(x, base + hgt + 0.2, 0.75); b.add(l);
+  });
+  // The picture faces the road and turns ~30° toward the oncoming karts (local -side x, -z), so it isn't seen edge-on;
+  // it fits in the roof square, legs and braces on the roof.
   b.rotation.y = Math.atan2(-side, -0.6);
-  b.position.x = -side * (d / 2 - 1);
+  b.position.x = -side * Math.max(0, d / 2 - bw * 0.45 - 0.8);
   grp.add(b);
+  if (import.meta.env.DEV) (window.__roofAds = window.__roofAds || []).push(b);   // for checking them in tests
 }
 
 /** A building on one side of the track at sample i (front facing the road). */
@@ -186,7 +247,7 @@ function building(i, side, { w = 14, d = 10, h = 12, ids: pool = TOWN_IDS, id, g
   const grp = new THREE.Group();
   const m = new THREE.Mesh(facadeBox(d, h, w, id || pick(pool), from), facadeM);
   m.position.y = h / 2; m.castShadow = true; grp.add(m);
-  if (roof && h < 16 && w > 11 && rand() < 0.16) roofAd(grp, d, h, side);
+  if (roof && h < 16 && w > 11 && rand() < 0.16) roofAd(grp, d, h, w, side);
   else if (roof) roofTop(grp, d, h, w);
   if (shop) shopFront(grp, d, h, w, -side);
   const o = off(i, side * (HALF + gap + d / 2));
@@ -282,6 +343,9 @@ function sidewalk(range) {
   scene.add(m);
 }
 const binG = new THREE.CylinderGeometry(0.4, 0.35, 1, 8), potG = new THREE.CylinderGeometry(0.45, 0.35, 0.7, 8), bushG = new THREE.IcosahedronGeometry(0.7, 0);
+const benchG = new THREE.BoxGeometry(0.8, 0.12, 2.4), benchBackG = new THREE.BoxGeometry(0.1, 0.7, 2.4), benchLegG = new THREE.BoxGeometry(0.7, 0.5, 2.2);
+const planterG = new THREE.BoxGeometry(1.4, 0.8, 1.4), lampPostG = new THREE.CylinderGeometry(0.1, 0.12, 4, 6), globeG = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+const kioskG = new THREE.BoxGeometry(1.8, 2.4, 1.8), kioskRoofG = new THREE.BoxGeometry(2.4, 0.3, 2.4);
 const crateG = new THREE.BoxGeometry(0.9, 0.7, 0.9), umbG = new THREE.ConeGeometry(1.6, 0.7, 8), poleG = new THREE.CylinderGeometry(0.06, 0.06, 2.4, 4), tableG = new THREE.CylinderGeometry(0.6, 0.6, 0.08, 10);
 function furniture(range, n, lat0, lat1, kinds = ['bin', 'pot', 'crate']) {
   for (let k = 0; k < n; k++) {
@@ -293,6 +357,11 @@ function furniture(range, n, lat0, lat1, kinds = ['bin', 'pot', 'crate']) {
     if (kind === 'bin') at(binG, tm(pick([0x2f6a46, 0x2a2a30, 0x2f5fa8])), 0.5);
     else if (kind === 'pot') { at(potG, tm(0xb0603a), 0.35); at(bushG, tm(0x2f7a46), 1.1); }
     else if (kind === 'crate') { at(crateG, tm(0x9a6a42), 0.35); if (rand() < 0.5) at(crateG, tm(pick([0xe0782f, 0x2fae6a, 0xf2c12e])), 1.05); }
+    else if (kind === 'bench') { at(benchG, tm(0x8a5a36), 0.55); at(benchBackG, tm(0x8a5a36), 0.95).position.x = -0.35; at(benchLegG, tm(0x2a2024), 0.25); }
+    else if (kind === 'planter') { at(planterG, tm(0xc9b8a2), 0.4); at(bushG, tm(0x3a8a4a), 1.1).scale.set(1.4, 1, 1.4); }
+    else if (kind === 'lamp') { at(lampPostG, tm(0x2a2024), 2); at(globeG, bm(0xffe0a0), 4.1); }
+    else if (kind === 'barrel') { at(binG, tm(pick([0x9a6a42, 0xC8110E, 0x2f5fa8])), 0.5).scale.set(1.2, 1.1, 1.2); }
+    else if (kind === 'kiosk') { at(kioskG, tm(pick([0x2f8a4a, 0xC8110E, 0x2f6fa8])), 1.2); at(kioskRoofG, tm(0xf3e6d6), 2.55); }
     else if (kind === 'cafe') { at(tableG, tm(0xf3e6d6), 0.75); at(poleG, tm(0x2a2024), 1.2); at(umbG, tm(pick([0xC8110E, 0xf3e6d6, 0xe8a23a])), 2.5); }
     g.position.set(o[0], 0, o[1]);
     g.rotation.y = rand() * 6.28;
@@ -302,19 +371,42 @@ function furniture(range, n, lat0, lat1, kinds = ['bin', 'pot', 'crate']) {
 
 // ---------- Seaside: ocean, sun glitter, wall with graffiti ----------
 let sea = null, glitter = null;
+let shore = null;
 function ocean() {
+  // The beach: a strip of sand, wet sand and shallow turquoise water with ripples (shore.png, seen from above),
+  // tiled along the coast, then the deep sea out to the clouds.
+  const st = new THREE.TextureLoader().load(shoreUrl);
+  st.magFilter = st.minFilter = THREE.NearestFilter;
+  st.generateMipmaps = false;
+  st.wrapS = THREE.RepeatWrapping;
+  const PXM = 0.25, depth = 224 * PXM;            // 4 texture pixels per metre
+  st.repeat.set(2400 / (96 * PXM), 1);
+  shore = new THREE.Mesh(new THREE.PlaneGeometry(2400, depth), new THREE.MeshBasicMaterial({ map: st, fog: false, color: 0xfff0e6 }));
+  shore.rotation.x = -Math.PI / 2;
+  shore.position.set(48, 0.04, SEA_Z - BEACH - depth / 2);
+  scene.add(shore);
+  // Dry sand from the coast down to where the shore texture starts, the same colour as its top rows.
+  const sand = canvasTex(32, 32, (g) => {
+    g.fillStyle = '#fff3d6'; g.fillRect(0, 0, 32, 32);
+    for (let k = 0; k < 30; k++) { g.fillStyle = k % 3 ? '#f0dfbe' : '#e6cfa8'; g.fillRect((k * 13) % 32, (k * 7) % 32, 1 + (k % 2), 1); }
+  }, true);
+  sand.repeat.set(2400 / 8, BEACH / 8);
+  const dry = new THREE.Mesh(new THREE.PlaneGeometry(2400, BEACH), new THREE.MeshBasicMaterial({ map: sand, color: 0xfff0e6 }));
+  dry.rotation.x = -Math.PI / 2;
+  dry.position.set(48, 0.04, SEA_Z - BEACH / 2);
+  scene.add(dry);
   const tex = canvasTex(32, 32, (g) => {
-    g.fillStyle = '#3a4a86'; g.fillRect(0, 0, 32, 32);
-    for (let k = 0; k < 26; k++) {
-      g.fillStyle = k % 3 ? '#4f63a3' : '#e7966a';
+    g.fillStyle = '#006f89'; g.fillRect(0, 0, 32, 32);
+    for (let k = 0; k < 22; k++) {
+      g.fillStyle = k % 4 ? '#0a8099' : '#e7966a';
       g.fillRect((k * 11) % 32, (k * 7) % 32, 3 + (k % 4), 1);
     }
   }, true);
   tex.repeat.set(120, 50);
   // No fog on the sea, so it stays blue out to the clouds.
-  sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 1000), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+  sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 1000), new THREE.MeshBasicMaterial({ map: tex, fog: false, color: 0xfff0e6 }));
   sea.rotation.x = -Math.PI / 2;
-  sea.position.set(48, 0.06, SEA_Z - 500);
+  sea.position.set(48, 0.04, SEA_Z - BEACH - depth - 500);
   scene.add(sea);
   // Sunset glitter: a warm path on the water toward the low sun, kept in line with the camera.
   const gt = canvasTex(16, 64, (g) => {
@@ -327,7 +419,7 @@ function ocean() {
   });
   glitter = new THREE.Mesh(new THREE.PlaneGeometry(90, 900), new THREE.MeshBasicMaterial({ map: gt, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8, fog: false }));
   glitter.rotation.x = -Math.PI / 2;
-  glitter.position.set(48, 0.1, SEA_Z - 460);
+  glitter.position.set(48, 0.1, SEA_Z - 500);
   scene.add(glitter);
 }
 
@@ -377,6 +469,31 @@ function pickup(i, lat, back) {
   g.rotation.y = yawAt(i) + (back ? Math.PI : 0);
   g.traverse((m) => { m.castShadow = true; });
   add(g);
+}
+
+/** A parked car by the curb: a little boxy sedan in a street colour. */
+function car(i, lat, colour) {
+  const g = new THREE.Group(), body = tm(colour), dark = tm(0x1b1b20), glass = bm(0x2a3446);
+  const b = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.8, 4.4), body); b.position.y = 0.8; g.add(b);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.75, 2.4), body); top.position.set(0, 1.55, -0.2); g.add(top);
+  const ws = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.55, 0.05), glass); ws.position.set(0, 1.58, 1.02); g.add(ws);
+  [[-1, 1.4], [1, 1.4], [-1, -1.4], [1, -1.4]].forEach(([x, z]) => {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.35, 8), dark); w.rotation.z = Math.PI / 2; w.position.set(x, 0.4, z); g.add(w);
+  });
+  const o = off(i % N, lat);
+  g.position.set(o[0], 0, o[1]);
+  g.rotation.y = yawAt(i % N) + (rand() < 0.5 ? Math.PI : 0);
+  g.traverse((m) => { m.castShadow = true; });
+  add(g);
+}
+const CAR_COLOURS = [0xe8c13a, 0xf3eee8, 0xC8110E, 0x2f6fa8, 0x3a8a4a, 0x8a8a94, 0xe0782f];
+/** Cars parked along both curbs of a range, now and then. */
+function parked(range, n) {
+  for (let k = 0; k < n; k++) {
+    const i = range[0] + Math.floor(rand() * (range[1] - range[0]));
+    if (corner[i % N]) continue;
+    car(i, pick([-1, 1]) * (HALF + 3.1), pick(CAR_COLOURS));
+  }
 }
 
 function stall(i, side) {
@@ -476,7 +593,8 @@ function wires() {
 function market() {
   street(MARKET, () => ({ floors: [2, 4], gap: 5.5, ids: MARKET_IDS, shop: true }));
   sidewalk(MARKET);
-  furniture(MARKET, 26, HALF + 2.6, HALF + 5.5);
+  furniture(MARKET, 40, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'crate', 'bench', 'lamp', 'kiosk', 'barrel', 'crate']);
+  parked(MARKET, 8);
   crowd(MARKET, 40, [0, 1, 2, 3, 4], HALF + 2.6, HALF + 5.5);
   wires();
   [MARKET[0] + 30, MARKET[0] + 92].forEach((i) => bunting(i, 8.4, HALF * 2 + 12));
@@ -495,6 +613,8 @@ function prison() {
     [-1, 1].forEach((side) => building(i, side, { w: 18, d: 4, h: 18, ids: PRISON_IDS, from: 'top', gap: 7, shop: false, roof: false }));
   }
   sidewalk(PRISON);
+  // Props along the yard so the walls don't run on alone: lamps, benches, planters, barrels, a guard kiosk.
+  furniture(PRISON, 52, HALF + 2.6, HALF + 5.8, ['lamp', 'bench', 'planter', 'barrel', 'lamp', 'planter', 'kiosk']);
   crowd(PRISON, 46, [0, 1, 5, 5], HALF + 2.4, HALF + 5.8);
   // Iron trusses across the courtyard, and warm lamps hanging from them.
   const ironM = tm(0x2a2024), bulbM = bm(0xffd27a);
@@ -527,7 +647,8 @@ function prison() {
     });
     const arch = new THREE.Mesh(new THREE.TorusGeometry(r + 1, 1.5, 4, 14, Math.PI), stoneM);
     arch.position.y = 12; g.add(arch);
-    const top = new THREE.Mesh(new THREE.BoxGeometry(r * 2 + 8, 3, 3.2), stoneM); top.position.y = 12 + r + 2.4; g.add(top);
+    // A keystone at the top of the arch (no lintel above it).
+    const key = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 3.4), stoneM); key.position.y = 12 + r + 1.2; g.add(key);
     const o = off(i, 0);
     g.position.set(o[0], 0, o[1]);
     g.rotation.y = yawAt(i);
@@ -556,7 +677,8 @@ function westSide() {
     if (rand() < 0.6) building(i, -side, { w: 8 + rand() * 6, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2 });
   }
   sidewalk(WEST);
-  furniture(WEST, 14, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'pot']);
+  furniture(WEST, 34, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'planter', 'bench', 'lamp', 'kiosk']);
+  parked(WEST, 7);
   crowd(WEST, 14, [1, 2, 3, 4], HALF + 2.6, HALF + 5.5);
 }
 
@@ -568,7 +690,7 @@ function town() {
   for (let x = -360; x <= 480; x += CELL) {
     for (let z = -10; z <= 440; z += CELL) {
       const d = minTrackDist(x, z);
-      if (z < SEA_Z + 24 || d < HALF + 24 || d > 240) continue;
+      if (z < SEA_Z + 30 || d < HALF + 24 || d > 240) continue;
       // Two to four houses around the block, back to back.
       const n = 2 + ((rand() * 3) | 0);
       for (let k = 0; k < n; k++) {
@@ -638,7 +760,7 @@ function props() {
     scatter(parts, b);
   }).catch(() => {});
   // Fishing boats bobbing off the terrace, and a wooden pier into the sea.
-  [['SM_TI_Wood_0_Boat_0', 120, -70, 0.4], ['SM_TI_Wood_1_Boat_0', 150, -64, 2.2], ['SM_TI_Wood_0_Boat_0', -60, -82, 1.3], ['SM_TI_Wood_1_Boat_0', 260, -90, 0.9]].forEach(([name, x, z, r]) => {
+  [['SM_TI_Wood_0_Boat_0', 120, -88, 0.4], ['SM_TI_Wood_1_Boat_0', 160, -80, 2.2], ['SM_TI_Wood_0_Boat_0', -60, -96, 1.3], ['SM_TI_Wood_1_Boat_0', 260, -104, 0.9]].forEach(([name, x, z, r]) => {
     model(name).then((parts) => parts.forEach(({ geometry, material }) => {
       const b = new THREE.Mesh(geometry, material);
       b.position.set(x, 0.3, z); b.rotation.y = r; b.scale.setScalar(1.6);
@@ -648,7 +770,7 @@ function props() {
   });
   model('SM_TI_Wood_0_Pier_0').then((parts) => parts.forEach(({ geometry, material }) => {
     const p = new THREE.Mesh(geometry, material);
-    p.position.set(80, 0.9, SEA_Z - 2); p.rotation.y = Math.PI; p.scale.setScalar(1.3);
+    p.position.set(80, 0.9, SEA_Z - BEACH - 18); p.rotation.y = Math.PI; p.scale.setScalar(0.7);
     scene.add(p);
   })).catch(() => {});
 }
@@ -694,6 +816,33 @@ function bake() {
   });
 }
 
+// The beach between the sea wall and the water: umbrellas, towels, a lifeguard tower, people.
+function beach() {
+  const xs = [-170, 330], z0 = SEA_Z - 6, z1 = SEA_Z - BEACH - 10;
+  const at = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; add(m); return m; };
+  const towel = new THREE.BoxGeometry(1.1, 0.05, 2.1);
+  for (let k = 0; k < 34; k++) {
+    const x = xs[0] + rand() * (xs[1] - xs[0]), z = z0 + rand() * (z1 - z0);
+    at(poleG, tm(0x2a2024), x, 1.2, z);
+    at(umbG, tm(pick([0xC8110E, 0xf3e6d6, 0xe8a23a, 0x2f8ad6, 0xf06eb0])), x, 2.5, z);
+    at(towel, tm(pick([0xC8110E, 0xf2c12e, 0x2fae6a, 0xf06eb0, 0xf3e6d6])), x + 1.3, 0.08, z + (rand() - 0.5)).rotation.y = rand() - 0.5;
+  }
+  // Lifeguard tower: red box on stilts.
+  [40, 220].forEach((x) => {
+    const z = SEA_Z - BEACH - 6;
+    [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([dx, dz]) => at(new THREE.BoxGeometry(0.2, 3, 0.2), tm(0xf3e6d6), x + dx, 1.5, z + dz));
+    at(new THREE.BoxGeometry(2.4, 1.6, 2.4), tm(0xC8110E), x, 3.8, z);
+    at(new THREE.BoxGeometry(2.8, 0.2, 2.8), tm(0xf3e6d6), x, 4.7, z);
+  });
+  // People on the sand, facing the sea and the road.
+  for (let k = 0; k < 40; k++) {
+    const x = xs[0] + rand() * (xs[1] - xs[0]), z = z0 + rand() * (z1 - z0 - 2);
+    const kk = pick([0, 1, 2, 3, 4, 2, 3]), g = new THREE.PlaneGeometry(0.95, 1.9), uv = g.attributes.uv;
+    for (let n = 0; n < 4; n++) uv.setX(n, kk / PEOPLE.length + uv.getX(n) / PEOPLE.length);
+    const m = new THREE.Mesh(g, peopleM); m.position.set(x, 0.95, z); m.rotation.y = rand() * 6.28; add(m);
+  }
+}
+
 // The turns between the parts: people watching from behind the tyres, street lamps and clutter.
 function corners() {
   const person2 = (i, lat, k) => {   // like person(), but allowed on the turns
@@ -720,14 +869,22 @@ export function buildParadise() {
   westSide();
   town();
   corners();
-  // Roadside billboards on the straights, taking turns through the seven ads.
-  [[30, 1], [96, -1], [200, 1], [250, -1], [520, 1], [600, -1], [680, -1], [8, -1]].forEach(([i, side]) => { if (!corner[i]) roadsideAd(i, side); });
+  beach();
+  // Billboards: each of the seven ads beside a straight, facing the karts, and two over the road in the prison yard.
+  [['pearl', 72, 1], ['route', 188, -1], ['haven', 548, 1], ['dormant', 602, -1], ['noomax', 692, 1]]
+    .forEach(([name, i, side]) => roadsideAd(i, side, name));
+  overheadAd(30, 'midnight');
+  overheadAd(228, 'centuries');
+  overheadAd(344, 'noomax');
+  overheadAd(410, 'haven');
+  overheadAd(262, 'route');
   bake();
   props();
 }
 
 export function updateParadise(dt, now) {
   if (sea) sea.material.map.offset.x = (now / 60000) % 1;
+  if (shore) shore.material.map.offset.x = (now / 90000) % 1;   // the ripples drift along the coast
   floating.forEach((b) => { b.position.y = 0.3 + Math.sin(now / 700 + b.userData.phase) * 0.15; b.rotation.z = Math.sin(now / 900 + b.userData.phase) * 0.05; });
   if (glitter) {
     // On the line from the camera toward the sun (moonDir in theme.js: x 0.1, z -0.97).
