@@ -35,7 +35,7 @@ public class StatsService {
 
     private static final Logger log = LoggerFactory.getLogger(StatsService.class);
     /** Events the game may send, and the server-side ones. */
-    private static final Set<String> CLIENT_EVENTS = Set.of("visit", "device", "mode", "race_start", "race_finish", "share", "install");
+    private static final Set<String> CLIENT_EVENTS = Set.of("visit", "device", "mode", "race_start", "race_finish", "share", "install", "mnet");
 
     private final StatCounterRepository counters;
     private final ZoneId zone;

@@ -1,4 +1,5 @@
 package com.rrriooo.e1kart.dto;
 
-public record MeResponse(long balance, long certificates, long runsPlayed) {
+/** balance: Interstellar runs (FANS' CHOICE certificates); mcdBalance: Bloody Paradise runs (MCD certificates). */
+public record MeResponse(long balance, long mcdBalance, long certificates, long runsPlayed) {
 }

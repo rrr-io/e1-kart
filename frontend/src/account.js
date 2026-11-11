@@ -1,7 +1,7 @@
 // Runs and certificates: "free play" flag, balance, certificate upload and starting a race.
 import { $ } from './engine.js';
 import { settings, saveSettings } from './config.js';
-import { SPACE } from './theme.js';
+import { TRACK, TRACKS, TRACK_ID } from './theme.js';
 import { G } from './state.js';
 import * as api from './api.js';
 import { setupRace } from './race.js';
@@ -12,14 +12,18 @@ export const wallet = {
   online: false,          // the server has responded
   error: '',              // why the server couldn't be used, shown in the menu
   freePlayAllowed: true,  // the server allows playing without a certificate
-  balance: null,          // runs available
+  balances: {},           // runs available per track: { space, bloody } (each certificate kind has its own runs)
   busy: false,
   checked: false,         // the first /config + /me answer (or failure) arrived
 };
 
-// NIGHT CIRCUIT is always free. INTERSTELLAR costs a run (one MAMA voting certificate = one run),
-// unless the server allows free play and the player turned it on (testing).
-export const isFreePlay = () => !SPACE || (wallet.online && wallet.freePlayAllowed && settings.freePlay);
+// NIGHT CIRCUIT is always free. INTERSTELLAR costs a run (one FANS' CHOICE voting certificate = one run),
+// BLOODY PARADISE a run from a FAVORITE MCD STAGE certificate, unless the server allows free play and the player
+// turned it on (testing).
+export const isFreePlay = () => !TRACK.cost || (wallet.online && wallet.freePlayAllowed && settings.freePlay);
+/** Runs left for the chosen track, or null when not known yet. */
+const balance = () => (wallet.balances[TRACK_ID] ?? null);
+const titleCase = (s) => s.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase());
 
 function message(text, kind) {
   const el = $('certMsg');
@@ -34,7 +38,7 @@ const fmtVoteDate = (iso) => {
 
 export function renderAccount() {
   const free = isFreePlay();
-  $('freeRow').hidden = !SPACE || !wallet.online || !wallet.freePlayAllowed;
+  $('freeRow').hidden = !TRACK.cost || !wallet.online || !wallet.freePlayAllowed;
   $('free').replaceChildren(...[[true, 'ON'], [false, 'OFF']].map(([v, l]) => {
     const b = document.createElement('button');
     b.className = 'chipbtn';
@@ -45,13 +49,14 @@ export function renderAccount() {
     return b;
   }));
   $('certBox').hidden = free;
-  $('runs').textContent = wallet.balance == null ? '–' : String(wallet.balance);
+  $('runs').textContent = balance() == null ? '–' : String(balance());
+  $('certKind').textContent = TRACK.cert ? 'Upload an ENHYPEN ' + TRACK.cert + '.' : '';
   $('uploadBtn').classList.toggle('busy', wallet.busy);
   $('start').disabled = wallet.busy;
-  $('runGo').disabled = wallet.busy || !wallet.online || wallet.balance === 0;
+  $('runGo').disabled = wallet.busy || !wallet.online || balance() === 0;
   // Offline warning (cleared once the server answers; before the first answer we don't know yet).
-  const off = wallet.checked && !wallet.online && SPACE;
-  if (off) message((wallet.error || 'Server unreachable') + ' — the Interstellar track needs a certificate run: play the Night Circuit for now.', 'err');
+  const off = wallet.checked && !wallet.online && !!TRACK.cost;
+  if (off) message((wallet.error || 'Server unreachable') + ' — the ' + titleCase(TRACK.name) + ' track needs a certificate run: play the Night Circuit for now.', 'err');
   else if ($('certMsg').dataset.offline) message('');
   $('certMsg').dataset.offline = off ? '1' : '';
 }
@@ -62,7 +67,7 @@ export async function initAccount() {
     wallet.online = true;
     wallet.freePlayAllowed = !!cfg.freePlayAllowed;
     const me = await api.getMe();
-    wallet.balance = me.balance;
+    wallet.balances = { space: me.balance, bloody: me.mcdBalance ?? 0 };
   } catch (e) {
     wallet.online = false;
     // Say what actually failed: no network, or the server answered with an error.
@@ -80,9 +85,12 @@ async function onCertificate(file) {
   message('Reading the certificate…');
   renderAccount();
   try {
-    const r = await api.uploadCertificate(file);
-    wallet.balance = r.balance;
-    message(`+${r.runsAdded} run${r.runsAdded === 1 ? '' : 's'}! Vote from ${fmtVoteDate(r.participationAt)}.`, 'ok');
+    const r = await api.uploadCertificate(file, TRACK_ID);
+    const track = TRACKS[r.track] ? r.track : TRACK_ID;
+    wallet.balances[track] = r.balance;
+    // A certificate of the other kind still counts, for the track it unlocks.
+    const where = track === TRACK_ID ? '' : ' for ' + titleCase(TRACKS[track].name);
+    message(`+${r.runsAdded} run${r.runsAdded === 1 ? '' : 's'}${where}! Vote from ${fmtVoteDate(r.participationAt)}.`, 'ok');
   } catch (e) {
     message(e.message, 'err');
   } finally {
@@ -115,9 +123,9 @@ export async function startGame() {
   wallet.busy = true;
   renderAccount();
   try {
-    const r = await api.startRun(settings.teamIdx);
+    const r = await api.startRun(settings.teamIdx, TRACK_ID);
     G.runId = r.runId;
-    wallet.balance = r.balance;
+    wallet.balances[TRACK_ID] = r.balance;
     message('');
     closeRunBox();
     setupRace();
@@ -125,7 +133,7 @@ export async function startGame() {
     if (!$('results').hidden) toMenu();
     openRunBox();
     message(e.message, 'err');
-    if (e.code === 'NO_RUNS') wallet.balance = 0;
+    if (e.code === 'NO_RUNS' || e.code === 'NO_MCD_RUNS') wallet.balances[TRACK_ID] = 0;
   } finally {
     wallet.busy = false;
     renderAccount();
@@ -133,8 +141,8 @@ export async function startGame() {
 }
 
 /**
- * Reports the time and position of the race just finished (only for races paid for with a run: Interstellar,
- * the races that count for the E1 Kart GP leaderboard), then offers the leaderboard on the results.
+ * Reports the time and position of the race just finished (only for races paid for with a run: Interstellar and
+ * Bloody Paradise, the races that count for the E1 Kart GP leaderboard), then offers the leaderboard on the results.
  */
 export function reportFinish(timeSeconds, position) {
   $('resBoard').hidden = true;
@@ -147,7 +155,7 @@ export function reportFinish(timeSeconds, position) {
 }
 
 export function runsLeftText() {
-  return isFreePlay() || wallet.balance == null ? '' : `Runs left: ${wallet.balance}`;
+  return isFreePlay() || balance() == null ? '' : `Runs left: ${balance()}`;
 }
 
 export function initAccountUi() {

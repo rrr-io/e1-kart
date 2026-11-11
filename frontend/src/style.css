@@ -212,6 +212,8 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .e1-stand .dr{font-family:var(--body);font-size:18px;color:var(--paper);opacity:.75}
 .res-board{font-family:var(--display);font-size:8px;line-height:1.6;color:var(--moon);background:none;border:none;padding:4px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:center}
 .res-board[hidden]{display:none}
+.res-btns .go.mnet,.go.mnet{min-height:40px;font-size:10px;width:100%;background:#C8110E;color:#fff;box-shadow:0 4px 0 var(--ink)}
+.go.mnet[hidden]{display:none}
 .e1-stand li.wait{font-family:var(--body);font-size:18px;color:var(--moon-dim)}
 #boardView .e1-stand{border-top:none;padding-top:14px}
 .e1-stand[hidden]{display:none}
@@ -412,7 +414,7 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .tp-map{position:absolute;right:6px;bottom:6px;width:64px;height:44px;image-rendering:pixelated;background:rgba(5,3,15,.72);border:2px solid var(--ink);outline:1px solid rgba(159,208,255,.35)}
 .tp-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tp-head b{font-family:var(--display);font-weight:400;font-size:12px;color:var(--paper)}
-.tp-badge{font-family:var(--display);font-size:7px;padding:4px 6px;background:var(--red);color:var(--paper);border:2px solid var(--ink)}
+.tp-badge{flex:none;white-space:nowrap;font-family:var(--display);font-size:7px;padding:4px 6px;background:var(--red);color:var(--paper);border:2px solid var(--ink)}
 .tp-badge.free{background:#1f8a5b}
 .tp-desc{margin:0;font-size:17px;line-height:1.05;color:var(--paper)}
 .tp-meta{margin:0;font-size:15px;color:var(--moon-dim)}

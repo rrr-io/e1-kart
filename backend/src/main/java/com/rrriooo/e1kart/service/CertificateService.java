@@ -22,6 +22,7 @@ import com.rrriooo.e1kart.dto.RedeemResponse;
 import com.rrriooo.e1kart.exception.ApiException;
 import com.rrriooo.e1kart.exception.ErrorCode;
 import com.rrriooo.e1kart.model.Certificate;
+import com.rrriooo.e1kart.model.CertificateKind;
 import com.rrriooo.e1kart.model.Player;
 import com.rrriooo.e1kart.repository.CertificateRepository;
 
@@ -39,6 +40,10 @@ import com.rrriooo.e1kart.repository.CertificateRepository;
  * <li>refused if the ID (normalized O→0, I→1) was already used.</li>
  * </ol>
  * The vote date is read for the record; an unreadable date or a date outside the voting windows is only logged.
+ * <p>
+ * FAVORITE MCD STAGE certificates (Bloody Paradise) go through the same steps with their own ENHYPEN check
+ * (McdMatcher: the single stage photo, refused only when clearly another stage), their own runs, and IDs compared
+ * only with other MCD IDs. The kind comes from the certificate's text, then its layout, then the player's track.
  */
 @Service
 public class CertificateService {
@@ -51,6 +56,7 @@ public class CertificateService {
     private final OcrService ocr;
     private final IdReader idReader;
     private final EnhypenMatcher enhypen;
+    private final McdMatcher mcd;
     private final CertificateParser parser;
     private final CertificateIdHasher hasher;
     private final CertificateRepository certificates;
@@ -59,12 +65,13 @@ public class CertificateService {
     private final E1KartProperties props;
     private final StatsService stats;
 
-    public CertificateService(OcrService ocr, IdReader idReader, EnhypenMatcher enhypen, CertificateParser parser,
+    public CertificateService(OcrService ocr, IdReader idReader, EnhypenMatcher enhypen, McdMatcher mcd, CertificateParser parser,
                               CertificateIdHasher hasher, CertificateRepository certificates,
                               RunService runService, RateLimiter rateLimiter, E1KartProperties props, StatsService stats) {
         this.ocr = ocr;
         this.idReader = idReader;
         this.enhypen = enhypen;
+        this.mcd = mcd;
         this.parser = parser;
         this.hasher = hasher;
         this.certificates = certificates;
@@ -74,12 +81,16 @@ public class CertificateService {
         this.stats = stats;
     }
 
-    /** Redeems the certificate and counts the outcome in the stats (accepted, or the error code). */
-    public RedeemResponse redeem(Player player, MultipartFile file, String clientIp) {
+    /**
+     * Redeems the certificate and counts the outcome in the stats (accepted, or the error code). trackHint is the
+     * track the player is uploading for ("space", "bloody"): it decides the kind only when the certificate itself
+     * doesn't say.
+     */
+    public RedeemResponse redeem(Player player, MultipartFile file, String trackHint, String clientIp) {
         rateLimiter.check("player:" + player.getId(), "ip:" + clientIp);
         try {
-            RedeemResponse r = check(player, file);
-            stats.count("certificate", "accepted");
+            RedeemResponse r = check(player, file, CertificateKind.forTrack(trackHint));
+            stats.count("certificate", CertificateKind.MCD.name().equals(r.kind()) ? "accepted_mcd" : "accepted");
             return r;
         } catch (ApiException e) {
             stats.count("certificate", e.code().name());
@@ -87,7 +98,7 @@ public class CertificateService {
         }
     }
 
-    private RedeemResponse check(Player player, MultipartFile file) {
+    private RedeemResponse check(Player player, MultipartFile file, CertificateKind hint) {
 
         if (file == null || file.isEmpty() || file.getContentType() == null || !ACCEPTED_TYPES.contains(file.getContentType().toLowerCase())) {
             throw new ApiException(ErrorCode.UNSUPPORTED_FILE);
@@ -105,9 +116,10 @@ public class CertificateService {
             throw new ApiException(ErrorCode.UNSUPPORTED_FILE);
         }
         CertificateImage.Card card = CertificateImage.normalise(CertificateImage.limitSize(image, MAX_PIXELS));
-        boolean enhypenSeen = checkEnhypen(card);
-
         String text = ocr.readText(bytes);
+        CertificateKind kind = kindOf(text, card, hint);
+        boolean enhypenSeen = kind == CertificateKind.MCD ? checkMcd(card) : checkEnhypen(card);
+
         boolean certificateLayout = card.screenshot() || CertificateImage.layoutOk(card.image());
         if (!enhypenSeen && !certificateLayout && !parser.isCertificateText(text)) {
             throw new ApiException(ErrorCode.NOT_A_CERTIFICATE); // nothing about it looks like a certificate
@@ -117,24 +129,63 @@ public class CertificateService {
         if (votedAt == null) {
             votedAt = LocalDateTime.now(ZoneId.of(props.zone()));
             log.info("Vote date not readable: upload time used");
-        } else if (!props.voteWindows().isEmpty() && props.voteWindows().stream().noneMatch(w -> w.contains(parsed.participationAt()))) {
+        } else if (kind == CertificateKind.FANS_CHOICE && !props.voteWindows().isEmpty()
+                && props.voteWindows().stream().noneMatch(w -> w.contains(parsed.participationAt()))) {
             log.info("Vote date {} outside the voting windows: accepted", votedAt);
         }
 
         String id = readId(card, parsed);
-        String idHash = hasher.hash(id != null ? CertificateParser.normalizeId(id) : "FILE:" + sha256(bytes));
+        if (kind == CertificateKind.MCD) {
+            id = CertificateParser.fixDatePrefix(id, parsed.participationAt());
+        }
+        // IDs are only compared within their kind: MCD keys carry a prefix, FANS' CHOICE keys are as before.
+        String key = id != null ? CertificateParser.normalizeId(id) : "FILE:" + sha256(bytes);
+        String idHash = hasher.hash(kind == CertificateKind.MCD ? "MCD:" + key : key);
         if (certificates.existsByIdHash(idHash)) {
             throw new ApiException(ErrorCode.ALREADY_USED);
         }
         int runs = props.runsPerCertificate();
+        String category = kind == CertificateKind.MCD ? "FAVORITE MCD STAGE VOTE" : parsed.category();
         try {
-            certificates.saveAndFlush(new Certificate(idHash, player.getId(), votedAt, parsed.category(), runs, Instant.now()));
+            certificates.saveAndFlush(new Certificate(idHash, player.getId(), votedAt, category, kind, runs, Instant.now()));
         } catch (DataIntegrityViolationException e) {
             // Two near-simultaneous uploads of the same certificate: the first one wins.
             throw new ApiException(ErrorCode.ALREADY_USED, e);
         }
-        log.info("Certificate redeemed by {} ({} {}{})", player.getId(), votedAt, parsed.category(), id == null ? ", no readable ID" : "");
-        return new RedeemResponse(runs, runService.balance(player), votedAt, parsed.category());
+        log.info("{} certificate redeemed by {} ({} {}{})", kind, player.getId(), votedAt, category, id == null ? ", no readable ID" : "");
+        return new RedeemResponse(runs, runService.balance(player, kind), votedAt, category, kind.name(), kind.track());
+    }
+
+    /**
+     * FANS' CHOICE or MCD: what the text says, else the card's layout (one photo in the middle means MCD),
+     * else the track the player is uploading for.
+     */
+    static CertificateKind kindOf(String text, CertificateImage.Card card, CertificateKind hint) {
+        CertificateKind fromText = CertificateParser.kindFromText(text);
+        if (fromText != null) {
+            return fromText;
+        }
+        if (CertificateImage.singleImageLayout(card.image())) {
+            return CertificateKind.MCD;
+        }
+        return CertificateImage.layoutOk(card.image()) ? CertificateKind.FANS_CHOICE : hint;
+    }
+
+    /**
+     * MCD certificates: refused only when the stage photo is surely not ENHYPEN's; returns true when it was
+     * recognised. Skipped (a warning is logged at startup) when no MCD references are configured.
+     */
+    private boolean checkMcd(CertificateImage.Card card) {
+        if (!mcd.enabled()) {
+            return false;
+        }
+        McdMatcher.Result r = mcd.check(card);
+        log.debug("MCD ENHYPEN check: {} ({})", r.verdict(), String.format("%.2f", r.similarity()));
+        return switch (r.verdict()) {
+            case ENHYPEN -> true;
+            case NOT_ENHYPEN -> throw new ApiException(ErrorCode.MCD_NOT_ENHYPEN);
+            case UNCLEAR -> false; // in doubt: accepted
+        };
     }
 
     /**

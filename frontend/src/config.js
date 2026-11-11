@@ -35,7 +35,7 @@ try {
   if (k >= 0) settings.teamIdx = k;
   if (typeof s.assist === 'boolean') settings.assist = s.assist;
   if (typeof s.free === 'boolean') settings.freePlay = s.free;
-  if (s.track === 'night' || s.track === 'space') settings.track = s.track;
+  if (['night', 'space', 'bloody'].includes(s.track)) settings.track = s.track;
   if (typeof s.sound === 'boolean') settings.sound = s.sound;
 } catch (e) { /* storage unavailable */ }
 

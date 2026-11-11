@@ -15,7 +15,7 @@ import com.rrriooo.e1kart.model.Run;
 class StandingsServiceTest {
 
     private static Run race(int team, int position) {
-        Run r = new Run(team + "-" + position + "-" + Math.random(), "p", team, Instant.now());
+        Run r = new Run(team + "-" + position + "-" + Math.random(), "p", team, com.rrriooo.e1kart.model.CertificateKind.FANS_CHOICE, Instant.now());
         r.finish(120_000, position, Instant.now());
         return r;
     }

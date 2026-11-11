@@ -31,6 +31,11 @@ public final class CertificateImage {
             {81 / 930.0, 443 / 1410.0, 321 / 930.0, 683 / 1410.0},
             {345 / 930.0, 443 / 1410.0, 585 / 930.0, 683 / 1410.0},
             {609 / 930.0, 443 / 1410.0, 849 / 930.0, 683 / 1410.0}};
+    /**
+     * FAVORITE MCD STAGE certificates: the single stage photo in the middle of the card, inside its black frame
+     * (measured on 930×1410 exports: frame x 305–624, y 396–729, photo y 468–657), trimmed a little.
+     */
+    static final double[] MCD_PHOTO = {325 / 930.0, 478 / 1410.0, 605 / 930.0, 648 / 1410.0};
     /** The whole "No. &lt;ID&gt;" line, with some margin. */
     static final double[] ID_BOX = {0.04, 0.903, 0.66, 0.959};
     /** Screenshot frame edges relative to the detected card height. */
@@ -87,6 +92,49 @@ public final class CertificateImage {
         double[] b = THUMB_SLOTS[slot];
         double mx = (b[2] - b[0]) * 0.1, my = (b[3] - b[1]) * 0.1; // trims the rounded corners
         return vector(im.cropFraction(b[0] + mx + dx, b[1] + my + dy, b[2] - mx + dx, b[3] - my + dy));
+    }
+
+    /** The MCD certificate's stage photo as a normalised vector, moved by (dx, dy) fractions of the image. */
+    public static double[] mcdVector(PixelImage im, double dx, double dy) {
+        double[] b = MCD_PHOTO;
+        return vector(im.cropFraction(b[0] + dx, b[1] + dy, b[2] + dx, b[3] + dy));
+    }
+
+    /**
+     * True when the card has the MCD layout: where a FANS' CHOICE certificate has its first and last thumbnails there
+     * is only the plain light background, and the middle holds a dark photo frame.
+     */
+    public static boolean singleImageLayout(PixelImage im) {
+        if (!layoutOk(im)) {
+            return false;
+        }
+        PixelImage g = im.gray();
+        for (int slot : new int[] {0, 2}) {
+            double[] b = THUMB_SLOTS[slot];
+            double mx = (b[2] - b[0]) * 0.1, my = (b[3] - b[1]) * 0.1;
+            double[] ms = meanAndSpread(g.cropFraction(b[0] + mx, b[1] + my, b[2] - mx, b[3] - my));
+            if (ms[0] < 190 || ms[1] > 18) {
+                return false;
+            }
+        }
+        // The frame's top bar, above the photo: dark.
+        double[] top = meanAndSpread(g.cropFraction(330 / 930.0, 405 / 1410.0, 600 / 930.0, 455 / 1410.0));
+        return top[0] < 90;
+    }
+
+    /** Mean and standard deviation of a grayscale image. */
+    static double[] meanAndSpread(PixelImage g) {
+        int n = g.data.length;
+        if (n == 0) {
+            return new double[] {0, 0};
+        }
+        double sum = 0, sq = 0;
+        for (int v : g.data) {
+            sum += v;
+            sq += (double) v * v;
+        }
+        double mean = sum / n;
+        return new double[] {mean, Math.sqrt(Math.max(0, sq / n - mean * mean))};
     }
 
     /** Like slotVector, for a thumbnail `sx` times as wide and `sy` times as tall as the standard slot, moved by (dx, dy). */

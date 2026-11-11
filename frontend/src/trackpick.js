@@ -15,8 +15,11 @@ let onGo = null;
 const SHOTS = {
   night: new URL('./assets/tracks/night.png', import.meta.url).href,
   space: new URL('./assets/tracks/space.png', import.meta.url).href,
+  bloody: new URL('./assets/tracks/bloody.png', import.meta.url).href,
 };
-const MAP = { night: ['#E10600', '#ffffff'], space: ['#ff4fd8', '#4fe6ff'] };
+const MAP = { night: ['#E10600', '#ffffff'], space: ['#ff4fd8', '#4fe6ff'], bloody: ['#C8110E', '#ffd23a'] };
+// What one run costs, on the card.
+const COST = { space: '1 FANS\' CHOICE certificate = 1 run', bloody: '1 MCD STAGE certificate = 1 run' };
 
 function drawMap(c, id) {
   const g = c.getContext('2d'), W = c.width, H = c.height, t = TRACKS[id], [k1, k2] = MAP[id] || MAP.night;
@@ -58,7 +61,7 @@ function buildCards() {
     head.append(nm, badge);
     const desc = document.createElement('p'); desc.className = 'tp-desc'; desc.textContent = t.desc;
     const meta = document.createElement('p'); meta.className = 'tp-meta';
-    meta.textContent = `${LAPS} LAPS` + (t.cost ? ' · 1 MAMA voting certificate = 1 run' : ' · unlimited races');
+    meta.textContent = `${LAPS} LAPS` + (t.cost ? ' · ' + (COST[id] || '1 certificate = 1 run') : ' · unlimited races');
     card.append(c, head, desc);
     if (t.note) {
       const note = document.createElement('p'); note.className = 'tp-note'; note.textContent = t.note;

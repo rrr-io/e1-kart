@@ -13,7 +13,8 @@ import jakarta.persistence.Table;
 
 /**
  * A voting certificate that has already been redeemed. The certificate's ID is never stored
- * in plain text: id_hash is the HMAC of the normalized ID, and the UNIQUE constraint prevents reuse.
+ * in plain text: id_hash is the HMAC of the normalized ID (prefixed with the kind for MCD certificates, so IDs are
+ * only compared within their kind), and the UNIQUE constraint prevents reuse.
  */
 @Entity
 @Table(name = "certificate", indexes = @Index(name = "idx_certificate_player", columnList = "player_id"))
@@ -37,6 +38,10 @@ public class Certificate {
     @Column(length = 120)
     private String category;
 
+    /** FANS_CHOICE or MCD (see CertificateKind); null for certificates saved before MCD existed (FANS' CHOICE). */
+    @Column(length = 16)
+    private String kind;
+
     @Column(name = "runs_granted", nullable = false)
     private int runsGranted;
 
@@ -46,8 +51,10 @@ public class Certificate {
     protected Certificate() {
     }
 
-    public Certificate(String idHash, String playerId, LocalDateTime participationAt, String category, int runsGranted, Instant uploadedAt) {
+    public Certificate(String idHash, String playerId, LocalDateTime participationAt, String category, CertificateKind kind,
+                       int runsGranted, Instant uploadedAt) {
         this.idHash = idHash;
+        this.kind = kind.name();
         this.playerId = playerId;
         this.participationAt = participationAt;
         this.category = category;
@@ -73,6 +80,10 @@ public class Certificate {
 
     public String getCategory() {
         return category;
+    }
+
+    public CertificateKind getKind() {
+        return CertificateKind.of(kind);
     }
 
     public int getRunsGranted() {

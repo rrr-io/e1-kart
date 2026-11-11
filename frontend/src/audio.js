@@ -420,6 +420,11 @@ const TRACK_MUSIC = {
     ratio: 1.08,
   },
 };
+// Bloody Paradise races to the Night Circuit music for now (same files, same loop points).
+TRACK_MUSIC.bloody = { ...TRACK_MUSIC.night, file: 'night' };
+SONGS.bloody = SONGS.night;
+/** File name prefix of a track's race music: its own id unless it borrows another track's music. */
+const fileOf = (id) => (TRACK_MUSIC[id] && TRACK_MUSIC[id].file) || id;
 const FILE_SFX = { countdown: 'countdown', boost: 'boost', pickup: 'pickup', finalLap: 'final-lap' };
 
 const raw = {}, decoded = {}, sfxBufs = {};
@@ -442,8 +447,8 @@ function decode(key) {
 // Download the current track's music in the background soon after the game opens.
 if (TRACK_MUSIC[TRACK_ID]) {
   setTimeout(() => {
-    fetchFile(TRACK_ID + '-race');
-    fetchFile(TRACK_ID + '-final');
+    fetchFile(fileOf(TRACK_ID) + '-race');
+    fetchFile(fileOf(TRACK_ID) + '-final');
     Object.values(FILE_SFX).forEach(fetchFile);
   }, 1500);
 }
@@ -493,8 +498,8 @@ function playRace(id) {
   if (!ensure()) return;
   const token = raceToken, asked = ctx.currentTime, m = TRACK_MUSIC[id];
   raceId = id; songName = id;
-  decode(id + '-final');
-  decode(id + '-race').then((buf) => {
+  decode(fileOf(id) + '-final');
+  decode(fileOf(id) + '-race').then((buf) => {
     if (token !== raceToken) return;
     if (!buf) { console.warn('[audio] race music not loaded, using chiptune'); raceId = ''; songName = ''; playMusic(id); return; }
     // If loading took a while, start where the music would be by now.
@@ -506,7 +511,7 @@ function playRace(id) {
 function toFinal() {
   if (!race || race.which !== 'race') return;
   const token = raceToken, m = TRACK_MUSIC[raceId];
-  decode(raceId + '-final').then((buf) => {
+  decode(fileOf(raceId) + '-final').then((buf) => {
     if (!buf || token !== raceToken || !race || race.which !== 'race') return;
     const pos = position(race);
     const u = pos < m.race.intro ? 0 : (pos - m.race.gara0) / m.ratio;
@@ -606,7 +611,7 @@ export function fadeOutMusic(sec = 0.7) {
 }
 /** Decodes a track's race music ahead of time, so it starts right on the GO. */
 export function prepareMusic(id) {
-  if (ctx && TRACK_MUSIC[id]) { decode(id + '-race'); decode(id + '-final'); }
+  if (ctx && TRACK_MUSIC[id]) { decode(fileOf(id) + '-race'); decode(fileOf(id) + '-final'); }
 }
 /** Asks for a piece of music: 'menu', a track id (race music from its intro), 'finish', or '' for silence. */
 export function wantMusic(name) {

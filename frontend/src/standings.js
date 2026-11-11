@@ -1,6 +1,6 @@
-// E1 Kart GP leaderboard: the six game teams ranked by their Interstellar races (GET /api/standings gives
+// E1 Kart GP leaderboard: the six game teams ranked by their Interstellar and Bloody Paradise races (GET /api/standings gives
 // only the order, never the points). It's the game's own ranking, separate from the official E1 standings,
-// which are based on voting certificates. Shown in "What is E1?" and, after an Interstellar race, in a window
+// which are based on voting certificates. Shown in "What is E1?" and, after a race on those tracks, in a window
 // opened from the results.
 import { $ } from './engine.js';
 import { TEAMS } from './config.js';

@@ -148,7 +148,7 @@
             <label class="chipbtn upload" id="uploadBtn">+ UPLOAD CERTIFICATE
               <input class="sr-only" type="file" id="certFile" accept="image/png,image/jpeg">
             </label>
-            <p class="hint">Each certificate can only be used once.</p>
+            <p class="hint"><span id="certKind"></span> Each certificate can only be used once.</p>
           </div>
           <p class="msg" id="certMsg" role="status" aria-live="polite"></p>
           <div class="row"><button class="go alt" id="runBack">BACK</button><button class="go" id="runGo">RACE ▶</button></div>
@@ -159,10 +159,10 @@
         <div class="opt-head"><span>WHAT IS E1?</span><button class="x" id="e1Close" aria-label="Close">✕</button></div>
         <p class="e1-tag">ENGENES RACING AS ONE FOR ENHYPEN</p>
         <p class="hint">E1, the ENHYPEN MAMA Grand Prix, is a fan-organized campaign to promote voting for ENHYPEN at the MAMA AWARDS. ENGENEs race in six F1-style teams to bring ENHYPEN to the podium.</p>
-        <p class="hint">This game is part of the fun: vote, upload your voting certificate and unlock the Interstellar track.</p>
+        <p class="hint">This game is part of the fun: vote, upload your voting certificate and unlock the Interstellar and Bloody Paradise tracks.</p>
         <div class="e1-stand" id="e1Stand" hidden>
           <span class="lbl">E1 KART GP LEADERBOARD</span>
-          <p class="hint">Teams ranked by their Interstellar races, across all global players.</p>
+          <p class="hint">Teams ranked by their Interstellar and Bloody Paradise races, across all global players.</p>
           <ol id="e1StandList"></ol>
         </div>
         <div class="e1-links">
@@ -213,6 +213,7 @@
           <div><dt>TIME</dt><dd id="resTime">--:--.--</dd></div>
           <div><dt>FASTEST LAP</dt><dd id="resBest">--:--.--</dd></div>
         </dl>
+        <button class="go mnet" id="resMnet" hidden>WATCH ON MNET PLUS ▶</button>
         <button class="res-board" id="resBoard" hidden>CHECK THE GLOBAL E1 KART GP LEADERBOARD ▶</button>
         <p class="hint" id="resRuns"></p>
         <div class="res-btns"><button class="go alt share" id="share" disabled>SHARE RESULT ↗</button><button class="go alt" id="toMenu">CHANGE TEAM</button><button class="go" id="again">PLAY AGAIN ▶</button></div>
@@ -223,7 +224,7 @@
     <div class="win share-win">
       <div class="bar"><span>E1 KART GP LEADERBOARD</span><button class="x" id="boardClose" aria-label="Close">✕</button></div>
       <div class="wbody e1-stand">
-        <p class="hint">Teams ranked by their Interstellar races, across all global players.</p>
+        <p class="hint">Teams ranked by their Interstellar and Bloody Paradise races, across all global players.</p>
         <ol id="boardList"></ol>
       </div>
     </div>

@@ -23,6 +23,8 @@ import { tickCountdown } from './race.js';
 import { toMenu } from './menu.js';
 import { initInput } from './input.js';
 import { trackVisit } from './stats.js';
+import { TRACK, TRACK_ID } from './theme.js';
+import { openMnet } from './mnet.js';
 import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
 
 G.karts = TEAMS.map((t) => makeKart(t.color));
@@ -30,6 +32,8 @@ G.karts = TEAMS.map((t) => makeKart(t.color));
 $('start').onclick = menuStart;
 $('runGo').onclick = startGame;
 $('again').onclick = startGame;
+$('resMnet').hidden = !TRACK.mnet;
+$('resMnet').onclick = () => openMnet('button', TRACK_ID);
 $('toMenu').onclick = toMenu;
 initInput();
 initAccountUi();
@@ -75,7 +79,9 @@ function frame(now) {
       $('controls').hidden = true;
       const pos = playerPosition();
       reportFinish(player.finish, pos);
-      talk(player.team, pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'lose').then(() => {
+      // Interstellar and Bloody Paradise: closing the driver's line opens the video on Mnet Plus.
+      const opts = TRACK.mnet ? { onClose: () => openMnet('auto', TRACK_ID) } : {};
+      talk(player.team, pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'lose', opts).then(() => {
         showResults();
         $('resRuns').textContent = runsLeftText();
       });

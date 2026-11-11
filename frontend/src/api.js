@@ -60,15 +60,17 @@ export const getConfig = () => call('/config');
 
 export const getMe = () => withPlayer(() => call('/me'));
 
-export function uploadCertificate(file) {
+/** track: the track the player is uploading for; the server uses it only when the certificate doesn't show its kind. */
+export function uploadCertificate(file, track) {
   return withPlayer(() => {
     const fd = new FormData();
     fd.append('file', file);
+    if (track) fd.append('track', track);
     return call('/certificates', { method: 'POST', body: fd });
   });
 }
 
-export const startRun = (team) => withPlayer(() => call('/runs', json({ team })));
+export const startRun = (team, track) => withPlayer(() => call('/runs', json({ team, track })));
 
 export const finishRun = (runId, timeMs, position) => call('/runs/' + encodeURIComponent(runId) + '/finish', json({ timeMs, position }));
 

@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import com.rrriooo.e1kart.dto.ParsedCertificate;
 import com.rrriooo.e1kart.exception.ApiException;
 import com.rrriooo.e1kart.exception.ErrorCode;
+import com.rrriooo.e1kart.model.CertificateKind;
 
 /**
  * Extracts ID, date and category from the OCR text of a MAMA (Mnet Plus) voting certificate.
@@ -84,6 +85,44 @@ public class CertificateParser {
         String category = cat.find() ? cat.group(1).trim().replaceAll(" +", " ") + " VOTE" : null;
 
         return new ParsedCertificate(rawId, rawId == null ? null : normalizeId(rawId), participationAt, category);
+    }
+
+    /**
+     * The certificate kind named by the text, or null when the text doesn't say: "FAVORITE MCD STAGE" means MCD,
+     * "FANS' CHOICE" or "Category" means FANS' CHOICE. Look-alike OCR slips (MC0, ST4GE) are tolerated.
+     */
+    public static CertificateKind kindFromText(String ocrText) {
+        if (ocrText == null) {
+            return null;
+        }
+        String c = ocrText.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        if (c.matches(".*(MC[D0O]ST[A4]GE|FAVOR[I1]TEMC[D0O]|MC[D0O]STAGEW[I1]TH).*")) {
+            return CertificateKind.MCD;
+        }
+        if (c.contains("FANSCHO") || c.contains("FANCHO") || c.contains("CATEGORY")) {
+            return CertificateKind.FANS_CHOICE;
+        }
+        return null;
+    }
+
+    /**
+     * The first five characters of a certificate ID are the vote date: last digit of the year, month, day
+     * (vote on 2026.11.09 → 61109…). When the date was read, OCR slips in that prefix are corrected from it,
+     * so the same certificate always gives the same ID. An ID whose prefix is far from the date is left alone.
+     */
+    public static String fixDatePrefix(String id, LocalDateTime votedAt) {
+        if (id == null || votedAt == null || id.length() < 5) {
+            return id;
+        }
+        String expected = String.format(Locale.ROOT, "%d%02d%02d", votedAt.getYear() % 10, votedAt.getMonthValue(), votedAt.getDayOfMonth());
+        String head = normalizeId(id.substring(0, 5));
+        int diff = 0;
+        for (int i = 0; i < 5; i++) {
+            if (i >= head.length() || head.charAt(i) != expected.charAt(i)) {
+                diff++;
+            }
+        }
+        return diff <= 2 ? expected + id.substring(5) : id;
     }
 
     /**

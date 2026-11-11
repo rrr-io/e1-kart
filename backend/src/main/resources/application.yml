@@ -37,6 +37,9 @@ e1kart:
   # ENHYPEN references for the "last image is ENHYPEN" check (certificate images and/or JSON vectors exported
   # from the collab verifier). Empty or missing folder = the check is off (a warning is logged at startup).
   enhypen-refs-dir: ${E1KART_ENHYPEN_REFS:/data/enhypen-refs}
+  # ENHYPEN references for FAVORITE MCD STAGE certificates (Bloody Paradise): MCD certificate images of the ENHYPEN
+  # stage, whose middle photo is the reference. Empty or missing folder = MCD certificates are not checked for ENHYPEN.
+  mcd-refs-dir: ${E1KART_MCD_REFS:/data/mcd-refs}
   # Private stats page (/stats.html): the token it asks for. Empty = stats page off (events are still counted).
   stats-token: ${E1KART_STATS_TOKEN:}
   # Time zone of the stats days.

@@ -1,4 +1,4 @@
-// The two tracks and their look. The track is chosen in the menu and applied by reloading the page,
+// The tracks and their look. The track is chosen in the menu and applied by reloading the page,
 // so every module can build its scene once, at import, for the chosen track.
 import { settings } from './config.js';
 
@@ -16,16 +16,48 @@ export const TRACKS = {
     cost: true,    // needs a run from a MAMA voting certificate
     desc: 'MAMA 2026 "A Music Interstellar": neon skyline, giant moon, floating glass cubes.',
     note: 'Your race results count for your team in the global E1 Kart GP leaderboard.',
+    cert: 'MAMA FANS\' CHOICE voting certificate',
+    mnet: true,    // after the race, off to Mnet Plus (every view counts)
     raw: [[0, 0], [80, -10], [150, -6], [190, 30], [170, 80], [110, 86], [70, 120], [90, 170], [40, 200], [-30, 180], [-60, 130], [-120, 120], [-150, 70], [-110, 20], [-50, -10]],
     scale: 1.9,
+  },
+  // ENHYPEN "Bloody Paradise" music video: sunset over a sea of clouds, the prison courtyard with iron balconies,
+  // the market street with the green EL CAPULLO arch and the yellow pickup, the seaside terrace with graffiti.
+  bloody: {
+    name: 'BLOODY PARADISE',
+    cost: true,    // needs a run from a FAVORITE MCD STAGE certificate
+    desc: 'Sunset race from the seaside terrace through the market street and the prison courtyard.',
+    note: 'Your race results count for your team in the global E1 Kart GP leaderboard.',
+    cert: 'FAVORITE MCD STAGE voting certificate',
+    mnet: true,
+    raw: [[0, 0], [70, -6], [140, -4], [184, 22], [190, 74], [186, 124], [164, 164], [112, 180], [50, 174], [-12, 180], [-72, 172], [-122, 142], [-142, 92], [-132, 42], [-92, 8], [-42, -2]],
+    scale: 2.0,
   },
 };
 export const TRACK_IDS = Object.keys(TRACKS);
 export const TRACK_ID = TRACKS[settings.track] ? settings.track : 'night';
 export const TRACK = TRACKS[TRACK_ID];
 export const SPACE = TRACK === TRACKS.space;
+export const BLOODY = TRACK === TRACKS.bloody;
 
-export const THEME = SPACE ? {
+// Bloody Paradise: golden hour. sun* replaces the moon with a low sun; ground is warm paving.
+const SUNSET = {
+  fog: [0xd98a66, 220, 950],
+  sky: ['#2c1638', '#8e3141', '#e06a3a', '#ffbe6a'],
+  hemi: [0xffd6b0, 0x3a2a3a, 0.6],
+  moonLight: 0xffc490,
+  moonScale: 120, moonDir: [0.1, 0.2, -0.97],
+  sun: true,
+  ground: ['#8c8078', '#857970', '#6f655e', '#a39488'],   // stone paving, like the seaside terrace
+  asphalt: ['#3a3236', '#363034'],
+  line: '#f3e6d6',
+  kerb: ['#C8110E', '#f3e6d6'],
+  gravel: ['#9a8a7c', '#918274'],
+  sign: 'BLOODY PARADISE',
+  lamp: [0xffd27a, 0xff9a3c],
+};
+
+export const THEME = BLOODY ? SUNSET : SPACE ? {
   fog: [0x1a1140, 170, 820],
   sky: ['#05030f', '#140a33', '#2a1660', '#46308f'],
   hemi: [0x9a86ff, 0x120a24, 0.7],

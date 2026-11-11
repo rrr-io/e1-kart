@@ -184,7 +184,7 @@ function typewriter(el, text, onDone) {
 const dlg = $('dialog');
 const dlgText = $('dlgText');
 const dlgLive = $('dlgLive');
-let current = null; // { lines, index, tw, resolve }
+let current = null; // { lines, index, tw, resolve, onClose }
 
 function showLine() {
   const { lines, index, teamIdx } = current;
@@ -198,13 +198,15 @@ function showLine() {
   current.tw = typewriter(dlgText, line.t, () => { $('dlgNext').hidden = false; });
 }
 
-function close() {
+// byPlayer: closed by the player's tap or key (onClose runs then, still inside that gesture, so it may open a link).
+function close(byPlayer = false) {
   if (!current) return;
-  const { resolve, tw } = current;
+  const { resolve, tw, onClose } = current;
   if (tw) tw.cancel();
   current = null;
   dlg.hidden = true;
   $('game').classList.remove('talking');
+  if (byPlayer && onClose) onClose();
   resolve();
 }
 
@@ -212,18 +214,21 @@ function advance() {
   if (!current) return;
   if (current.tw && current.tw.typing()) { current.tw.finish(); return; }
   current.index++;
-  if (current.index >= current.lines.length) close();
+  if (current.index >= current.lines.length) close(true);
   else showLine();
 }
 
-/** Shows the driver's dialogue for a race moment. Resolves once the player closes it. */
-export function talk(teamIdx, key) {
+/**
+ * Shows the driver's dialogue for a race moment. Resolves once the player closes it.
+ * opts.onClose runs right in the closing tap or key press (not when another dialogue replaces this one).
+ */
+export function talk(teamIdx, key, opts = {}) {
   const lines = pickLines(teamIdx, key);
   if (!lines.length) return Promise.resolve();
   if (current) close();
   hideRadio();
   return new Promise((resolve) => {
-    current = { lines, index: 0, teamIdx, key, pick: Math.random(), tw: null, resolve };
+    current = { lines, index: 0, teamIdx, key, pick: Math.random(), tw: null, resolve, onClose: opts.onClose };
     applyTeam(dlg, teamIdx);
     $('dlgName').textContent = nameOf(teamIdx);
     dlg.hidden = false;
@@ -238,12 +243,12 @@ dlg.addEventListener('click', (e) => {
   if (e.target.closest('#dlgSkip')) return;
   advance();
 });
-$('dlgSkip').addEventListener('click', (e) => { e.stopPropagation(); close(); });
+$('dlgSkip').addEventListener('click', (e) => { e.stopPropagation(); close(true); });
 // Keyboard: Enter/Space to advance, Esc to skip. Captured so it never reaches the driving controls.
 window.addEventListener('keydown', (e) => {
   if (!current) return;
   if (['Enter', 'Space', 'KeyE'].includes(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) advance(); }
-  else if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); }
+  else if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(true); }
 }, true);
 
 // ---------- In-race radio ----------

@@ -32,12 +32,12 @@ public class RunController {
         this.standings = standings;
     }
 
-    /** Consumes a run when the race starts. 402 if the balance is zero. */
+    /** Consumes a run of the track's kind when the race starts. 402 if that balance is zero. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public StartRunResponse start(@RequestHeader(value = PlayerController.TOKEN_HEADER, required = false) String token,
                                   @Valid @RequestBody StartRunRequest body) {
-        return runService.start(playerService.requirePlayer(token), body.team());
+        return runService.start(playerService.requirePlayer(token), body.team(), body.track());
     }
 
     /** Records the race's final time and position (for the team standings). */

@@ -2,7 +2,7 @@
 
 Mobile single-player kart racer inspired by E1 / Enhypen MAMA Grand Prix: a night race under the blue moon, 6 teams, drift mini-turbos, boost pads and lightstick boost.
 
-The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run per race: runs are earned by uploading a screenshot of a MAMA voting certificate (**1 certificate = 1 run**, each certificate can only be used once). When the server allows it (`E1KART_FREE_PLAY`), OPTIONS shows **PLAY WITHOUT A CERTIFICATE** to race the Interstellar track for free, for testing.
+The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run per race: runs are earned by uploading a screenshot of a MAMA FANS' CHOICE voting certificate (**1 certificate = 1 run**, each certificate can only be used once). The **BLOODY PARADISE** track works the same way with FAVORITE MCD STAGE certificates, which have their own runs. When the server allows it (`E1KART_FREE_PLAY`), OPTIONS shows **PLAY WITHOUT A CERTIFICATE** to race those tracks for free, for testing.
 
 **Where things are**
 
@@ -108,12 +108,15 @@ Odds, durations, flower colors and icons live in `frontend/src/itemdefs.js`; the
 
 ## Tracks
 
-Two tracks, chosen with the TRACK button in the menu (the choice is saved and the page reloads):
+Three tracks, chosen after START (the choice is saved and the page reloads):
 
 - **NIGHT CIRCUIT**: the original night track under the blue moon. Always free.
 - **INTERSTELLAR**: needs a run (1 MAMA voting certificate = 1 run; the server's free-play flag still overrides it for testing). MAMA 2026 "A Music Interstellar" theme — neon skyline, giant moon, nebula, floating glass cubes, MAMA billboards.
+- **BLOODY PARADISE**: needs a run from a FAVORITE MCD STAGE certificate (1 certificate = 1 run, separate from the Interstellar runs). After ENHYPEN's "Bloody Paradise" music video, at sunset: the seaside terrace with the ocean and graffiti walls on the start straight, the market street with the green EL CAPULLO arch, yellow pickups, stalls, wires and red bunting, the prison courtyard with iron balconies, arched windows, trusses and warm lamps, pastel houses on the west side, a sea of sunset clouds around the horizon. Races to the Night Circuit music for now (`TRACK_MUSIC.bloody` in `audio.js` borrows its files).
 
-Layouts and colours live in `frontend/src/theme.js`; the interstellar scenery is in `frontend/src/space.js`.
+After an Interstellar or Bloody Paradise race, closing the driver's end-of-race line opens the video on Mnet Plus (the OneLink opens the app when installed), because every view counts; the results also have **WATCH ON MNET PLUS**. The link is `MNET_URL` in `frontend/src/mnet.js`; `mnet: true` on a track in `theme.js` turns it on.
+
+Layouts and colours live in `frontend/src/theme.js`; the interstellar scenery is in `frontend/src/space.js`, the Bloody Paradise scenery in `frontend/src/paradise.js` (its small static pieces are merged by material and the town houses and palms are instanced, so the whole town costs about as many draw calls as the other tracks). Its 3D models load in the background from `public/models/bloody/` and are cached by the service worker once loaded.
 
 ## Credits
 
@@ -124,6 +127,12 @@ A fan game by **rrr.i.ooo**: game, code, pixel art, driver portraits, music and 
 Fonts: Press Start 2P and VT323 (SIL Open Font License). 3D engine: three.js (MIT).
 
 Skyline of the INTERSTELLAR track (`frontend/src/assets/space/`): "Neon City" by Kelench, recoloured; free for free and commercial projects, not to be redistributed or resold as an asset pack.
+
+Sunset clouds of the BLOODY PARADISE track (`frontend/src/assets/bloody/clouds.png`): from "Free Sky with Clouds Background Pixel Art Set" by CraftPix (craftpix.net, free license), cropped and made tileable; not to be redistributed as an asset pack.
+
+Building facades of the BLOODY PARADISE track (`frontend/src/assets/bloody/facades/`): "Pixel Facades 100" by najjar320, free commercial license; not to be redistributed as standalone assets.
+
+Palms, fishing boats, barrels and the pier of the BLOODY PARADISE track (`frontend/public/models/bloody/`): "PSX The Island Pack" by Caliber Creations; usable in games, not to be redistributed as standalone files.
 
 
 Pixel-art effects (`frontend/src/assets/fx/`):
@@ -141,18 +150,18 @@ Pixel-art effects (`frontend/src/assets/fx/`):
 
 Anonymous usage stats are counted by the API itself, in its database: no external service, no cookies, no IPs stored.
 
-- The game sends a few events (`frontend/src/stats.js`): the visit with its source (Instagram, X, TikTok, KakaoTalk… from the app's built-in browser, the referring site or `?utm_source=`), the device, how it is opened (browser, in-app browser, installed app), races started (track and team), races finished (win, podium, finished), shares and app installs. The API counts certificate uploads by outcome (accepted, not ENHYPEN, already used…).
+- The game sends a few events (`frontend/src/stats.js`): the visit with its source (Instagram, X, TikTok, KakaoTalk… from the app's built-in browser, the referring site or `?utm_source=`), the device, how it is opened (browser, in-app browser, installed app), races started (track and team), races finished (win, podium, finished), shares, app installs and trips to Mnet Plus (`mnet`, automatic or from the button, per track). The API counts certificate uploads by outcome (accepted, accepted MCD, not ENHYPEN, already used…).
 - Only daily totals are stored (`stat_counter`). Unique visitors are counted with a hash of IP + browser + day and a random salt kept in memory that changes every day: nobody can be recognised from one day to the next, and nothing personal reaches the disk.
 - **The stats page** is `https://e1-kart.ensite.org/stats.html` (or on the debug domain) (not linked anywhere, not indexed). It asks for the token set in `.env` as `E1KART_STATS_TOKEN` (generate it with `openssl rand -hex 24`, then `docker compose up -d`). Without a token the page is off; the events are still counted.
 - To see which post brings players, share links with a source, e.g. `https://e1-kart.ensite.org/?utm_source=x-launch`.
 
 ## E1 Kart GP leaderboard
 
-The game's own team leaderboard, from the Interstellar races (the ones paid for with a run). It is separate from the official E1 standings, which are based on voting certificates.
+The game's own team leaderboard, from the Interstellar and Bloody Paradise races (the ones paid for with a run). It is separate from the official E1 standings, which are based on voting certificates.
 
 - At the finish the game sends the race's position with its time (`POST /api/runs/{id}/finish`). Each race gives its team points by position, F1-style, and teams are ranked by points, then by number of races.
 - `GET /api/standings` returns only the order (`[{ team, rank }]`, `rank` null for a team with no races yet): the points never leave the server.
-- Players see it in **WHAT IS E1?** (E1 KART GP LEADERBOARD) and, after an Interstellar race, from "CHECK THE GLOBAL E1 KART GP LEADERBOARD" on the results. Nothing on the share card.
+- Players see it in **WHAT IS E1?** (E1 KART GP LEADERBOARD) and, after a race on those tracks, from "CHECK THE GLOBAL E1 KART GP LEADERBOARD" on the results. Nothing on the share card.
 - `E1KART_STANDINGS_SINCE` in `.env` (e.g. `2026-11-12`, Korean date) counts only races from that day on, to start from zero at launch after the tests. Empty: all races.
 
 ## How certificate redemption works
@@ -165,7 +174,14 @@ The checks are those of the collab verifier (`e1-social-race`, `/collab-verify`)
 4. `OcrService` reads the whole image with Tesseract. Refused as `NOT_A_CERTIFICATE` only when nothing looks like a certificate: no certificate layout, none of the words `VOTING CERTIFICATE` / `MAMA` / `Mnet Plus`, no ENHYPEN photo. `CertificateParser` extracts the `Participation Date` (Korean time) and the category, e.g. `FANS' CHOICE CATEGORY 1ST VOTE`. An unreadable date (the upload time is stored instead) or a date outside `e1kart.vote-windows` is only logged.
 5. **The ID** (`IdReader`, `IdVotes`): the `No. <ID>` line of the card is read 3 times (up to 8 when the readings disagree) at different sizes, plain and binarised, in single-line mode with no dictionaries. Each reading votes for every 16-character ID it can stand for (the `No.` prefix and stray characters the OCR inserts are voted away). Without agreement: the best guess (a leader, or candidates differing only in look-alike characters), then the candidate with the most votes, then the full-page reading. With no readable ID at all, the file itself is the key: the same file can't be used twice.
 6. **Unique**: the ID is normalized (O→0, I→1) and stored only as an **HMAC-SHA256** keyed with a server secret, under a `UNIQUE` constraint: the same certificate can never be redeemed twice (`ALREADY_USED`), whether it arrives as an export or a screenshot.
-7. The balance is always `runs granted by certificates − runs started`, so it can never drift out of sync.
+7. The balance is always `runs granted by certificates − runs started`, so it can never drift out of sync. Each kind of certificate has its own balance (`/api/me`: `balance` for Interstellar, `mcdBalance` for Bloody Paradise).
+
+**FAVORITE MCD STAGE certificates** (Bloody Paradise) go through the same steps, with these differences:
+
+- **The kind** comes from the text (`FAVORITE MCD STAGE` → MCD, `FANS' CHOICE` / `Category` → FANS' CHOICE), then from the layout (one framed photo in the middle and no side thumbnails → MCD), then from the track the player is uploading for. A certificate of the other kind is still accepted, and its run goes to the track it unlocks ("+1 run for Interstellar!").
+- **ENHYPEN** (`McdMatcher`): the middle stage photo is compared with the MCD references (≥ 0.80 is ENHYPEN). Very lenient: refused (`MCD_NOT_ENHYPEN`) only when the card has the standard MCD layout and the photo is clearly another one (< 0.45). With no references the check is off.
+- **The ID**: its first five characters are the vote date (year's last digit, month, day: a vote on 2026.11.09 gives `61109…`); when the date was read, OCR slips in that prefix are corrected from it.
+- **Unique within its kind**: MCD IDs are hashed with an `MCD:` prefix, so they are only compared with other MCD IDs.
 
 ### ENHYPEN references
 
@@ -187,18 +203,29 @@ docker restart e1kart-api
 
 The startup log lists what was loaded (`ENHYPEN references: N vectors from enhypen-refs.json`).
 
+**MCD references** go in `e1kart.mcd-refs-dir` (env `E1KART_MCD_REFS`, default `/data/mcd-refs`): one or more FAVORITE MCD STAGE certificate images of the ENHYPEN stage (an export, or a screenshot showing the whole card); the middle photo becomes the reference. Add one more if Mnet changes the photo.
+
+```bash
+docker exec -u 0 e1kart-api mkdir -p /data/mcd-refs
+docker cp mcd-enhypen.jpg e1kart-api:/data/mcd-refs/
+docker exec -u 0 e1kart-api chown -R e1kart /data/mcd-refs
+docker restart e1kart-api
+```
+
+The log says `MCD reference: mcd-enhypen.jpg`.
+
 ### API
 
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/config` | `freePlayAllowed`, runs per certificate, voting windows |
 | POST | `/api/players` | creates an anonymous player and returns the token |
-| GET | `/api/me` | run balance, uploaded certificates, games played |
-| POST | `/api/certificates` | multipart `file`: redeems a certificate |
-| POST | `/api/runs` | `{team}`: consumes a run and returns `runId` |
-| POST | `/api/runs/{id}/finish` | `{timeMs}`: final time, for a future leaderboard |
+| GET | `/api/me` | run balances (`balance` Interstellar, `mcdBalance` Bloody Paradise), uploaded certificates, games played |
+| POST | `/api/certificates` | multipart `file` (+ optional `track`): redeems a certificate; the answer says its `kind` and `track` |
+| POST | `/api/runs` | `{team, track}`: consumes a run of that track's kind and returns `runId` |
+| POST | `/api/runs/{id}/finish` | `{timeMs, position}`: final time and position, for the leaderboard |
 
-The token goes in the `X-Player-Token` header. Errors are JSON `{code, message}` with a message already meant to be shown as-is (e.g. `ALREADY_USED` 409, `NO_RUNS` 402, `NOT_ENHYPEN` 422, `RATE_LIMITED` 429).
+The token goes in the `X-Player-Token` header. Errors are JSON `{code, message}` with a message already meant to be shown as-is (e.g. `ALREADY_USED` 409, `NO_RUNS` / `NO_MCD_RUNS` 402, `NOT_ENHYPEN` / `MCD_NOT_ENHYPEN` 422, `RATE_LIMITED` 429).
 
 ### Main settings (`backend/src/main/resources/application.yml`)
 
@@ -207,6 +234,7 @@ The token goes in the `X-Player-Token` header. Errors are JSON `{code, message}`
 - `e1kart.vote-windows`: voting periods. With the lenient check a date outside them is only logged, not refused.
 - `e1kart.upload-rate-limit-per-minute`: uploads per minute, per player and per IP.
 - `e1kart.enhypen-refs-dir` (env `E1KART_ENHYPEN_REFS`): folder of the ENHYPEN references (see above).
+- `e1kart.mcd-refs-dir` (env `E1KART_MCD_REFS`): folder of the MCD references (see above).
 
 ## Local development
 

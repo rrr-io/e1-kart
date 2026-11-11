@@ -53,7 +53,7 @@ const $ = (id) => document.getElementById(id);
 try { $('token').value = localStorage.getItem('e1kart.statsToken') || ''; } catch (e) { /* no storage */ }
 
 const LABELS = {
-  accepted: 'accepted', not_enhypen: 'not ENHYPEN', enhypen_not_last: 'not ENHYPEN (not last)', already_used: 'already used',
+  accepted: 'accepted', accepted_mcd: 'accepted (MCD)', mcd_not_enhypen: 'MCD not ENHYPEN', no_mcd_runs: 'no MCD runs', not_enhypen: 'not ENHYPEN', enhypen_not_last: 'not ENHYPEN (not last)', already_used: 'already used',
   not_a_certificate: 'not a certificate', rate_limited: 'too many uploads', unsupported_file: 'not an image', file_too_large: 'too large',
   ocr_failed: 'server busy (OCR)', no_runs: 'no runs',
 };
@@ -95,17 +95,20 @@ function table(title, entries, wide) {
   return `<section${wide ? ' class="wide"' : ''}><h2>${esc(title)}</h2><table>${body}</table></section>`;
 }
 
+// Accepted certificates of both kinds (FANS' CHOICE "accepted", FAVORITE MCD STAGE "accepted_mcd").
+const accepted = (rows) => sum(rows, 'certificate', 'accepted') + sum(rows, 'certificate', 'accepted_mcd');
+
 function render(rows) {
   const tiles = [
     ['Unique visitors', sum(rows, 'visitor')], ['Visits', sum(rows, 'visit')], ['Races started', sum(rows, 'race_start')],
-    ['Races finished', sum(rows, 'race_finish')], ['Certificates accepted', sum(rows, 'certificate', 'accepted')],
-    ['Certificates refused', sum(rows, 'certificate') - sum(rows, 'certificate', 'accepted')], ['Shares', sum(rows, 'share')], ['App installs', sum(rows, 'install')],
+    ['Races finished', sum(rows, 'race_finish')], ['Certificates accepted', accepted(rows)],
+    ['Certificates refused', sum(rows, 'certificate') - accepted(rows)], ['Shares', sum(rows, 'share')], ['App installs', sum(rows, 'install')],
   ].map(([k, v]) => `<div class="tile"><span>${k}</span><b>${v}</b></div>`).join('');
 
   const days = [...new Set(rows.map((r) => r.day))].sort().reverse();
   const daily = days.map((d) => {
     const r = rows.filter((x) => x.day === d);
-    return `<tr><td>${d}</td><td>${sum(r, 'visitor')}</td><td>${sum(r, 'visit')}</td><td>${sum(r, 'race_start')}</td><td>${sum(r, 'race_finish')}</td><td>${sum(r, 'certificate', 'accepted')}</td><td>${sum(r, 'share')}</td></tr>`;
+    return `<tr><td>${d}</td><td>${sum(r, 'visitor')}</td><td>${sum(r, 'visit')}</td><td>${sum(r, 'race_start')}</td><td>${sum(r, 'race_finish')}</td><td>${accepted(r)}</td><td>${sum(r, 'share')}</td></tr>`;
   }).join('') || '<tr><td class="empty" colspan="7">No data yet</td></tr>';
 
   $('out').innerHTML = `<div class="tiles">${tiles}</div><div class="grid">

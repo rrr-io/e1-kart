@@ -4,8 +4,10 @@ import * as THREE from 'three';
 import { scene, toon, canvasTex, redrawTex } from './engine.js';
 import { TEAMS, lum } from './config.js';
 import { N, NR, HALF, WORLD_K, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
-import { THEME, SPACE } from './theme.js';
+import { THEME, SPACE, BLOODY } from './theme.js';
 import { buildSpace, updateSpace, spaceTexts } from './space.js';
+import { buildParadise, updateParadise, paradiseTexts } from './paradise.js';
+const NIGHT = !SPACE && !BLOODY;
 
 // ---------- Start line and portal ----------
 const checker = canvasTex(16, 2, (g) => {
@@ -116,8 +118,11 @@ function grandstand(i) {
   lightsticks.push(sticks);
   placeAt(g, i, HALF + 5, 0);
 }
-grandstand(12);
-grandstand(N - 34);
+// Bloody Paradise: the start straight runs along the sea, so no grandstands there.
+if (!BLOODY) {
+  grandstand(12);
+  grandstand(N - 34);
+}
 
 // ---------- Team banners ----------
 const bannerTexs = TEAMS.map((t) => canvasTex(48, 8, (g, w, h) => {
@@ -170,7 +175,7 @@ const bannerMats = bannerTexs.map((map) => new THREE.MeshBasicMaterial({ map }))
 })();
 
 // ---------- Trees and bushes ----------
-if (!SPACE) (function vegetation() {
+if (NIGHT) (function vegetation() {
   const K = WORLD_K, cnt = Math.round(260 * K), bushCnt = Math.round(120 * K);
   const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.45, 2, 5), toon(0x3d2c2a), cnt);
   const cones = new THREE.InstancedMesh(new THREE.ConeGeometry(2.4, 5.5, 6), toon(0xffffff), cnt);
@@ -218,7 +223,7 @@ if (!SPACE) (function vegetation() {
 
 // ---------- Mountains and clouds ----------
 const clouds = [];
-if (!SPACE) (function backdrop() {
+if (NIGHT) (function backdrop() {
   const K = WORLD_K, c = new THREE.Vector3(10 * K, 0, 90 * K);
   for (let k = 0; k < 26; k++) {
     const a = (k / 26) * Math.PI * 2, r = (430 + Math.random() * 60) * K, h = 60 + Math.random() * 90;
@@ -276,6 +281,9 @@ if (!SPACE) (function backdrop() {
 // ---------- Interstellar track: skyline, floating glass cubes, MAMA billboards ----------
 if (SPACE) buildSpace();
 
+// ---------- Bloody Paradise: sea, market street, prison courtyard, town, sunset clouds ----------
+if (BLOODY) buildParadise();
+
 // ---------- Boost pads: [track index, lateral offset] ----------
 const padTex = canvasTex(16, 32, (g) => {
   g.fillStyle = '#1a1a1e'; g.fillRect(0, 0, 16, 32);
@@ -322,9 +330,10 @@ export function updateScenery(dt, now) {
   clouds.forEach((c) => { c.position.x += c.userData.v * dt; if (c.position.x > 500 * WORLD_K) c.position.x = -480 * WORLD_K; });
   lightsticks.forEach((s, k) => { s.position.y = Math.max(0, Math.sin(now / 170 + k * 2)) * 0.35; });
   if (SPACE) updateSpace(dt, now);
+  if (BLOODY) updateParadise(dt, now);
 }
 
 // Redraws the text once the pixel font has loaded.
 export function redrawText() {
-  [signTex, ...bannerTexs, ...spaceTexts].forEach(redrawTex);
+  [signTex, ...bannerTexs, ...spaceTexts, ...paradiseTexts].forEach(redrawTex);
 }

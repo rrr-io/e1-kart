@@ -19,6 +19,7 @@ public record E1KartProperties(
         int uploadRateLimitPerMinute,
         List<VoteWindow> voteWindows,
         String enhypenRefsDir,
+        String mcdRefsDir,
         String statsToken,
         String statsZone,
         String standingsSince) {

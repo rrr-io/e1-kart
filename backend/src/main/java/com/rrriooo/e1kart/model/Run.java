@@ -24,6 +24,10 @@ public class Run {
     @Column(nullable = false)
     private int team;
 
+    /** Which runs it used: FANS_CHOICE (Interstellar) or MCD (Bloody Paradise); null for older races (FANS' CHOICE). */
+    @Column(length = 16)
+    private String kind;
+
     @Column(name = "started_at", nullable = false)
     private Instant startedAt;
 
@@ -41,10 +45,11 @@ public class Run {
     protected Run() {
     }
 
-    public Run(String id, String playerId, int team, Instant startedAt) {
+    public Run(String id, String playerId, int team, CertificateKind kind, Instant startedAt) {
         this.id = id;
         this.playerId = playerId;
         this.team = team;
+        this.kind = kind.name();
         this.startedAt = startedAt;
     }
 
@@ -68,6 +73,10 @@ public class Run {
 
     public int getTeam() {
         return team;
+    }
+
+    public CertificateKind getKind() {
+        return CertificateKind.of(kind);
     }
 
     public Instant getStartedAt() {

@@ -12,6 +12,7 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
 
     long countByPlayerId(String playerId);
 
-    @Query("select coalesce(sum(c.runsGranted), 0) from Certificate c where c.playerId = :playerId")
-    long sumRunsGranted(@Param("playerId") String playerId);
+    /** Runs granted by the player's certificates of one kind (a null kind is FANS_CHOICE). */
+    @Query("select coalesce(sum(c.runsGranted), 0) from Certificate c where c.playerId = :playerId and coalesce(c.kind, 'FANS_CHOICE') = :kind")
+    long sumRunsGranted(@Param("playerId") String playerId, @Param("kind") String kind);
 }

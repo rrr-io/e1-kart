@@ -1,4 +1,5 @@
 // Night sky: moonlight, blue moon, halo, stars and a shooting star.
+// Bloody Paradise (THEME.sun): a low golden sun with a warm halo instead, and no stars.
 import * as THREE from 'three';
 import { scene, camera, canvasTex } from './engine.js';
 import moonUrl from './assets/moon.png';
@@ -30,7 +31,17 @@ const sky = new THREE.Group();
 scene.add(sky);
 
 const MOON_DIR = new THREE.Vector3(...THEME.moonDir).normalize();
-const moonTex = new THREE.TextureLoader().load(moonUrl);
+// The sun: stepped pixel disc, white-hot core to deep orange rim.
+const sunTex = () => canvasTex(32, 32, (g) => {
+  [[16, '#ff8a2a'], [14, '#ffb03c'], [11, '#ffd46a'], [7, '#fff1c2']].forEach(([r, c]) => {
+    g.fillStyle = c;
+    for (let y = -r; y < r; y++) {
+      const w = Math.round(Math.sqrt(r * r - (y + 0.5) * (y + 0.5)));
+      g.fillRect(16 - w, 16 + y, w * 2, 1);
+    }
+  });
+});
+const moonTex = THEME.sun ? sunTex() : new THREE.TextureLoader().load(moonUrl);
 moonTex.magFilter = THREE.NearestFilter;
 moonTex.minFilter = THREE.NearestFilter;
 moonTex.generateMipmaps = false;
@@ -42,9 +53,10 @@ moon.position.copy(MOON_DIR).multiplyScalar(760);
 
 const glowTex = canvasTex(64, 64, (g) => {
   const r = g.createRadialGradient(32, 32, 4, 32, 32, 32);
-  r.addColorStop(0, 'rgba(170,205,255,.75)');
-  r.addColorStop(0.45, 'rgba(110,160,255,.25)');
-  r.addColorStop(1, 'rgba(80,120,255,0)');
+  const [a, b, c] = THEME.sun ? ['255,214,140', '255,140,60', '255,90,40'] : ['170,205,255', '110,160,255', '80,120,255'];
+  r.addColorStop(0, `rgba(${a},.8)`);
+  r.addColorStop(0.45, `rgba(${b},.3)`);
+  r.addColorStop(1, `rgba(${c},0)`);
   g.fillStyle = r;
   g.fillRect(0, 0, 64, 64);
 });
@@ -96,9 +108,9 @@ function starField(n, size, colors, minY) {
   sky.add(p);
   return p;
 }
-starField(SPACE ? 2400 : 1300, 1, SPACE ? ['#b9a8ff', '#ffffff', '#ff9be6', '#8fd8ff'] : ['#8fa3d6', '#c9d6ff', '#6f86c4'], 0.02);
+if (!THEME.sun) starField(SPACE ? 2400 : 1300, 1, SPACE ? ['#b9a8ff', '#ffffff', '#ff9be6', '#8fd8ff'] : ['#8fa3d6', '#c9d6ff', '#6f86c4'], 0.02);
 if (SPACE) nebula();
-const brightStars = starField(140, 2, ['#ffffff', '#bfe0ff', '#9fd0ff'], 0.08);
+const brightStars = starField(THEME.sun ? 0 : 140, 2, ['#ffffff', '#bfe0ff', '#9fd0ff'], 0.08);
 
 const shoot = new THREE.Mesh(
   new THREE.BoxGeometry(26, 0.9, 0.9),
@@ -115,7 +127,7 @@ export function updateSky(dt, now, focus) {
   brightStars.material.opacity = 0.75 + Math.sin(now / 400) * 0.25;
 
   shootT -= dt;
-  if (shootT < 0) {
+  if (shootT < 0 && !THEME.sun) {
     shootT = 5 + Math.random() * 6;
     const a = Math.random() * Math.PI * 2;
     shot = { t: 0, x: Math.cos(a) * 600, z: Math.sin(a) * 600, dx: -Math.sin(a), dz: Math.cos(a) };
