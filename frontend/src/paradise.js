@@ -207,6 +207,8 @@ function overheadAd(i, name) {
   [-1, 1].forEach((sx) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.7, y + hgt / 2 + 1, 0.7), frameM); p.position.set(sx * span / 2, (y + hgt / 2 + 1) / 2, -0.4); p.castShadow = true; g.add(p);
     const f = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 1.4), tm(0xb8ada0)); f.position.set(sx * span / 2, 0.25, -0.4); g.add(f); });
   const beam = new THREE.Mesh(new THREE.BoxGeometry(span, 0.6, 0.6), frameM); beam.position.set(0, y + hgt / 2 + 0.7, -0.4); g.add(beam);
+  // From behind (after passing under it, or on the way back): a grey steel back, not a black slab.
+  const back = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.6, hgt + 0.6, 0.1), tm(0x7a726c)); back.position.set(0, y, -0.4); g.add(back);
   const o = off(i, 0);
   g.position.set(o[0], 0, o[1]);
   g.rotation.y = yawAt(i) + Math.PI;
@@ -546,8 +548,8 @@ function capulloArch(i) {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.8, 7, 0.8), postM);
     p.position.set(s * (HALF + 3.4), 3.5, 0); p.castShadow = true; grp.add(p);
   });
-  // The arch faces along the road: rotate the plane to stand across it.
-  sign.rotation.y = 0;
+  // Stands across the road, its lettering facing the karts that drive toward it (local -z).
+  sign.rotation.y = Math.PI;
   const o = off(i, 0);
   grp.position.set(o[0], 0, o[1]);
   grp.rotation.y = yawAt(i);
