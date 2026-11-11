@@ -112,7 +112,7 @@ const grass = THEME.ground ? canvasTex(32, 32, (g) => {
   for (let k = 0; k < 40; k++) { g.fillStyle = k % 2 ? '#152c27' : '#25463c'; g.fillRect((k * 13) % 32, (k * 7) % 32, 1, 1); }
 }, true);
 grass.repeat.set(70, 70);
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(2200, 2200), toon(0xffffff, { map: grass }));
+export const ground = new THREE.Mesh(new THREE.PlaneGeometry(2200, 2200), toon(0xffffff, { map: grass }));
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);

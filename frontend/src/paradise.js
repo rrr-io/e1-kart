@@ -11,7 +11,7 @@
 // Palms, boats, barrels, pier (public/models/bloody): "PSX The Island Pack" by Caliber Creations (not to be redistributed).
 import * as THREE from 'three';
 import { scene, camera, toon, canvasTex } from './engine.js';
-import { N, HALF, WORLD_K, corner, off, yawAt, minTrackDist, P } from './track.js';
+import { N, HALF, WORLD_K, corner, off, yawAt, minTrackDist, P, ground } from './track.js';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import cloudsUrl from './assets/bloody/clouds.png';
@@ -36,8 +36,9 @@ const SEASIDE = [[650, 720], [0, 112]];
 const MARKET = [150, 276];
 const PRISON = [298, 472];
 const WEST = [492, 636];
-const SEA_Z = -24;           // the coast: the beach starts south of here
-const BEACH = 22;            // metres of dry sand before the shore strip (whose wet sand and water start ~15 m in)
+const SEA_Z = -36;           // the edge of the terrace: the cliff drops to the sea south of here
+const CLIFF = 12;            // how far below the terrace the beach and the sea are
+const BEACH = 14;            // metres of dry sand at the foot of the cliff before the shore strip
 
 // ---------- Graffiti: our own colourful tags and blobs on a pale wall.
 function graffiti(seed, base = '#d8d2cc') {
@@ -90,7 +91,6 @@ const ids = (...styles) => styles.flatMap((st) => STYLES[st] || []);
 const MARKET_IDS = ids('brownstone', 'warehouse', 'shop_terrace');
 const WEST_IDS = ids('mediterranean', 'art_nouveau', 'half_timber', 'limestone');
 const TOWN_IDS = Object.keys(ATLAS.rects);
-const PRISON_IDS = ids('mediterranean');
 
 // Seeded random numbers: the same town on every device.
 let seed = 20261111;
@@ -244,10 +244,80 @@ function roofAd(grp, d, h, w, side) {
   if (import.meta.env.DEV) (window.__roofAds = window.__roofAds || []).push(b);   // for checking them in tests
 }
 
+// ---------- Casas: low Barranco / Lima houses drawn here, one or two floors (4 m each), 12 m wide ----------
+// Painted plaster in strong colours, barred windows, wooden doors, shop shutters with a painted sign, wooden
+// balconies, an unfinished brick upper floor, a mural. All in one canvas, so every casa merges into one mesh.
+const CASA_N = 12, CW = 96, CH = 64;   // 8 px per metre
+const CASA_COL = ['#e7a23a', '#d9685a', '#3fa7a0', '#ece6da', '#e8c9a0', '#7fa6d9', '#d98ab0', '#b9623c', '#c9a27e', '#8fbf7a', '#f2e9dc', '#e2b23a'];
+const SHOP_SIGNS = ['BODEGA', 'FRUTAS', 'POLLO', 'CAFE', 'TIENDA', 'JUGOS'];
+const casaTex = canvasTex(CW * (CASA_N + 1), CH, (g) => {
+  for (let k = 0; k < CASA_N; k++) {
+    let s = 977 + k * 131;
+    const r = () => ((s = (s * 48271) % 2147483647) / 2147483647);
+    const x0 = k * CW, base = CASA_COL[k], F = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x0 + x, y, w, h); };
+    F(base, 0, 0, CW, CH);
+    const brick = (y, h) => { F('#b9623c', 0, y, CW, h); for (let yy = y; yy < y + h; yy += 3) for (let xx = (yy % 6 ? 0 : 3); xx < CW; xx += 6) F('#8f4428', xx, yy + 2, 5, 1); };
+    if (k === 7) brick(0, CH);
+    if (k % 4 === 1) brick(0, 30);                                  // upper floor left in bare brick
+    for (let n = 0; n < 40; n++) F('rgba(0,0,0,.06)', (r() * CW) | 0, (r() * CH) | 0, 2 + ((r() * 3) | 0), 1);   // stains
+    F('rgba(0,0,0,.22)', 0, CH - 5, CW, 5);                           // darker plinth
+    F('rgba(255,255,255,.25)', 0, 0, CW, 2);                          // cornice
+    F('rgba(0,0,0,.2)', 0, 31, CW, 1);                                // floor line
+    const win = (x, y, w = 11, h = 12) => {
+      F('#f3e6d6', x - 1, y - 1, w + 2, h + 2); F(r() < 0.4 ? '#ffcf7a' : '#27303f', x, y, w, h);
+      for (let b = 2; b < w; b += 3) F('#1b1418', x + b, y, 1, h);    // iron bars
+      F('#1b1418', x, y + (h >> 1), w, 1);
+    };
+    const door = (x) => { F('#3a2418', x - 1, CH - 21, 11, 21); F('#6b4226', x, CH - 20, 9, 20); F('#3a2418', x + 4, CH - 20, 1, 20); F('#e6c02e', x + 6, CH - 11, 1, 1); };
+    const shop = k % 3 === 0;
+    if (shop) {
+      const sx = 34 + ((r() * 8) | 0), band = ['#C8110E', '#2f9a52', '#2f6fa8', '#e6c02e'][k % 4];
+      F('#5a5f6a', sx, CH - 22, 44, 22); for (let yy = CH - 21; yy < CH; yy += 2) F('#7a808c', sx, yy, 44, 1);   // roller shutter
+      F(band, sx - 2, CH - 30, 48, 7);
+      g.fillStyle = band === '#e6c02e' ? '#1b1418' : '#fff6e0';
+      g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(SHOP_SIGNS[k % SHOP_SIGNS.length].slice(0, 6), x0 + sx + 22, CH - 26);
+      door(8 + ((r() * 10) | 0));
+    } else {
+      const dx = 12 + ((r() * 60) | 0);
+      door(dx);
+      [8, 34, 60, 78].forEach((wx) => { if (Math.abs(wx - dx) > 14 && r() < 0.75) win(wx, CH - 22); });
+    }
+    if (k === 10) {                                                  // a mural across the upper floor
+      ['#C8110E', '#2f8ad6', '#f2c12e', '#2fae6a', '#f06eb0', '#7a3fd0'].forEach((c, n) => { F(c, 6 + n * 14, 6 + ((n * 7) % 12), 16, 10); F(c, 10 + n * 14, 3 + ((n * 5) % 9), 8, 18); });
+    } else {
+      [10, 42, 74].forEach((wx) => { if (r() < 0.8) win(wx, 8, 11, 13); });
+      if (k % 2 === 0) { F('#3a2418', 4, 24, CW - 8, 2); for (let b = 5; b < CW - 5; b += 3) F('#3a2418', b, 19, 1, 6); F('#3a2418', 4, 18, CW - 8, 1); }   // wooden balcony
+    }
+  }
+  g.fillStyle = '#9a8f84'; g.fillRect(CASA_N * CW, 0, CW, CH);       // roof tile: concrete
+  g.fillStyle = '#8a7f74'; for (let yy = 0; yy < CH; yy += 8) g.fillRect(CASA_N * CW, yy, CW, 1);
+});
+paradiseTexts.push(casaTex);
+const casaM = toon(0xffffff, { map: casaTex });
+/** A casa: floors 1 or 2, w along the street (up to 12 m shows a whole tile), its walls from tile k. */
+function casaBox(d, floors, w, k) {
+  const h = floors * 4, g = new THREE.BoxGeometry(d, h, w), uv = g.attributes.uv, T = CASA_N + 1;
+  const piece = (fw) => { const cw = Math.min(1, fw / 12), o = (1 - cw) * rand(); return [(k + o) / T, 0, (k + o + cw) / T, floors === 2 ? 1 : 0.5]; };
+  const roof = [(CASA_N + 0.1) / T, 0.1, (CASA_N + 0.9) / T, 0.9];
+  const faces = [piece(w), piece(w), roof, roof, piece(d), piece(d)];
+  for (let f = 0; f < 6; f++) {
+    const [u0, v0, u1, v1] = faces[f];
+    for (let n = f * 4; n < f * 4 + 4; n++) uv.setXY(n, u0 + uv.getX(n) * (u1 - u0), v0 + uv.getY(n) * (v1 - v0));
+  }
+  return [g, h];
+}
+
 /** A building on one side of the track at sample i (front facing the road). */
-function building(i, side, { w = 14, d = 10, h = 12, ids: pool = TOWN_IDS, id, gap = 6, from = 'bottom', shop = true, roof = true }) {
+function building(i, side, { w = 14, d = 10, h = 12, ids: pool = TOWN_IDS, id, gap = 6, from = 'bottom', shop = true, roof = true, casa = 0 }) {
   const grp = new THREE.Group();
-  const m = new THREE.Mesh(facadeBox(d, h, w, id || pick(pool), from), facadeM);
+  let m;
+  if (rand() < casa) {   // a low painted casa instead of a facade from the atlas
+    w = Math.min(w, 12);
+    const [geo, ch] = casaBox(d, h > 6 ? 2 : 1, w, (rand() * CASA_N) | 0);
+    h = ch; shop = shop && rand() < 0.4;
+    m = new THREE.Mesh(geo, casaM);
+  } else m = new THREE.Mesh(facadeBox(d, h, w, id || pick(pool), from), facadeM);
   m.position.y = h / 2; m.castShadow = true; grp.add(m);
   if (roof && h < 16 && w > 11 && rand() < 0.16) roofAd(grp, d, h, w, side);
   else if (roof) roofTop(grp, d, h, w);
@@ -273,40 +343,44 @@ function street(range, opts) {
         const o = opts(side);
         if (!o) { i += step; continue; }
         const floors = o.floors[0] + ((rand() * (o.floors[1] - o.floors[0] + 1)) | 0);
-        building(j, side, { w, d: 8 + rand() * 6, h: floors * 3.6 + 0.8, gap: o.gap + rand() * 2.5, ids: o.ids, shop: o.shop });
+        building(j, side, { w, d: 8 + rand() * 6, h: floors * 3.6 + 0.8, gap: o.gap + rand() * 2.5, ids: o.ids, shop: o.shop, casa: o.casa || 0 });
       }
       i += step + (rand() < 0.15 ? 2 : 0);   // now and then an alley
     }
   });
 }
 
-// ---------- People: little pixel figures (red jumpsuits and bandanas, like the video) ----------
-const PEOPLE = ['jumpsuit-bandana', 'jumpsuit', 'tee-jeans', 'pink-jeans', 'hoodie', 'dancer'];
+// ---------- People: little pixel figures. The inmates wear the video's red tracksuit: jacket open on a white tee,
+// a white number tag on the chest, red trousers with a white stripe. ----------
+const PEOPLE = ['inmate', 'inmate-tee', 'tee-jeans', 'pink-jeans', 'hoodie', 'dancer'];
 const peopleTex = canvasTex(8 * PEOPLE.length, 16, (g) => {
   PEOPLE.forEach((kind, k) => {
     const x = k * 8, px = (c, a, b, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(x + a, b, w, h); };
-    const skin = ['#e0b08a', '#c98f68', '#f0c8a0'][k % 3], hair = '#1b1418';
-    const red = '#C8110E', top = { 'tee-jeans': '#f3eee8', 'pink-jeans': '#f06eb0', hoodie: '#8a8a94' }[kind] || red;
-    const legs = { 'tee-jeans': '#3a5a9a', 'pink-jeans': '#4a6aa8', hoodie: '#2a2a30' }[kind] || red;
+    const skin = ['#e0b08a', '#c98f68', '#f0c8a0'][k % 3], hair = k % 2 ? '#1b1418' : '#3a2a22';
+    const red = '#B8141A', dark = '#7d0c10', white = '#f3eee8';
+    const inmate = kind === 'inmate' || kind === 'dancer', tee = kind === 'inmate-tee';
+    const top = inmate ? red : tee ? white : { 'tee-jeans': white, 'pink-jeans': '#f06eb0', hoodie: '#8a8a94' }[kind];
+    const legs = inmate || tee ? red : { 'tee-jeans': '#3a5a9a', 'pink-jeans': '#4a6aa8', hoodie: '#2a2a30' }[kind];
     px(hair, 2, 0, 4, 2); px(skin, 2, 2, 4, 3); px(hair, 2, 2, 1, 2);
-    if (kind === 'jumpsuit-bandana' || kind === 'dancer') { px(red, 1, 1, 6, 1); px('#f3e6d6', 3, 1, 1, 1); }
     px(top, 1, 5, 6, 5);
+    if (inmate) { px(white, 3, 5, 2, 5); px(white, 5, 6, 2, 1); px(dark, 1, 9, 2, 1); px(dark, 5, 9, 2, 1); }   // open jacket, tee, number tag
+    if (tee) px(dark, 2, 9, 4, 1);                                                                           // jacket tied at the waist
     if (kind === 'dancer') { px(top, 0, 2, 1, 4); px(top, 7, 2, 1, 4); px(skin, 0, 1, 1, 1); px(skin, 7, 1, 1, 1); } // arms up
-    else { px(top, 0, 5, 1, 4); px(top, 7, 5, 1, 4); px(skin, 0, 9, 1, 1); px(skin, 7, 9, 1, 1); }
-    if (kind.startsWith('jumpsuit') || kind === 'dancer') px('#8a0c0a', 1, 9, 6, 1);   // belt shadow
+    else { px(tee ? skin : top, 0, 5, 1, 4); px(tee ? skin : top, 7, 5, 1, 4); px(skin, 0, 9, 1, 1); px(skin, 7, 9, 1, 1); }
     px(legs, 2, 10, 2, 5); px(legs, 4, 10, 2, 5);
-    px('#1b1418', 1, 15, 3, 1); px('#1b1418', 4, 15, 3, 1);
+    if (inmate || tee) { px(white, 2, 10, 1, 5); px(white, 5, 10, 1, 5); }                                    // side stripes
+    px(white, 1, 15, 3, 1); px(white, 4, 15, 3, 1);
   });
 });
 const peopleM = new THREE.MeshBasicMaterial({ map: peopleTex, alphaTest: 0.5, side: THREE.DoubleSide });
 /** A figure of kind k standing at sample i, lateral lat, facing the karts coming toward it. */
-function person(i, lat, k) {
+function person(i, lat, k, y = 0) {
   const g = new THREE.PlaneGeometry(0.95, 1.9);
   const uv = g.attributes.uv, u0 = k / PEOPLE.length, u1 = (k + 1) / PEOPLE.length;
   for (let n = 0; n < 4; n++) uv.setX(n, u0 + uv.getX(n) * (u1 - u0));
   const m = new THREE.Mesh(g, peopleM);
   const o = off(i % N, lat);
-  m.position.set(o[0], 0.95, o[1]);
+  m.position.set(o[0], y + 0.95, o[1]);
   m.rotation.y = yawAt(i % N) + Math.PI + (rand() - 0.5) * 0.6;
   add(m);
 }
@@ -320,7 +394,7 @@ function crowd(range, n, kinds, lat0, lat1, sides = [-1, 1]) {
 }
 
 // ---------- Street furniture ----------
-function sidewalk(range) {
+function sidewalk(range, outer = HALF + 6, tones = ['#a89a8c', '#a09284']) {
   // Pavement and curb between the road and the buildings, on the straights.
   const pos = [], col = [], c = new THREE.Color();
   const quad = (i, a, b, colour) => {
@@ -331,9 +405,9 @@ function sidewalk(range) {
   for (let i = range[0]; i < range[1]; i++) {
     if (corner[i % N]) continue;
     [-1, 1].forEach((s) => {
-      const a = s * (HALF + 1.7), b = s * (HALF + 2.2), e = s * (HALF + 6);
+      const a = s * (HALF + 1.7), b = s * (HALF + 2.2), e = s * outer;
       quad(i % N, Math.min(a, b), Math.max(a, b), '#d8cfc4');
-      quad(i % N, Math.min(b, e), Math.max(b, e), (i >> 2) % 2 ? '#a89a8c' : '#a09284');
+      quad(i % N, Math.min(b, e), Math.max(b, e), tones[(i >> 2) % 2]);
     });
   }
   const g = new THREE.BufferGeometry();
@@ -364,6 +438,17 @@ function furniture(range, n, lat0, lat1, kinds = ['bin', 'pot', 'crate']) {
     else if (kind === 'lamp') { at(lampPostG, tm(0x2a2024), 2); at(globeG, bm(0xffe0a0), 4.1); }
     else if (kind === 'barrel') { at(binG, tm(pick([0x9a6a42, 0xC8110E, 0x2f5fa8])), 0.5).scale.set(1.2, 1.1, 1.2); }
     else if (kind === 'kiosk') { at(kioskG, tm(pick([0x2f8a4a, 0xC8110E, 0x2f6fa8])), 1.2); at(kioskRoofG, tm(0xf3e6d6), 2.55); }
+    else if (kind === 'cart') {            // fruit cart with an umbrella
+      at(new THREE.BoxGeometry(1.4, 0.7, 2.2), tm(0x6b4a32), 0.9);
+      [0xf2c12e, 0xe0782f, 0x2fae6a].forEach((c, n) => { at(crateG, tm(c), 1.45).position.z = (n - 1) * 0.7; });
+      [-0.9, 0.9].forEach((z) => { const w = at(new THREE.CylinderGeometry(0.4, 0.4, 0.15, 8), tm(0x1b1b20), 0.4); w.rotation.z = Math.PI / 2; w.position.set(0.75, 0.4, z); });
+      at(poleG, tm(0x2a2024), 1.9); at(umbG, tm(pick([0xC8110E, 0xe8a23a, 0x2f8ad6])), 3.1);
+    } else if (kind === 'sacks') { [0, 1, 2].forEach((n) => { const m = at(bushG, tm(pick([0xd8c9a8, 0xc9b08a])), 0.4 + (n === 2 ? 0.55 : 0)); m.scale.set(1, 0.6, 0.8); m.position.x = n === 2 ? 0.3 : n * 0.9; }); }
+    else if (kind === 'chairs') { [0, 1].forEach((n) => { const c = pick([0xC8110E, 0xf3eee8, 0x2f6fa8]); at(new THREE.BoxGeometry(0.5, 0.08, 0.5), tm(c), 0.5).position.x = n; at(new THREE.BoxGeometry(0.5, 0.5, 0.08), tm(c), 0.78).position.set(n, 0.78, -0.22); at(new THREE.BoxGeometry(0.4, 0.5, 0.4), tm(0x8a8a94), 0.25).position.x = n; }); }
+    else if (kind === 'redcrates') { for (let n = 0; n < 3; n++) at(new THREE.BoxGeometry(0.8, 0.5, 0.6), tm(n === 1 ? 0xf2c12e : 0xC8110E), 0.25 + n * 0.5); }
+    else if (kind === 'telescope') { at(lampPostG, tm(0x5a6a7a), 0.7).scale.set(1.4, 0.35, 1.4); at(new THREE.BoxGeometry(0.35, 0.35, 0.9), tm(0x5a6a7a), 1.55); }
+    else if (kind === 'tree') { at(lampPostG, tm(0x6b4a32), 1.4).scale.set(1.6, 0.7, 1.6); at(bushG, tm(0x2f7a46), 3.2).scale.set(2, 1.8, 2); at(bushG, tm(0x3a8a4a), 4.2).scale.set(1.3, 1.2, 1.3); at(planterG, tm(0xb0603a), 0.4); }
+    else if (kind === 'bucket') { at(binG, tm(pick([0x8a8a94, 0x2f5fa8])), 0.3).scale.set(0.8, 0.55, 0.8); }
     else if (kind === 'cafe') { at(tableG, tm(0xf3e6d6), 0.75); at(poleG, tm(0x2a2024), 1.2); at(umbG, tm(pick([0xC8110E, 0xf3e6d6, 0xe8a23a])), 2.5); }
     g.position.set(o[0], 0, o[1]);
     g.rotation.y = rand() * 6.28;
@@ -375,8 +460,19 @@ function furniture(range, n, lat0, lat1, kinds = ['bin', 'pot', 'crate']) {
 let sea = null, glitter = null;
 let shore = null;
 function ocean() {
-  // The beach: a strip of sand, wet sand and shallow turquoise water with ripples (shore.png, seen from above),
-  // tiled along the coast, then the deep sea out to the clouds.
+  // Like the video's mirador, the terrace is on top of a cliff: the ground ends at SEA_Z, a rock face drops to a
+  // beach (sand, wet sand and shallow water with ripples, shore.png seen from above), then the open sea out to the
+  // clouds, with breakwaters and a headland across the bay.
+  ground.position.z = SEA_Z + 1100;
+  const SL = -CLIFF + 0.04;
+  const rock = canvasTex(32, 16, (g) => {
+    g.fillStyle = '#8a6a4e'; g.fillRect(0, 0, 32, 16);
+    for (let k = 0; k < 40; k++) { g.fillStyle = ['#7a5a40', '#9a7a5a', '#6f8a4a'][k % 3 === 2 && k % 5 ? 0 : k % 3]; g.fillRect((k * 13) % 32, (k * 5) % 16, 2 + (k % 5), 1); }
+  }, true);
+  rock.repeat.set(2400 / 32, 1);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(2400, CLIFF + 1), new THREE.MeshBasicMaterial({ map: rock, side: THREE.DoubleSide }));
+  face.position.set(48, -(CLIFF + 1) / 2 + 0.5, SEA_Z);
+  scene.add(face);
   const st = new THREE.TextureLoader().load(shoreUrl);
   st.magFilter = st.minFilter = THREE.NearestFilter;
   st.generateMipmaps = false;
@@ -385,7 +481,7 @@ function ocean() {
   st.repeat.set(2400 / (96 * PXM), 1);
   shore = new THREE.Mesh(new THREE.PlaneGeometry(2400, depth), new THREE.MeshBasicMaterial({ map: st, fog: false, color: 0xfff0e6 }));
   shore.rotation.x = -Math.PI / 2;
-  shore.position.set(48, 0.04, SEA_Z - BEACH - depth / 2);
+  shore.position.set(48, SL, SEA_Z - BEACH - depth / 2);
   scene.add(shore);
   // Dry sand from the coast down to where the shore texture starts, the same colour as its top rows.
   const sand = canvasTex(32, 32, (g) => {
@@ -395,7 +491,7 @@ function ocean() {
   sand.repeat.set(2400 / 8, BEACH / 8);
   const dry = new THREE.Mesh(new THREE.PlaneGeometry(2400, BEACH), new THREE.MeshBasicMaterial({ map: sand, color: 0xfff0e6 }));
   dry.rotation.x = -Math.PI / 2;
-  dry.position.set(48, 0.04, SEA_Z - BEACH / 2);
+  dry.position.set(48, SL, SEA_Z - BEACH / 2);
   scene.add(dry);
   const tex = canvasTex(32, 32, (g) => {
     g.fillStyle = '#006f89'; g.fillRect(0, 0, 32, 32);
@@ -408,7 +504,7 @@ function ocean() {
   // No fog on the sea, so it stays blue out to the clouds.
   sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 1000), new THREE.MeshBasicMaterial({ map: tex, fog: false, color: 0xfff0e6 }));
   sea.rotation.x = -Math.PI / 2;
-  sea.position.set(48, 0.04, SEA_Z - BEACH - depth - 500);
+  sea.position.set(48, SL, SEA_Z - BEACH - depth - 500);
   scene.add(sea);
   // Sunset glitter: a warm path on the water toward the low sun, kept in line with the camera.
   const gt = canvasTex(16, 64, (g) => {
@@ -421,17 +517,31 @@ function ocean() {
   });
   glitter = new THREE.Mesh(new THREE.PlaneGeometry(90, 900), new THREE.MeshBasicMaterial({ map: gt, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8, fog: false }));
   glitter.rotation.x = -Math.PI / 2;
-  glitter.position.set(48, 0.1, SEA_Z - 500);
+  glitter.position.set(48, SL + 0.06, SEA_Z - 500);
   scene.add(glitter);
+  // Breakwaters: lines of dark rocks running out from the beach.
+  [-220, -20, 200, 420].forEach((x) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(4, 1.6, 70), tm(0x4a4038)); b.position.set(x, SL + 0.5, SEA_Z - BEACH - 40); add(b);
+  });
+  // The headland across the bay, to the east: dusty flat-topped hills with the lights of a town on them.
+  for (let k = 0; k < 9; k++) {
+    const r = 60 + rand() * 50, h = 22 + rand() * 34, x = 640 + k * 30 + rand() * 20, z = SEA_Z - 70 - k * 52;
+    const hill = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.55, r, h, 7), tm(k % 2 ? 0x8a6248 : 0x7a563e));
+    hill.position.set(x, SL + h / 2, z); hill.rotation.y = rand() * 3; add(hill);
+    for (let n = 0; n < 10; n++) {
+      const a = Math.PI * (0.9 + rand() * 0.9), rr = r * (0.62 + rand() * 0.3), l = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), bm(rand() < 0.8 ? 0xffd27a : 0xfff0c0));
+      l.position.set(x + Math.cos(a) * rr, SL + h * (0.2 + rand() * 0.75), z + Math.sin(a) * rr * 0.8); add(l);
+    }
+  }
 }
 
 function seaWall() {
-  const wallMats = [1, 2, 3, 4].map((k) => new THREE.MeshBasicMaterial({ map: graffiti(k * 977) }));
+  const wallMats = [1, 2, 3, 4].map((k) => new THREE.MeshBasicMaterial({ map: graffiti(k * 977, '#b8b0a8') }));
   SEASIDE.forEach((r) => {
     for (let i = r[0]; i < r[1]; i += 6) {
       const j = i % N, o = off(j, HALF + 9);
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(1, 1.8, 13), wallMats[(i / 6) % 4 | 0]);
-      wall.position.set(o[0], 0.9, o[1]);
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 15.2), wallMats[(i / 6) % 4 | 0]);
+      wall.position.set(o[0], 0.7, o[1]);
       wall.rotation.y = yawAt(j);
       wall.castShadow = true;
       add(wall);
@@ -439,15 +549,15 @@ function seaWall() {
   });
   // The land side of the terrace: a row of pastel houses and a white one covered in graffiti, cafe tables, people
   // leaning on the sea wall.
-  SEASIDE.forEach((r) => street(r, (side) => (side < 0 ? { floors: [1, 4], gap: 8, ids: WEST_IDS, shop: true } : null)));
+  SEASIDE.forEach((r) => street(r, (side) => (side < 0 ? { floors: [1, 3], gap: 8, ids: WEST_IDS, shop: true, casa: 0.6 } : null)));
   const white = new THREE.Mesh(new THREE.BoxGeometry(12, 10, 22), new THREE.MeshBasicMaterial({ map: graffiti(4242, '#ece6e0') }));
   const wo = off(80, -(HALF + 16));
   white.position.set(wo[0], 5, wo[1]); white.rotation.y = yawAt(80);
   add(white);
   SEASIDE.forEach((r) => {
-    furniture(r, 14, HALF + 2.5, HALF + 6, ['cafe']);
-    crowd(r, 22, [0, 1, 2, 3, 4], HALF + 6.5, HALF + 8.2, [1]);   // along the sea wall
-    crowd(r, 10, [0, 1, 2, 3], HALF + 3, HALF + 6, [-1]);
+    furniture(r, 26, HALF + 2.5, HALF + 7.5, ['cafe', 'bench', 'lamp', 'telescope', 'cart', 'chairs', 'redcrates', 'pot', 'lamp']);
+    crowd(r, 22, [2, 3, 4, 2, 3, 1], HALF + 6.5, HALF + 8, [1]);   // leaning on the parapet, looking at the sea
+    crowd(r, 12, [2, 3, 4, 0], HALF + 3, HALF + 6, [-1]);
   });
 }
 
@@ -494,8 +604,24 @@ function parked(range, n) {
   for (let k = 0; k < n; k++) {
     const i = range[0] + Math.floor(rand() * (range[1] - range[0]));
     if (corner[i % N]) continue;
-    car(i, pick([-1, 1]) * (HALF + 3.1), pick(CAR_COLOURS));
+    if (rand() < 0.45) mototaxi(i, pick([-1, 1]) * (HALF + 3), pick([0xC8110E, 0x2f6fa8, 0xe8c13a, 0x2f8a4a]));
+    else car(i, pick([-1, 1]) * (HALF + 3.1), pick(CAR_COLOURS));
   }
+}
+/** A mototaxi: the three-wheeled taxi of Lima's side streets, with a canopy. */
+function mototaxi(i, lat, colour) {
+  const g = new THREE.Group(), body = tm(colour), dark = tm(0x1b1b20);
+  const at = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+  at(new THREE.BoxGeometry(1.5, 1, 1.6), body, 0, 0.95, -0.5);
+  at(new THREE.BoxGeometry(1.6, 0.1, 2.9), dark, 0, 2.05, 0);
+  [[-0.7, -1.2], [0.7, -1.2], [-0.7, 1.2], [0.7, 1.2]].forEach(([x, z]) => at(new THREE.BoxGeometry(0.08, 1.2, 0.08), dark, x, 1.45, z));
+  at(new THREE.BoxGeometry(0.5, 0.6, 0.9), body, 0, 0.8, 0.9);
+  at(new THREE.BoxGeometry(1.3, 0.5, 0.05), bm(0x2a3446), 0, 1.6, 1.25);
+  [[-0.75, -0.6], [0.75, -0.6], [0, 1.25]].forEach(([x, z]) => { const w = at(new THREE.CylinderGeometry(0.38, 0.38, 0.25, 8), dark, x, 0.38, z); w.rotation.z = Math.PI / 2; });
+  const o = off(i % N, lat);
+  g.position.set(o[0], 0, o[1]);
+  g.rotation.y = yawAt(i % N) + (rand() < 0.5 ? Math.PI : 0);
+  add(g);
 }
 
 function stall(i, side) {
@@ -515,16 +641,17 @@ function stall(i, side) {
 
 // The green arch over the road with yellow letters, like the shop sign in the video.
 function capulloArch(i) {
+  // The market's sign in the video: a green half-sun with yellow rays, the name around it.
   const tex = canvasTex(128, 64, (g, w, h) => {
-    const cx = w / 2, cy = h - 6;
-    for (let r = 58; r > 36; r--) {
-      g.fillStyle = r > 55 || r < 39 ? '#e6c02e' : '#2f9a52';
-      for (let a = 0; a <= 180; a += 0.5) {
-        const t = (a * Math.PI) / 180;
-        g.fillRect(Math.round(cx + Math.cos(t) * r), Math.round(cy - Math.sin(t) * r * 0.95), 1, 1);
-      }
-    }
-    // Lettering along the arch.
+    const cx = w / 2, cy = h - 2, disc = (r, c, ky = 0.95) => {
+      g.fillStyle = c;
+      for (let y = 0; y <= r; y++) { const hw = Math.round(Math.sqrt(r * r - y * y)); g.fillRect(cx - hw, Math.round(cy - y * ky), hw * 2, 1); }
+    };
+    disc(62, '#e6c02e'); disc(59, '#2f9a52');
+    disc(38, '#e6c02e'); disc(36, '#2f9a52');
+    g.strokeStyle = '#e6c02e'; g.lineWidth = 2;
+    for (let a = 12; a <= 168; a += 13) { const t = (a * Math.PI) / 180; g.beginPath(); g.moveTo(cx + Math.cos(t) * 10, cy - Math.sin(t) * 10); g.lineTo(cx + Math.cos(t) * 35, cy - Math.sin(t) * 35 * 0.95); g.stroke(); }
+    disc(10, '#e6c02e');
     const text = 'EL CAPULLO';
     g.fillStyle = '#ffe14d';
     g.font = '8px "Press Start 2P", monospace';
@@ -532,7 +659,7 @@ function capulloArch(i) {
     for (let k = 0; k < text.length; k++) {
       const t = Math.PI * (0.86 - (0.72 * k) / (text.length - 1));
       g.save();
-      g.translate(cx + Math.cos(t) * 47, cy - Math.sin(t) * 47 * 0.95);
+      g.translate(cx + Math.cos(t) * 48, cy - Math.sin(t) * 48 * 0.95);
       g.rotate(Math.PI / 2 - t);
       g.fillText(text[k], 0, 1);
       g.restore();
@@ -547,7 +674,12 @@ function capulloArch(i) {
   [-1, 1].forEach((s) => {
     const p = new THREE.Mesh(new THREE.BoxGeometry(0.8, 7, 0.8), postM);
     p.position.set(s * (HALF + 3.4), 3.5, 0); p.castShadow = true; grp.add(p);
+    // The market's green gates, swung open against the posts.
+    const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.25, 5.2, 4.2), tm(0x2a8a48));
+    leaf.position.set(s * (HALF + 4.6), 2.6, 1.6); leaf.rotation.y = s * 0.5; grp.add(leaf);
   });
+  const beamY = new THREE.Mesh(new THREE.BoxGeometry(HALF * 2 + 7.6, 0.7, 0.6), tm(0xe6c02e));
+  beamY.position.y = 6.3; grp.add(beamY);
   // Stands across the road, its lettering facing the karts that drive toward it (local -z).
   sign.rotation.y = Math.PI;
   const o = off(i, 0);
@@ -593,10 +725,10 @@ function wires() {
 }
 
 function market() {
-  street(MARKET, () => ({ floors: [2, 4], gap: 5.5, ids: MARKET_IDS, shop: true }));
+  street(MARKET, () => ({ floors: [1, 3], gap: 5.5, ids: MARKET_IDS, shop: true, casa: 0.5 }));
   sidewalk(MARKET);
-  furniture(MARKET, 40, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'crate', 'bench', 'lamp', 'kiosk', 'barrel', 'crate']);
-  parked(MARKET, 8);
+  furniture(MARKET, 60, HALF + 2.6, HALF + 5.5, ['bin', 'crate', 'cart', 'sacks', 'chairs', 'redcrates', 'cart', 'lamp', 'kiosk', 'barrel', 'crate', 'pot']);
+  parked(MARKET, 10);
   crowd(MARKET, 40, [0, 1, 2, 3, 4], HALF + 2.6, HALF + 5.5);
   wires();
   [MARKET[0] + 30, MARKET[0] + 92].forEach((i) => bunting(i, 8.4, HALF * 2 + 12));
@@ -607,55 +739,173 @@ function market() {
   [12, 46, 84, 116].forEach((d, k) => stall(MARKET[0] + d, k % 2 ? 1 : -1));
 }
 
-// ---------- Prison courtyard ----------
-function prison() {
-  // Cream walls with iron balconies on every floor (the upper floors of the Mediterranean facades), the inmates
-  // in red jumpsuits dancing in the yard, like the video.
-  for (let i = PRISON[0], k = 0; i < PRISON[1]; i += 7, k++) {
-    [-1, 1].forEach((side) => building(i, side, { w: 18, d: 4, h: 18, ids: PRISON_IDS, from: 'top', gap: 7, shop: false, roof: false }));
+// ---------- The prison: the track runs inside the cell block ----------
+// The video's hall: two floors of cells behind iron walkways, yellow tiles along the bottom of the walls, arched
+// barred doors, warm wall lamps, plants, a glazed roof on iron trusses, and at each end a wall with the big arched
+// window over the gate the karts drive through. Inmates in red tracksuits everywhere.
+const HALL_W = HALF + 7, HALL_H = 16;   // half width between the walls, height of the walls
+// One bay of wall, 8.7 m wide and 16 m tall (6 px per metre): cell floor above, arched doors and tiles below.
+const cellTex = canvasTex(48, 96, (g) => {
+  const F = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  F('#cfc4ae', 0, 0, 48, 96);
+  for (let k = 0; k < 60; k++) F(k % 2 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)', (k * 17) % 48, (k * 29) % 96, 2 + (k % 4), 1);   // worn plaster
+  F('#8a7f70', 0, 0, 48, 3);
+  // Upper floor: a cell door with bars, its number plate, a lamp.
+  F('#22262e', 17, 18, 13, 26); for (let x = 18; x < 30; x += 3) F('#4a505c', x, 19, 1, 25); F('#4a505c', 17, 30, 13, 1);
+  F('#f3eee8', 33, 24, 5, 3); F('#ffd98a', 9, 16, 2, 3); F('#fff1c0', 9, 17, 2, 1); F('#2a2428', 9, 14, 2, 2);
+  F('#2a2428', 0, 44, 48, 4);                                         // the walkway slab's edge
+  // Ground floor: an arched barred door, a lamp, the yellow tiles with their teal trim.
+  F('#d6a032', 0, 78, 48, 18); for (let y = 78; y < 96; y += 3) F('#b8842a', 0, y, 48, 1); for (let x = 0; x < 48; x += 3) F('#b8842a', x, 78, 1, 18);
+  F('#3a7a78', 0, 77, 48, 1); F('#3a7a78', 0, 94, 48, 2);
+  F('#8a7f70', 14, 56, 20, 40); F('#22262e', 16, 60, 16, 36); F('#22262e', 17, 58, 14, 2); F('#22262e', 19, 57, 10, 1);
+  for (let x = 18; x < 31; x += 3) F('#4a505c', x, 59, 1, 37); F('#4a505c', 16, 72, 16, 1);
+  F('#2a2428', 39, 56, 2, 2); F('#ffd98a', 39, 58, 2, 3); F('#fff1c0', 39, 59, 2, 1);
+  F('#f3eee8', 5, 64, 6, 4); F('#B8141A', 6, 65, 4, 1);                // a notice on the wall
+}, true);
+const cellM = toon(0xffffff, { map: cellTex });
+// Walkway railing: iron, with the ring pattern of the video.
+const railTex = canvasTex(32, 8, (g) => {
+  g.fillStyle = '#231c20';
+  g.fillRect(0, 0, 32, 1); g.fillRect(0, 7, 32, 1); g.fillRect(0, 3, 32, 1);
+  for (let x = 0; x < 32; x += 4) g.fillRect(x, 0, 1, 8);
+  [[14, 1], [13, 2], [17, 2], [13, 5], [17, 5], [14, 6], [15, 6], [16, 6], [15, 1], [16, 1], [12, 3], [12, 4], [18, 3], [18, 4]].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+}, true);
+const railM = new THREE.MeshBasicMaterial({ map: railTex, alphaTest: 0.5, side: THREE.DoubleSide });
+/** A stretch of railing len metres long, 1.3 m high. */
+function railing(len) {
+  const g = new THREE.PlaneGeometry(len, 1.3), uv = g.attributes.uv;
+  for (let n = 0; n < 4; n++) uv.setX(n, uv.getX(n) * Math.max(1, Math.round(len / 5)));
+  return new THREE.Mesh(g, railM);
+}
+// The arched window of the end walls, glowing with the evening light.
+const windowTex = canvasTex(32, 32, (g) => {
+  for (let y = 0; y < 32; y++) {
+    const hw = y < 14 ? Math.round(Math.sqrt(Math.max(0, 196 - (14 - y) * (14 - y)))) : 14;
+    g.fillStyle = '#2a2428'; g.fillRect(16 - hw - 2, y, hw * 2 + 4, 1);
+    g.fillStyle = y < 12 ? '#ffe9c4' : '#f6d6a8'; g.fillRect(16 - hw, y, hw * 2, 1);
   }
-  sidewalk(PRISON);
-  // Props along the yard so the walls don't run on alone: lamps, benches, planters, barrels, a guard kiosk.
-  furniture(PRISON, 52, HALF + 2.6, HALF + 5.8, ['lamp', 'bench', 'planter', 'barrel', 'lamp', 'planter', 'kiosk']);
-  crowd(PRISON, 46, [0, 1, 5, 5], HALF + 2.4, HALF + 5.8);
-  // Iron trusses across the courtyard, and warm lamps hanging from them.
-  const ironM = tm(0x2a2024), bulbM = bm(0xffd27a);
+  g.fillStyle = '#2a2428';
+  for (let x = 4; x < 32; x += 5) g.fillRect(x, 0, 1, 32);
+  for (let y = 8; y < 32; y += 6) g.fillRect(0, y, 32, 1);
+  g.clearRect(0, 0, 1, 32); g.clearRect(31, 0, 1, 32);
+});
+// The painted wall of the video: a coast of cliffs and sea.
+const muralTex = canvasTex(48, 24, (g) => {
+  const F = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  F('#e8a05a', 0, 0, 48, 9); F('#f2c27a', 0, 6, 48, 4); F('#3f7f8f', 0, 10, 48, 14); F('#5a9aa6', 0, 10, 48, 2);
+  [[0, 8, 16, 16, '#8a6248'], [10, 11, 14, 13, '#7a563e'], [30, 9, 18, 15, '#96704f'], [36, 13, 12, 11, '#6f4f3a']].forEach(([x, y, w, h, c]) => { F(c, x, y, w, h); F('#5f8a4a', x, y, w, 1); });
+  for (let k = 0; k < 10; k++) F('#f3eee8', (k * 11) % 44 + 2, 20 + (k % 3), 3, 1);
+});
+
+function prison() {
+  const step = 7, plaster = tm(0xcfc4ae), iron = tm(0x2a2024), roofM = tm(0x5a3a32);
+  const glass = new THREE.MeshBasicMaterial({ color: 0xffe9c4, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide });
+  const tube = bm(0xfff4d6);
   const poolM = new THREE.MeshBasicMaterial({ color: 0xff9a3c, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false });
   const poolG = new THREE.CircleGeometry(5, 12).rotateX(-Math.PI / 2);
-  for (let i = PRISON[0] + 12; i < PRISON[1] - 6; i += 22) {
-    const g = new THREE.Group();
-    const span = (HALF + 7) * 2;
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(span, 0.6, 0.6), ironM); beam.position.y = 17; g.add(beam);
-    const low = new THREE.Mesh(new THREE.BoxGeometry(span, 0.3, 0.3), ironM); low.position.y = 15.2; g.add(low);
-    for (let x = -span / 2 + 2; x < span / 2; x += 3) {
-      const d = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.2, 0.2), ironM);
-      d.position.set(x, 16.1, 0); d.rotation.z = (x / 3) % 2 ? 0.6 : -0.6; g.add(d);
-    }
-    [-4, 4].forEach((x) => {
-      const cord = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 0.1), ironM); cord.position.set(x, 13.2, 0); g.add(cord);
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.9), bulbM); lamp.position.set(x, 11, 0); g.add(lamp);
-      const pool = new THREE.Mesh(poolG, poolM); pool.position.set(x, 0.12, 0); g.add(pool);
+  for (let i = PRISON[0], k = 0; i < PRISON[1]; i += step, k++) {
+    const a = off(i, 0), b = off(Math.min(i + step, PRISON[1]) % N, 0), len = Math.hypot(b[0] - a[0], b[1] - a[1]) + 0.5;
+    const mid = (i + Math.round(step / 2)) % N, o = off(mid, 0), g = new THREE.Group();
+    [-1, 1].forEach((sd) => {
+      // The wall: two bays of cells per segment.
+      const wg = new THREE.BoxGeometry(1, HALL_H, len), uv = wg.attributes.uv;
+      for (let n = 0; n < 8; n++) uv.setX(n, uv.getX(n) * 2);
+      const wall = new THREE.Mesh(wg, cellM); wall.position.set(sd * (HALL_W + 0.5), HALL_H / 2, 0); wall.castShadow = true; g.add(wall);
+      // The walkway of the upper floor, its railing and a strip light under it.
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, len), iron); slab.position.set(sd * (HALL_W - 1.3), 8.3, 0); g.add(slab);
+      const rail = railing(len); rail.rotation.y = Math.PI / 2; rail.position.set(sd * (HALL_W - 2.55), 9.1, 0); g.add(rail);
+      const lt = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 3.2), tube); lt.position.set(sd * (HALL_W - 1.3), 8.05, 0); g.add(lt);
+      [-len / 2 + 0.4, len / 2 - 0.4].forEach((z) => { const br = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 0.2), iron); br.position.set(sd * (HALL_W - 1.3), 7.75, z); g.add(br); });
+      // The roof: a pitched slab from the wall up to the glazed ridge.
+      const rs = new THREE.Mesh(new THREE.BoxGeometry(11.8, 0.3, len), roofM);
+      rs.position.set(sd * 9.6, HALL_H + 2.25, 0); rs.rotation.z = -sd * 0.395; rs.castShadow = true; g.add(rs);
     });
-    const o = off(i, 0);
+    const sky = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.12, len), glass); sky.position.y = HALL_H + 4.6; g.add(sky);
+    if (k % 3 === 1) {   // an iron truss with two hanging lamps and their pools of light
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(HALL_W * 2, 0.5, 0.5), iron); beam.position.y = HALL_H; g.add(beam);
+      for (let x = -HALL_W + 2; x < HALL_W; x += 3.5) { const d = new THREE.Mesh(new THREE.BoxGeometry(0.2, 4.4, 0.2), iron); d.position.set(x, HALL_H + 1.6, 0); d.rotation.z = (Math.round(x / 3.5) % 2 ? 1 : -1) * 0.75; g.add(d); }
+      [-4, 4].forEach((x) => {
+        const cord = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 0.1), iron); cord.position.set(x, HALL_H - 2, 0); g.add(cord);
+        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.9), bm(0xffd27a)); lamp.position.set(x, HALL_H - 4.2, 0); g.add(lamp);
+        const pool = new THREE.Mesh(poolG, poolM); pool.position.set(x, 0.12, 0); g.add(pool);
+      });
+    }
+    if (k === 4 || k === 15) {   // the painted wall
+      const sd = k === 4 ? 1 : -1, mu = new THREE.Mesh(new THREE.PlaneGeometry(13, 6.5), new THREE.MeshBasicMaterial({ map: muralTex }));
+      mu.position.set(sd * (HALL_W - 0.06), 4.2, 0); mu.rotation.y = -sd * Math.PI / 2; g.add(mu);
+    }
+    if (k === 8 || k === 19) {   // iron stairs up to the walkway
+      const sd = k === 8 ? -1 : 1;
+      for (let n = 0; n < 10; n++) { const st = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.2, 0.9), iron); st.position.set(sd * (HALL_W - 3.6), 0.8 + n * 0.8, -4 + n * 0.9); g.add(st); }
+    }
     g.position.set(o[0], 0, o[1]);
-    g.rotation.y = yawAt(i);
+    g.rotation.y = yawAt(mid);
     add(g);
   }
-  // Arched gates at both ends.
-  [PRISON[0] - 2, PRISON[1] - 2].forEach((i) => {
-    const g = new THREE.Group(), stoneM = tm(0xe6cfa3), r = HALF + 3;
-    [-1, 1].forEach((s) => {
-      const p = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 3), stoneM); p.position.set(s * (r + 1), 6, 0); p.castShadow = true; g.add(p);
+  // End walls: the gate under an arch, the big arched window in the gable, a walkway across just inside.
+  [[PRISON[0], 1], [PRISON[1], -1]].forEach(([i, inward]) => {
+    const g = new THREE.Group(), W = HALL_W + 1, R = HALF + 2.4;
+    const sh = new THREE.Shape();
+    sh.moveTo(-W, 0); sh.lineTo(-R, 0); sh.absarc(0, 0, R, Math.PI, 0, true); sh.lineTo(W, 0); sh.lineTo(W, HALL_H); sh.lineTo(0, HALL_H + 6.4); sh.lineTo(-W, HALL_H); sh.lineTo(-W, 0);
+    const wall = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 1.2, bevelEnabled: false }), plaster);
+    wall.position.z = -0.6; wall.castShadow = true; g.add(wall);
+    const trim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.7, 4, 16, Math.PI), tm(0xd6a032)); g.add(trim);
+    [-0.75, 0.75].forEach((z) => {
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 7.5), new THREE.MeshBasicMaterial({ map: windowTex, alphaTest: 0.5 }));
+      win.position.set(0, HALL_H + 0.3, z); if (z < 0) win.rotation.y = Math.PI; g.add(win);
     });
-    const arch = new THREE.Mesh(new THREE.TorusGeometry(r + 1, 1.5, 4, 14, Math.PI), stoneM);
-    arch.position.y = 12; g.add(arch);
-    // A keystone at the top of the arch (no lintel above it).
-    const key = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 3.4), stoneM); key.position.y = 12 + r + 1.2; g.add(key);
-    const o = off(i, 0);
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(HALL_W * 2, 0.3, 2.6), iron); deck.position.set(0, 11.4, inward * 3); g.add(deck);
+    [-1.3, 1.3].forEach((dz) => { const r = railing(HALL_W * 2); r.position.set(0, 12.2, inward * 3 + dz); g.add(r); });
+    const o = off(i % N, 0);
     g.position.set(o[0], 0, o[1]);
-    g.rotation.y = yawAt(i);
+    g.rotation.y = yawAt(i % N);
     add(g);
   });
+  // The concrete floor of the hall, and what stands on it.
+  sidewalk(PRISON, HALL_W, ['#8f8a84', '#878279']);
+  furniture(PRISON, 70, HALF + 2.8, HALL_W - 1, ['tree', 'pot', 'bench', 'bucket', 'redcrates', 'chairs', 'planter', 'tree', 'pot', 'bucket']);
+  crowd(PRISON, 80, [0, 0, 1, 5, 5], HALF + 2.6, HALL_W - 3.2);
+  for (let n = 0; n < 46; n++) {   // inmates on the walkways
+    const i = PRISON[0] + 2 + Math.floor(rand() * (PRISON[1] - PRISON[0] - 4));
+    person(i, pick([-1, 1]) * (HALL_W - 1.5), pick([0, 1, 5]), 8.45);
+  }
+}
+
+// ---------- The night street: strings of lights and the footbridge ----------
+const bulbTex = canvasTex(32, 4, (g) => {
+  g.fillStyle = '#1b1418'; g.fillRect(0, 0, 32, 1);
+  for (let k = 0; k < 8; k++) { g.fillStyle = ['#ffd27a', '#ff6a4a', '#fff0c0', '#ffb03c'][k % 4]; g.fillRect(k * 4 + 1, 1, 2, 2); }
+}, true);
+function stringLights(i, y, span) {
+  const t = bulbTex.clone(); t.needsUpdate = true; t.repeat.set(span / 6, 1);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(span, 0.8), new THREE.MeshBasicMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide }));
+  const o = off(i, 0);
+  m.position.set(o[0], y, o[1]); m.rotation.y = yawAt(i);
+  add(m);
+}
+/** The steel footbridge over the road, with stairs at both ends, lights along it and people crossing. */
+function footbridge(i) {
+  const g = new THREE.Group(), steel = tm(0x3a4656), span = HALF * 2 + 16, Y = 7.4;
+  const at = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+  at(new THREE.BoxGeometry(span, 0.4, 3.2), steel, 0, Y, 0);
+  at(new THREE.BoxGeometry(span, 0.5, 0.3), tm(0xC8110E), 0, Y - 0.5, 1.6); at(new THREE.BoxGeometry(span, 0.5, 0.3), tm(0xC8110E), 0, Y - 0.5, -1.6);
+  [-1.6, 1.6].forEach((z) => { const r = railing(span); r.position.set(0, Y + 0.85, z); g.add(r); });
+  for (let x = -span / 2 + 1; x < span / 2; x += 2.2) at(new THREE.BoxGeometry(0.35, 0.35, 0.35), bm(Math.round(x) % 2 ? 0xffd27a : 0xff6a4a), x, Y + 1.7, 1.6);
+  [-1, 1].forEach((sd) => {
+    const x = sd * (span / 2 - 0.4);
+    [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]].forEach(([dx, dz]) => at(new THREE.BoxGeometry(0.35, Y, 0.35), steel, x + dx, Y / 2, dz));
+    for (let n = 0; n < 9; n++) at(new THREE.BoxGeometry(2.4, 0.2, 0.9), steel, x, 0.7 + n * 0.8, 2.2 + (8 - n) * 0.9);   // stairs down along the road
+  });
+  const o = off(i, 0);
+  g.position.set(o[0], 0, o[1]);
+  g.rotation.y = yawAt(i);
+  add(g);
+  for (let n = 0; n < 9; n++) {   // people on the bridge, looking down at the race
+    const pg = new THREE.PlaneGeometry(0.95, 1.9), uv = pg.attributes.uv, k = pick([2, 3, 4, 0]);
+    for (let q = 0; q < 4; q++) uv.setX(q, (k + uv.getX(q)) / PEOPLE.length);
+    const m = new THREE.Mesh(pg, peopleM), p = off(i, -span / 2 + 3 + n * ((span - 6) / 8));
+    m.position.set(p[0], Y + 1.15, p[1]); m.rotation.y = yawAt(i) + Math.PI; add(m);
+  }
 }
 
 // ---------- West side: pastel houses and graffiti walls ----------
@@ -675,12 +925,16 @@ function westSide() {
       continue;
     }
     const w = 9 + rand() * 7;
-    building(i, side, { w, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2 });
-    if (rand() < 0.6) building(i, -side, { w: 8 + rand() * 6, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2 });
+    building(i, side, { w, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2, casa: 0.65 });
+    if (rand() < 0.6) building(i, -side, { w: 8 + rand() * 6, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2, casa: 0.65 });
   }
   sidewalk(WEST);
-  furniture(WEST, 34, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'planter', 'bench', 'lamp', 'kiosk']);
-  parked(WEST, 7);
+  furniture(WEST, 40, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'planter', 'bench', 'lamp', 'kiosk', 'tree', 'chairs', 'tree', 'sacks']);
+  parked(WEST, 9);
+  // The night street of the video: strings of lights across the road, and the footbridge over it.
+  for (let i = WEST[0] + 10; i < WEST[1]; i += 18) if (!corner[i]) stringLights(i, 8.6, HALF * 2 + 14);
+  let bi = 566; while (corner[bi] && bi < WEST[1]) bi++;
+  footbridge(bi);
   crowd(WEST, 14, [1, 2, 3, 4], HALF + 2.6, HALF + 5.5);
 }
 
@@ -696,13 +950,15 @@ function town() {
       // Two to four houses around the block, back to back.
       const n = 2 + ((rand() * 3) | 0);
       for (let k = 0; k < n; k++) {
-        const w = 9 + rand() * 8, dd = 8 + rand() * 4, h = (1 + ((rand() * 4) | 0)) * 3.6 + 0.8;
+        const w = 9 + rand() * 8, dd = 8 + rand() * 4, h = (1 + ((rand() * 3) | 0)) * 3.6 + 0.8;
         const qx = (k % 2 ? 1 : -1) * (CELL / 2 - dd / 2 - 2.5), qz = (k >> 1 ? 1 : -1) * (CELL / 4) + (rand() - 0.5) * 3;
         if (minTrackDist(x + qx, z + qz) < HALF + 18) continue;
         const grp = new THREE.Group();
-        const m = new THREE.Mesh(facadeBox(dd, h, w, pick(TOWN_IDS)), facadeM);
-        m.position.y = h / 2; m.castShadow = true; grp.add(m);
-        roofTop(grp, dd, h, w);
+        let m, hh = h;
+        if (rand() < 0.55) { const [geo, ch] = casaBox(dd, h > 6 ? 2 : 1, Math.min(w, 12), (rand() * CASA_N) | 0); m = new THREE.Mesh(geo, casaM); hh = ch; }
+        else m = new THREE.Mesh(facadeBox(dd, h, w, pick(TOWN_IDS)), facadeM);
+        m.position.y = hh / 2; m.castShadow = true; grp.add(m);
+        roofTop(grp, dd, hh, w);
         grp.position.set(x + qx, 0, z + qz);
         grp.rotation.y = rand() < 0.5 ? 0 : Math.PI / 2;
         add(grp);
@@ -765,14 +1021,14 @@ function props() {
   [['SM_TI_Wood_0_Boat_0', 120, -88, 0.4], ['SM_TI_Wood_1_Boat_0', 160, -80, 2.2], ['SM_TI_Wood_0_Boat_0', -60, -96, 1.3], ['SM_TI_Wood_1_Boat_0', 260, -104, 0.9]].forEach(([name, x, z, r]) => {
     model(name).then((parts) => parts.forEach(({ geometry, material }) => {
       const b = new THREE.Mesh(geometry, material);
-      b.position.set(x, 0.3, z); b.rotation.y = r; b.scale.setScalar(1.6);
+      b.position.set(x, -CLIFF + 0.3, z - 20); b.rotation.y = r; b.scale.setScalar(2.2);
       b.userData.phase = Math.random() * 6;
       scene.add(b); floating.push(b);
     })).catch(() => {});
   });
   model('SM_TI_Wood_0_Pier_0').then((parts) => parts.forEach(({ geometry, material }) => {
     const p = new THREE.Mesh(geometry, material);
-    p.position.set(80, 0.9, SEA_Z - BEACH - 18); p.rotation.y = Math.PI; p.scale.setScalar(0.7);
+    p.position.set(80, -CLIFF + 0.9, SEA_Z - BEACH - 18); p.rotation.y = Math.PI; p.scale.setScalar(1.2);
     scene.add(p);
   })).catch(() => {});
 }
@@ -818,33 +1074,6 @@ function bake() {
   });
 }
 
-// The beach between the sea wall and the water: umbrellas, towels, a lifeguard tower, people.
-function beach() {
-  const xs = [-170, 330], z0 = SEA_Z - 6, z1 = SEA_Z - BEACH - 10;
-  const at = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; add(m); return m; };
-  const towel = new THREE.BoxGeometry(1.1, 0.05, 2.1);
-  for (let k = 0; k < 34; k++) {
-    const x = xs[0] + rand() * (xs[1] - xs[0]), z = z0 + rand() * (z1 - z0);
-    at(poleG, tm(0x2a2024), x, 1.2, z);
-    at(umbG, tm(pick([0xC8110E, 0xf3e6d6, 0xe8a23a, 0x2f8ad6, 0xf06eb0])), x, 2.5, z);
-    at(towel, tm(pick([0xC8110E, 0xf2c12e, 0x2fae6a, 0xf06eb0, 0xf3e6d6])), x + 1.3, 0.08, z + (rand() - 0.5)).rotation.y = rand() - 0.5;
-  }
-  // Lifeguard tower: red box on stilts.
-  [40, 220].forEach((x) => {
-    const z = SEA_Z - BEACH - 6;
-    [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach(([dx, dz]) => at(new THREE.BoxGeometry(0.2, 3, 0.2), tm(0xf3e6d6), x + dx, 1.5, z + dz));
-    at(new THREE.BoxGeometry(2.4, 1.6, 2.4), tm(0xC8110E), x, 3.8, z);
-    at(new THREE.BoxGeometry(2.8, 0.2, 2.8), tm(0xf3e6d6), x, 4.7, z);
-  });
-  // People on the sand, facing the sea and the road.
-  for (let k = 0; k < 40; k++) {
-    const x = xs[0] + rand() * (xs[1] - xs[0]), z = z0 + rand() * (z1 - z0 - 2);
-    const kk = pick([0, 1, 2, 3, 4, 2, 3]), g = new THREE.PlaneGeometry(0.95, 1.9), uv = g.attributes.uv;
-    for (let n = 0; n < 4; n++) uv.setX(n, kk / PEOPLE.length + uv.getX(n) / PEOPLE.length);
-    const m = new THREE.Mesh(g, peopleM); m.position.set(x, 0.95, z); m.rotation.y = rand() * 6.28; add(m);
-  }
-}
-
 // The turns between the parts: people watching from behind the tyres, street lamps and clutter.
 function corners() {
   const person2 = (i, lat, k) => {   // like person(), but allowed on the turns
@@ -871,14 +1100,13 @@ export function buildParadise() {
   westSide();
   town();
   corners();
-  beach();
   // Billboards: each of the seven ads beside a straight, facing the karts, and two over the road in the prison yard.
   [['pearl', 72, 1], ['route', 188, -1], ['haven', 548, 1], ['dormant', 602, -1], ['noomax', 692, 1]]
     .forEach(([name, i, side]) => roadsideAd(i, side, name));
   overheadAd(30, 'midnight');
   overheadAd(228, 'centuries');
-  overheadAd(344, 'noomax');
-  overheadAd(410, 'haven');
+  overheadAd(98, 'noomax');
+  overheadAd(524, 'haven');
   overheadAd(262, 'route');
   bake();
   props();
@@ -887,7 +1115,7 @@ export function buildParadise() {
 export function updateParadise(dt, now) {
   if (sea) sea.material.map.offset.x = (now / 60000) % 1;
   if (shore) shore.material.map.offset.x = (now / 90000) % 1;   // the ripples drift along the coast
-  floating.forEach((b) => { b.position.y = 0.3 + Math.sin(now / 700 + b.userData.phase) * 0.15; b.rotation.z = Math.sin(now / 900 + b.userData.phase) * 0.05; });
+  floating.forEach((b) => { b.position.y = -CLIFF + 0.3 + Math.sin(now / 700 + b.userData.phase) * 0.15; b.rotation.z = Math.sin(now / 900 + b.userData.phase) * 0.05; });
   if (glitter) {
     // On the line from the camera toward the sun (moonDir in theme.js: x 0.1, z -0.97).
     glitter.position.x = camera.position.x - (0.1 / 0.97) * (glitter.position.z - camera.position.z);
