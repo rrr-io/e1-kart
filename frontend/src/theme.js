@@ -29,6 +29,8 @@ export const TRACKS = {
     desc: 'Sunset race from the seaside terrace through the market street and the prison courtyard.',
     note: 'Your race results count for your team in the global E1 Kart GP leaderboard.',
     cert: 'FAVORITE MCD STAGE voting certificate',
+    // Where to vote to get one (Mnet Plus, FAVORITE MCD STAGE): linked under the upload button.
+    vote: 'https://mnetplus.onelink.me/TRa8/xd22hep2?custom_link_value=vote%2Ftemplates%2Fmama-favorite-mcd-stage%2F6ae064af0c8a27ff60ed92b6%3Furl_fallback_type%3Dupdate',
     mnet: true,
     raw: [[0, 0], [70, -6], [140, -4], [184, 22], [190, 74], [186, 124], [164, 164], [112, 180], [50, 174], [-12, 180], [-72, 172], [-122, 142], [-142, 92], [-132, 42], [-92, 8], [-42, -2]],
     scale: 2.0,

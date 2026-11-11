@@ -51,6 +51,8 @@ export function renderAccount() {
   $('certBox').hidden = free;
   $('runs').textContent = balance() == null ? '–' : String(balance());
   $('certKind').textContent = TRACK.cert ? 'Upload an ENHYPEN ' + TRACK.cert + '.' : '';
+  $('voteLink').hidden = !TRACK.vote;
+  if (TRACK.vote) $('voteLink').href = TRACK.vote;
   $('uploadBtn').classList.toggle('busy', wallet.busy);
   $('start').disabled = wallet.busy;
   $('runGo').disabled = wallet.busy || !wallet.online || balance() === 0;
