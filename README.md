@@ -116,7 +116,7 @@ Three tracks, chosen after START (the choice is saved and the page reloads):
 
 After an Interstellar or Bloody Paradise race, closing the driver's end-of-race line opens the video on Mnet Plus (the OneLink opens the app when installed), because every view counts; the results also have **WATCH ON MNET PLUS**. The link is `MNET_URL` in `frontend/src/mnet.js`; `mnet: true` on a track in `theme.js` turns it on.
 
-Layouts and colours live in `frontend/src/theme.js`; the interstellar scenery is in `frontend/src/space.js`, the Bloody Paradise scenery in `frontend/src/paradise.js` (its small static pieces are merged by material and the town houses and palms are instanced, so the whole town costs about as many draw calls as the other tracks). Its 3D models load in the background from `public/models/bloody/` and are cached by the service worker once loaded.
+Layouts and colours live in `frontend/src/theme.js`; the interstellar scenery is in `frontend/src/space.js`, the Bloody Paradise scenery in `frontend/src/paradise.js` (every building takes a different piece of the facade atlas at the same scale, with roof clutter, awnings, signs and AC units; the town around the circuit is laid out on a street grid; little pixel people, many in the video's red jumpsuits, line the streets, the terrace and the corners, and dance in the prison yard. Billboards beside the road and on some roofs show the video's fake ads (Midnight Bank, Dormant Sleep, Noomax, Route, Haven, Centuries, Pearl Bite), pixelated in `frontend/src/assets/bloody/billboards.png` (rectangles in `billboards.json`). A seeded random makes the town the same for everyone. All static pieces are merged by material, so the whole town costs about as many draw calls as the other tracks). Its 3D models load in the background from `public/models/bloody/` and are cached by the service worker once loaded.
 
 ## Credits
 
@@ -130,7 +130,7 @@ Skyline of the INTERSTELLAR track (`frontend/src/assets/space/`): "Neon City" by
 
 Sunset clouds of the BLOODY PARADISE track (`frontend/src/assets/bloody/clouds.png`): from "Free Sky with Clouds Background Pixel Art Set" by CraftPix (craftpix.net, free license), cropped and made tileable; not to be redistributed as an asset pack.
 
-Building facades of the BLOODY PARADISE track (`frontend/src/assets/bloody/facades/`): "Pixel Facades 100" by najjar320, free commercial license; not to be redistributed as standalone assets.
+Building facades of the BLOODY PARADISE track (`frontend/src/assets/bloody/facade-atlas.png`, 38 facades packed in one texture, rectangles in `facade-atlas.json`): "Pixel Facades 100" by najjar320, free commercial license; not to be redistributed as standalone assets.
 
 Palms, fishing boats, barrels and the pier of the BLOODY PARADISE track (`frontend/public/models/bloody/`): "PSX The Island Pack" by Caliber Creations; usable in games, not to be redistributed as standalone files.
 

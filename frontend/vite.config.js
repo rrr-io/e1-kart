@@ -34,8 +34,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,woff,woff2}'],
-        // Bloody Paradise models are cached when that track is played (runtimeCaching below), not for everyone.
-        globIgnores: ['**/models/**'],
+        // Bloody Paradise models and facades are cached when that track is played (runtimeCaching below), not for everyone.
+        globIgnores: ['**/models/**', '**/facade-atlas*'],
         // API calls never go through the service worker cache.
         navigateFallbackDenylist: [/^\/api\//],
         // Music files are big: not precached, but kept once played so the next races (and offline play) have them.
@@ -45,7 +45,7 @@ export default defineConfig({
           options: { cacheName: 'e1kart-music', expiration: { maxEntries: 20 } },
         }, {
           // 3D models of the Bloody Paradise track (palms, boats…): kept once loaded.
-          urlPattern: /\/models\/.*\.(gltf|bin|png)$/,
+          urlPattern: /(\/models\/.*\.(gltf|bin|png)|facade-atlas.*\.png)$/,
           handler: 'CacheFirst',
           options: { cacheName: 'e1kart-models', expiration: { maxEntries: 40 } },
         }],

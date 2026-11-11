@@ -15,6 +15,10 @@ import { N, HALF, WORLD_K, corner, off, yawAt, minTrackDist, P } from './track.j
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import cloudsUrl from './assets/bloody/clouds.png';
+import atlasUrl from './assets/bloody/facade-atlas.png';
+import ATLAS from './assets/bloody/facade-atlas.json';
+import adsUrl from './assets/bloody/billboards.png';
+import ADS from './assets/bloody/billboards.json';
 
 export const paradiseTexts = [];
 
@@ -33,8 +37,7 @@ const PRISON = [298, 472];
 const WEST = [492, 636];
 const SEA_Z = -40;           // the shore: the ocean starts south of here
 
-// ---------- Graffiti ----------
-// Graffiti: our own colourful tags and blobs on a pale wall.
+// ---------- Graffiti: our own colourful tags and blobs on a pale wall.
 function graffiti(seed, base = '#d8d2cc') {
   let s = seed;
   const r = () => ((s = (s * 48271) % 2147483647) / 2147483647);
@@ -53,55 +56,247 @@ function graffiti(seed, base = '#d8d2cc') {
   });
 }
 
-// ---------- Building blocks ----------
+// ---------- Buildings: one facade atlas, every building a different piece of it ----------
+// 38 facades of "Pixel Facades 100" packed in one texture (facade-atlas.json gives each one's rectangle), so all the
+// buildings of the track merge into a single mesh. Each building takes a piece of a facade the size of its front,
+// at a fixed scale (PX facade pixels per metre, so floors have the same height everywhere), from a seeded random
+// facade and offset: the town looks the same for every player, but no two neighbours match.
+const atlasTex = new THREE.TextureLoader().load(atlasUrl);
+atlasTex.magFilter = THREE.NearestFilter;
+atlasTex.minFilter = THREE.LinearMipmapLinearFilter;   // far away: mipmaps, or the small windows turn into moiré
+const facadeM = toon(0xffffff, { map: atlasTex });
+const AW = ATLAS.size[0], AH = ATLAS.size[1], PX = 12;
+const STYLES = {};
+Object.entries(ATLAS.rects).forEach(([id, r]) => { (STYLES[r[4]] = STYLES[r[4]] || []).push(id); });
+const ids = (...styles) => styles.flatMap((st) => STYLES[st] || []);
+const MARKET_IDS = ids('brownstone', 'warehouse', 'shop_terrace');
+const WEST_IDS = ids('mediterranean', 'art_nouveau', 'half_timber', 'limestone');
+const TOWN_IDS = Object.keys(ATLAS.rects);
+const PRISON_IDS = ids('mediterranean');
 
-// ---------- Pixel Facades 100: a piece of a facade picture, the size of the building's front ----------
-const FACADE_URLS = import.meta.glob('./assets/bloody/facades/*.png', { eager: true, query: '?url', import: 'default' });
-const facadeUrl = (id) => Object.entries(FACADE_URLS).find(([k]) => k.includes('/' + id + '_'))[1];
-const pictures = new Map(), pieces = new Map();
-/**
- * Texture showing the part of facade `id` with the proportions of a building front (ratio = height / width):
- * the bottom (street floor and shops) or, with 'top', the upper floors. The picture loads in the background.
- */
-function facadePiece(id, ratio, from = 'bottom') {
-  const key = id + ':' + ratio.toFixed(3) + ':' + from;
-  if (pieces.has(key)) return pieces.get(key);
-  const t = new THREE.Texture();
-  // Crisp pixels up close; mipmaps far away, or the small windows shimmer into moiré at the game's low resolution.
-  t.magFilter = THREE.NearestFilter;
-  t.minFilter = THREE.LinearMipmapLinearFilter;
-  pieces.set(key, t);
-  const url = facadeUrl(id);
-  if (!pictures.has(url)) pictures.set(url, new THREE.ImageLoader().loadAsync(url));
-  pictures.get(url).then((img) => {
-    const rep = Math.min(1, (img.width * ratio) / img.height);
-    t.image = img;
-    t.repeat.set(1, rep);
-    t.offset.set(0, from === 'top' ? 1 - rep - 0.015 : 0);
-    t.needsUpdate = true;
-  }).catch(() => {});
-  return t;
+// Seeded random numbers: the same town on every device.
+let seed = 20261111;
+const rand = () => ((seed = (seed * 48271) % 2147483647) / 2147483647);
+const pick = (arr) => arr[(rand() * arr.length) | 0];
+
+/** Atlas UVs [u0, v0, u1, v1] of a fw × fh metre piece of facade id: from the bottom (street floor) or the top. */
+function facadeUV(id, fw, fh, from = 'bottom') {
+  const [x, y, w, h] = ATLAS.rects[id];
+  const cw = Math.min(w, fw * PX), ch = Math.min(h, fh * PX);
+  const cx = x + (w - cw) * rand(), cy = from === 'top' ? y + 3 : y + h - ch;
+  return [cx / AW, 1 - (cy + ch) / AH, (cx + cw) / AW, 1 - cy / AH];
+}
+function roofUV(kind) {
+  const [x, y, w, h] = ATLAS.roofs[kind];
+  return [x / AW, 1 - (y + h) / AH, (x + w) / AW, 1 - y / AH];
+}
+/** A box d (across) × h × w (along) whose four walls show facade pieces and whose top is a roof swatch. */
+function facadeBox(d, h, w, id, from = 'bottom') {
+  const g = new THREE.BoxGeometry(d, h, w);
+  const uv = g.attributes.uv;
+  const roof = roofUV(pick(['concrete', 'concrete', 'terracotta', 'tar']));
+  // Face order: +x, -x, +y, -y, +z, -z. ±x are the long fronts (w wide), ±z the sides (d wide).
+  const faces = [facadeUV(id, w, h, from), facadeUV(id, w, h, from), roof, roof, facadeUV(id, d, h, from), facadeUV(id, d, h, from)];
+  for (let f = 0; f < 6; f++) {
+    const [u0, v0, u1, v1] = faces[f];
+    for (let k = f * 4; k < f * 4 + 4; k++) uv.setXY(k, u0 + uv.getX(k) * (u1 - u0), v0 + uv.getY(k) * (v1 - v0));
+  }
+  return g;
 }
 
-/** A box building on one side of the track at sample i, its facade on every side (so buildings merge by facade). */
-const facadeMats = new Map();
-function building(i, side, { w = 14, d = 10, h = 12, facade, gap = 6 }) {
-  if (!facadeMats.has(facade)) facadeMats.set(facade, toon(0xffffff, { map: facade }));
-  const m = new THREE.Mesh(new THREE.BoxGeometry(d, h, w), facadeMats.get(facade));
+/** Roof clutter of a flat roof (Lima style): water tanks, AC units, antennas, rebar left for the next floor. */
+const tankG = new THREE.CylinderGeometry(0.8, 0.8, 1.4, 8), acG = new THREE.BoxGeometry(1.2, 0.8, 0.9);
+const rebarG = new THREE.BoxGeometry(0.12, 1.6, 0.12), antG = new THREE.BoxGeometry(0.08, 3, 0.08), shackG = new THREE.BoxGeometry(1, 1, 1);
+function roofTop(grp, d, h, w) {
+  const at = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; grp.add(m); return m; };
+  const rx = () => (rand() - 0.5) * (d - 2), rz = () => (rand() - 0.5) * (w - 2);
+  if (rand() < 0.55) at(tankG, tm(pick([0x2a2a30, 0x2f5fa8, 0xd8d2cc])), rx(), h + 0.7, rz());
+  if (rand() < 0.5) at(acG, tm(0xb8b4ae), rx(), h + 0.4, rz());
+  if (rand() < 0.25) at(antG, tm(0x2a2024), rx(), h + 1.5, rz());
+  if (rand() < 0.3) for (let k = 0; k < 4; k++) at(rebarG, tm(0x5a4038), (k % 2 - 0.5) * (d - 1), h + 0.8, ((k >> 1) - 0.5) * (w - 1));
+  if (rand() < 0.2) at(shackG, tm(pick([0xd8cfc4, 0xc98a5a])), rx(), h + 1.2, rz()).scale.set(3, 2.4, 3);
+}
+
+/** Clutter on the street front of a building: AC units on the wall, an awning and a hanging sign over the shop. */
+const awnColors = [0xC8110E, 0x2f8a4a, 0x2f6fa8, 0xe8a23a, 0xf3e6d6];
+function shopFront(grp, d, h, w, front) {
+  const fx = front * (d / 2);
+  for (let k = 0; k < Math.floor(w / 6); k++) if (rand() < 0.45) {
+    const ac = new THREE.Mesh(acG, tm(0xb8b4ae)); ac.position.set(fx + front * 0.45, 4 + ((rand() * Math.max(1, h - 6)) | 0), (rand() - 0.5) * (w - 2)); grp.add(ac);
+  }
+  if (rand() < 0.6) {
+    const aw = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.15, Math.min(w - 1, 6 + rand() * 6)), tm(pick(awnColors)));
+    aw.position.set(fx + front * 0.9, 3.1, (rand() - 0.5) * 2); aw.rotation.z = front * 0.35; grp.add(aw);
+  }
+  if (rand() < 0.4) {
+    const sg = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 0.2), tm(pick([0xC8110E, 0xf2c12e, 0x2f9a52, 0xf3e6d6])));
+    sg.position.set(fx + front * 0.9, 4.6, (rand() - 0.5) * (w - 3)); sg.rotation.y = Math.PI / 2; grp.add(sg);
+  }
+}
+
+// ---------- Billboards: the video's fake ads (Midnight Bank, Dormant, Noomax, Route, Haven, Centuries, Pearl Bite),
+// pixelated into one small texture (billboards.json gives each ad's rectangle). ----------
+const adsTex = new THREE.TextureLoader().load(adsUrl);
+adsTex.magFilter = adsTex.minFilter = THREE.NearestFilter;
+adsTex.generateMipmaps = false;
+const adsM = new THREE.MeshBasicMaterial({ map: adsTex, side: THREE.DoubleSide });
+const AD_NAMES = Object.keys(ADS.rects);
+let adTurn = 0;
+const nextAd = () => AD_NAMES[adTurn++ % AD_NAMES.length];
+/** The ad as a plane sized to its picture (height hgt metres), and its width. */
+function adBoard(name, hgt) {
+  const [x, y, w, h] = ADS.rects[name], [AW2, AH2] = ADS.size;
+  const g = new THREE.PlaneGeometry((hgt * w) / h, hgt), uv = g.attributes.uv;
+  for (let n = 0; n < 4; n++) uv.setXY(n, (x + uv.getX(n) * w) / AW2, 1 - (y + (1 - uv.getY(n)) * h) / AH2);
+  return [new THREE.Mesh(g, adsM), (hgt * w) / h];
+}
+const frameM = tm(0x1b1418);
+/** A billboard on two legs beside the road at sample i, angled toward the oncoming karts. */
+function roadsideAd(i, side) {
+  const g = new THREE.Group(), name = nextAd();
+  const [board, bw] = adBoard(name, name === 'route' ? 9 : 7);
+  const y = 8 + (name === 'route' ? 1 : 0);
+  board.position.y = y; g.add(board);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.8, (name === 'route' ? 9 : 7) + 0.8, 0.3), frameM);
+  frame.position.set(0, y, -0.2); g.add(frame);
+  [-bw / 3, bw / 3].forEach((x) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, y, 0.5), frameM); l.position.set(x, y / 2, -0.4); l.castShadow = true; g.add(l); });
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.8, 0.3, 0.6), bm(0xffe0a0));
+  lamp.position.set(0, y + (name === 'route' ? 4.9 : 3.9), 0.4); g.add(lamp);
+  const o = off(i, side * (HALF + 13));
+  g.position.set(o[0], 0, o[1]);
+  g.rotation.y = yawAt(i) + Math.PI - side * 0.5;
+  add(g);
+}
+/** A billboard on a building's roof, facing the road (and a little toward the oncoming karts). */
+function roofAd(grp, d, h, side) {
+  const name = nextAd(), hgt = name === 'route' ? 6 : 4.5;
+  const [board, bw] = adBoard(name, hgt);
+  const b = new THREE.Group();
+  board.position.y = h + 1.6 + hgt / 2; b.add(board);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.5, hgt + 0.5, 0.2), frameM);
+  frame.position.set(0, board.position.y, -0.15); b.add(frame);
+  [-bw / 3, bw / 3].forEach((x) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.8, 0.25), frameM); l.position.set(x, h + 0.9, -0.3); b.add(l); });
+  b.rotation.y = Math.atan2(-side, -0.6);
+  b.position.x = -side * (d / 2 - 1);
+  grp.add(b);
+}
+
+/** A building on one side of the track at sample i (front facing the road). */
+function building(i, side, { w = 14, d = 10, h = 12, ids: pool = TOWN_IDS, id, gap = 6, from = 'bottom', shop = true, roof = true }) {
+  const grp = new THREE.Group();
+  const m = new THREE.Mesh(facadeBox(d, h, w, id || pick(pool), from), facadeM);
+  m.position.y = h / 2; m.castShadow = true; grp.add(m);
+  if (roof && h < 16 && w > 11 && rand() < 0.16) roofAd(grp, d, h, side);
+  else if (roof) roofTop(grp, d, h, w);
+  if (shop) shopFront(grp, d, h, w, -side);
   const o = off(i, side * (HALF + gap + d / 2));
-  m.position.set(o[0], h / 2, o[1]);
-  m.rotation.y = yawAt(i);
-  m.castShadow = true;
-  add(m);
-  return m;
+  grp.position.set(o[0], 0, o[1]);
+  grp.rotation.y = yawAt(i);
+  add(grp);
+  return grp;
 }
 
-/** Row of buildings along both sides of a range, skipping tight corners. */
-function street(range, step, make) {
-  let k = 0;
-  for (let i = range[0]; i < range[1]; i += step) {
+/**
+ * Buildings along both sides of a range: random widths, heights in whole floors, set-backs and the odd alley,
+ * so the street doesn't repeat. opts(side) gives the per-building options.
+ */
+function street(range, opts) {
+  [-1, 1].forEach((side) => {
+    let i = range[0];
+    while (i < range[1]) {
+      const w = 8 + rand() * 9, step = Math.max(3, Math.round(w / 2.6));
+      const j = (i + Math.round(step / 2)) % N;
+      if (!corner[j]) {
+        const o = opts(side);
+        if (!o) { i += step; continue; }
+        const floors = o.floors[0] + ((rand() * (o.floors[1] - o.floors[0] + 1)) | 0);
+        building(j, side, { w, d: 8 + rand() * 6, h: floors * 3.6 + 0.8, gap: o.gap + rand() * 2.5, ids: o.ids, shop: o.shop });
+      }
+      i += step + (rand() < 0.15 ? 2 : 0);   // now and then an alley
+    }
+  });
+}
+
+// ---------- People: little pixel figures (red jumpsuits and bandanas, like the video) ----------
+const PEOPLE = ['jumpsuit-bandana', 'jumpsuit', 'tee-jeans', 'pink-jeans', 'hoodie', 'dancer'];
+const peopleTex = canvasTex(8 * PEOPLE.length, 16, (g) => {
+  PEOPLE.forEach((kind, k) => {
+    const x = k * 8, px = (c, a, b, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(x + a, b, w, h); };
+    const skin = ['#e0b08a', '#c98f68', '#f0c8a0'][k % 3], hair = '#1b1418';
+    const red = '#C8110E', top = { 'tee-jeans': '#f3eee8', 'pink-jeans': '#f06eb0', hoodie: '#8a8a94' }[kind] || red;
+    const legs = { 'tee-jeans': '#3a5a9a', 'pink-jeans': '#4a6aa8', hoodie: '#2a2a30' }[kind] || red;
+    px(hair, 2, 0, 4, 2); px(skin, 2, 2, 4, 3); px(hair, 2, 2, 1, 2);
+    if (kind === 'jumpsuit-bandana' || kind === 'dancer') { px(red, 1, 1, 6, 1); px('#f3e6d6', 3, 1, 1, 1); }
+    px(top, 1, 5, 6, 5);
+    if (kind === 'dancer') { px(top, 0, 2, 1, 4); px(top, 7, 2, 1, 4); px(skin, 0, 1, 1, 1); px(skin, 7, 1, 1, 1); } // arms up
+    else { px(top, 0, 5, 1, 4); px(top, 7, 5, 1, 4); px(skin, 0, 9, 1, 1); px(skin, 7, 9, 1, 1); }
+    if (kind.startsWith('jumpsuit') || kind === 'dancer') px('#8a0c0a', 1, 9, 6, 1);   // belt shadow
+    px(legs, 2, 10, 2, 5); px(legs, 4, 10, 2, 5);
+    px('#1b1418', 1, 15, 3, 1); px('#1b1418', 4, 15, 3, 1);
+  });
+});
+const peopleM = new THREE.MeshBasicMaterial({ map: peopleTex, alphaTest: 0.5, side: THREE.DoubleSide });
+/** A figure of kind k standing at sample i, lateral lat, facing the karts coming toward it. */
+function person(i, lat, k) {
+  const g = new THREE.PlaneGeometry(0.95, 1.9);
+  const uv = g.attributes.uv, u0 = k / PEOPLE.length, u1 = (k + 1) / PEOPLE.length;
+  for (let n = 0; n < 4; n++) uv.setX(n, u0 + uv.getX(n) * (u1 - u0));
+  const m = new THREE.Mesh(g, peopleM);
+  const o = off(i % N, lat);
+  m.position.set(o[0], 0.95, o[1]);
+  m.rotation.y = yawAt(i % N) + Math.PI + (rand() - 0.5) * 0.6;
+  add(m);
+}
+/** A crowd along a range: n figures, on one or both sides, kinds drawn from `kinds`. */
+function crowd(range, n, kinds, lat0, lat1, sides = [-1, 1]) {
+  for (let k = 0; k < n; k++) {
+    const i = range[0] + Math.floor(rand() * (range[1] - range[0]));
     if (corner[i % N]) continue;
-    [-1, 1].forEach((side) => make(i % N, side, k++));
+    person(i, pick(sides) * (lat0 + rand() * (lat1 - lat0)), pick(kinds));
+  }
+}
+
+// ---------- Street furniture ----------
+function sidewalk(range) {
+  // Pavement and curb between the road and the buildings, on the straights.
+  const pos = [], col = [], c = new THREE.Color();
+  const quad = (i, a, b, colour) => {
+    const j = (i + 1) % N, A = off(i, a), B = off(i, b), C = off(j, a), D = off(j, b), y = 0.05;
+    pos.push(A[0], y, A[1], C[0], y, C[1], B[0], y, B[1], B[0], y, B[1], C[0], y, C[1], D[0], y, D[1]);
+    c.set(colour); for (let k = 0; k < 6; k++) col.push(c.r, c.g, c.b);
+  };
+  for (let i = range[0]; i < range[1]; i++) {
+    if (corner[i % N]) continue;
+    [-1, 1].forEach((s) => {
+      const a = s * (HALF + 1.7), b = s * (HALF + 2.2), e = s * (HALF + 6);
+      quad(i % N, Math.min(a, b), Math.max(a, b), '#d8cfc4');
+      quad(i % N, Math.min(b, e), Math.max(b, e), (i >> 2) % 2 ? '#a89a8c' : '#a09284');
+    });
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, toon(0xffffff, { vertexColors: true, side: THREE.DoubleSide }));
+  m.receiveShadow = true;
+  scene.add(m);
+}
+const binG = new THREE.CylinderGeometry(0.4, 0.35, 1, 8), potG = new THREE.CylinderGeometry(0.45, 0.35, 0.7, 8), bushG = new THREE.IcosahedronGeometry(0.7, 0);
+const crateG = new THREE.BoxGeometry(0.9, 0.7, 0.9), umbG = new THREE.ConeGeometry(1.6, 0.7, 8), poleG = new THREE.CylinderGeometry(0.06, 0.06, 2.4, 4), tableG = new THREE.CylinderGeometry(0.6, 0.6, 0.08, 10);
+function furniture(range, n, lat0, lat1, kinds = ['bin', 'pot', 'crate']) {
+  for (let k = 0; k < n; k++) {
+    const i = (range[0] + Math.floor(rand() * (range[1] - range[0]))) % N;
+    if (corner[i]) continue;
+    const o = off(i, pick([-1, 1]) * (lat0 + rand() * (lat1 - lat0))), g = new THREE.Group();
+    const kind = pick(kinds);
+    const at = (geo, mat, y) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; m.castShadow = true; g.add(m); return m; };
+    if (kind === 'bin') at(binG, tm(pick([0x2f6a46, 0x2a2a30, 0x2f5fa8])), 0.5);
+    else if (kind === 'pot') { at(potG, tm(0xb0603a), 0.35); at(bushG, tm(0x2f7a46), 1.1); }
+    else if (kind === 'crate') { at(crateG, tm(0x9a6a42), 0.35); if (rand() < 0.5) at(crateG, tm(pick([0xe0782f, 0x2fae6a, 0xf2c12e])), 1.05); }
+    else if (kind === 'cafe') { at(tableG, tm(0xf3e6d6), 0.75); at(poleG, tm(0x2a2024), 1.2); at(umbG, tm(pick([0xC8110E, 0xf3e6d6, 0xe8a23a])), 2.5); }
+    g.position.set(o[0], 0, o[1]);
+    g.rotation.y = rand() * 6.28;
+    add(g);
   }
 }
 
@@ -148,16 +343,21 @@ function seaWall() {
       add(wall);
     }
   });
-  // Buildings on the land side of the terrace: the orange one, a white one covered in graffiti.
-  building(40, -1, { w: 26, d: 14, h: 16, facade: facadePiece('049', 16 / 26), gap: 10 });
-  building(80, -1, { w: 22, d: 12, h: 10, facade: graffiti(4242, '#ece6e0'), gap: 9 });
-  building(690, -1, { w: 24, d: 12, h: 13, facade: facadePiece('014', 13 / 24), gap: 10 });
+  // The land side of the terrace: a row of pastel houses and a white one covered in graffiti, cafe tables, people
+  // leaning on the sea wall.
+  SEASIDE.forEach((r) => street(r, (side) => (side < 0 ? { floors: [1, 4], gap: 8, ids: WEST_IDS, shop: true } : null)));
+  const white = new THREE.Mesh(new THREE.BoxGeometry(12, 10, 22), new THREE.MeshBasicMaterial({ map: graffiti(4242, '#ece6e0') }));
+  const wo = off(80, -(HALF + 16));
+  white.position.set(wo[0], 5, wo[1]); white.rotation.y = yawAt(80);
+  add(white);
+  SEASIDE.forEach((r) => {
+    furniture(r, 14, HALF + 2.5, HALF + 6, ['cafe']);
+    crowd(r, 22, [0, 1, 2, 3, 4], HALF + 6.5, HALF + 8.2, [1]);   // along the sea wall
+    crowd(r, 10, [0, 1, 2, 3], HALF + 3, HALF + 6, [-1]);
+  });
 }
 
 // ---------- Market street ----------
-// Brick houses with shop fronts on the street floor; pastel houses on the west side.
-const MARKET_FACADES = ['004', '022', '091', '009', '025', '094'];
-const WEST_FACADES = ['044', '074', '049', '079', '054'];
 
 function pickup(i, lat, back) {
   const g = new THREE.Group();
@@ -274,10 +474,10 @@ function wires() {
 }
 
 function market() {
-  street(MARKET, 9, (i, side, k) => {
-    const h = 9 + ((k * 5) % 3) * 3.5;
-    building(i, side, { w: 16, d: 10, h, facade: facadePiece(MARKET_FACADES[k % MARKET_FACADES.length], h / 16) });
-  });
+  street(MARKET, () => ({ floors: [2, 4], gap: 5.5, ids: MARKET_IDS, shop: true }));
+  sidewalk(MARKET);
+  furniture(MARKET, 26, HALF + 2.6, HALF + 5.5);
+  crowd(MARKET, 40, [0, 1, 2, 3, 4], HALF + 2.6, HALF + 5.5);
   wires();
   [MARKET[0] + 30, MARKET[0] + 92].forEach((i) => bunting(i, 8.4, HALF * 2 + 12));
   capulloArch(MARKET[0] + 60);
@@ -289,11 +489,13 @@ function market() {
 
 // ---------- Prison courtyard ----------
 function prison() {
-  // Cream walls with iron balconies on every floor (the upper floors of two Mediterranean facades).
-  const facs = [facadePiece('048', 1, 'top'), facadePiece('041', 1, 'top')];
-  for (let i = PRISON[0], k = 0; i < PRISON[1]; i += 8, k++) {
-    [-1, 1].forEach((side) => building(i, side, { w: 18, d: 4, h: 18, facade: facs[(k + (side > 0 ? 1 : 0)) % 2], gap: 7 }));
+  // Cream walls with iron balconies on every floor (the upper floors of the Mediterranean facades), the inmates
+  // in red jumpsuits dancing in the yard, like the video.
+  for (let i = PRISON[0], k = 0; i < PRISON[1]; i += 7, k++) {
+    [-1, 1].forEach((side) => building(i, side, { w: 18, d: 4, h: 18, ids: PRISON_IDS, from: 'top', gap: 7, shop: false, roof: false }));
   }
+  sidewalk(PRISON);
+  crowd(PRISON, 46, [0, 1, 5, 5], HALF + 2.4, HALF + 5.8);
   // Iron trusses across the courtyard, and warm lamps hanging from them.
   const ironM = tm(0x2a2024), bulbM = bm(0xffd27a);
   const poolM = new THREE.MeshBasicMaterial({ color: 0xff9a3c, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -336,45 +538,53 @@ function prison() {
 // ---------- West side: pastel houses and graffiti walls ----------
 function westSide() {
   const westWalls = [31, 132, 233].map((seed) => new THREE.MeshBasicMaterial({ map: graffiti(seed) }));
-  street(WEST, 14, (i, side, k) => {
-    if (k % 3 === 2) {   // a graffiti wall instead of a house
+  let k = 0;
+  for (let i = WEST[0]; i < WEST[1]; i += 6) {
+    if (corner[i]) continue;
+    const side = k % 2 ? 1 : -1;
+    k++;
+    if (rand() < 0.25) {   // a graffiti wall instead of a house
       const o = off(i, side * (HALF + 6));
-      const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3, 14), westWalls[k % westWalls.length]);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3, 14), pick(westWalls));
       m.position.set(o[0], 1.5, o[1]);
       m.rotation.y = yawAt(i);
       add(m);
-      return;
+      continue;
     }
-    const h = 8 + (k % 2) * 4;
-    building(i, side, { w: 15, d: 10, h, facade: facadePiece(WEST_FACADES[k % WEST_FACADES.length], h / 15), gap: 7 });
-  });
+    const w = 9 + rand() * 7;
+    building(i, side, { w, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2 });
+    if (rand() < 0.6) building(i, -side, { w: 8 + rand() * 6, d: 8 + rand() * 5, h: (1 + ((rand() * 3) | 0)) * 3.6 + 0.8, ids: WEST_IDS, gap: 6.5 + rand() * 2 });
+  }
+  sidewalk(WEST);
+  furniture(WEST, 14, HALF + 2.6, HALF + 5.5, ['bin', 'pot', 'pot']);
+  crowd(WEST, 14, [1, 2, 3, 4], HALF + 2.6, HALF + 5.5);
 }
 
-// ---------- The town around the circuit: low flat-roofed houses (one draw call) ----------
+// ---------- The town around the circuit: blocks of houses on a street grid ----------
+// Every house is a facade box from the atlas (all merged with the track's buildings into one mesh), in rows along
+// a grid of little streets, with roof clutter. Nothing within reach of the track, nothing on the beach.
 function town() {
-  // Four kinds of house, each a facade on an instanced box: four draw calls for the whole town.
-  const K = WORLD_K, cnt = Math.round(240 * K), kinds = ['091', '044', '022', '079'];
-  const ims = kinds.map((id) => new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), toon(0xffffff, { map: facadePiece(id, 0.8) }), Math.ceil(cnt / kinds.length)));
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-  let n = 0, tries = 0;
-  while (n < cnt && tries < 40000) {
-    tries++;
-    const x = (-300 + Math.random() * 680) * K, z = (-20 + Math.random() * 440) * K;
-    if (z < SEA_Z + 14) continue;
-    const d = minTrackDist(x, z);
-    if (d < HALF + 26 || d > 260) continue;
-    const w = 10 + Math.random() * 6, h = w * (0.7 + Math.random() * 0.2);
-    q.setFromAxisAngle(up, (Math.random() < 0.5 ? 0 : Math.PI / 2) + 0.1);
-    s.set(w, h, w); v.set(x, h / 2, z);
-    m.compose(v, q, s);
-    ims[n % kinds.length].setMatrixAt(Math.floor(n / kinds.length), m);
-    n++;
+  const CELL = 30;
+  for (let x = -360; x <= 480; x += CELL) {
+    for (let z = -10; z <= 440; z += CELL) {
+      const d = minTrackDist(x, z);
+      if (z < SEA_Z + 24 || d < HALF + 24 || d > 240) continue;
+      // Two to four houses around the block, back to back.
+      const n = 2 + ((rand() * 3) | 0);
+      for (let k = 0; k < n; k++) {
+        const w = 9 + rand() * 8, dd = 8 + rand() * 4, h = (1 + ((rand() * 4) | 0)) * 3.6 + 0.8;
+        const qx = (k % 2 ? 1 : -1) * (CELL / 2 - dd / 2 - 2.5), qz = (k >> 1 ? 1 : -1) * (CELL / 4) + (rand() - 0.5) * 3;
+        if (minTrackDist(x + qx, z + qz) < HALF + 18) continue;
+        const grp = new THREE.Group();
+        const m = new THREE.Mesh(facadeBox(dd, h, w, pick(TOWN_IDS)), facadeM);
+        m.position.y = h / 2; m.castShadow = true; grp.add(m);
+        roofTop(grp, dd, h, w);
+        grp.position.set(x + qx, 0, z + qz);
+        grp.rotation.y = rand() < 0.5 ? 0 : Math.PI / 2;
+        add(grp);
+      }
+    }
   }
-  ims.forEach((im, k) => {
-    im.count = Math.floor(n / kinds.length) + (k < n % kinds.length ? 1 : 0);
-    im.castShadow = true;
-    scene.add(im);
-  });
 }
 
 // ---------- PSX models: palms by the sea and in the town, boats, a pier, barrels by the stalls ----------
@@ -484,6 +694,23 @@ function bake() {
   });
 }
 
+// The turns between the parts: people watching from behind the tyres, street lamps and clutter.
+function corners() {
+  const person2 = (i, lat, k) => {   // like person(), but allowed on the turns
+    const g = new THREE.PlaneGeometry(0.95, 1.9), uv = g.attributes.uv, u0 = k / PEOPLE.length, u1 = (k + 1) / PEOPLE.length;
+    for (let n = 0; n < 4; n++) uv.setX(n, u0 + uv.getX(n) * (u1 - u0));
+    const m = new THREE.Mesh(g, peopleM), o = off(i % N, lat);
+    m.position.set(o[0], 0.95, o[1]); m.rotation.y = yawAt(i % N) + Math.PI + (rand() - 0.5) * 0.8;
+    add(m);
+  };
+  [[112, 150], [276, 298], [472, 492], [636, 650]].forEach(([a, b]) => {
+    for (let k = 0; k < (b - a) * 0.9; k++) {
+      const i = a + Math.floor(rand() * (b - a)), side = rand() < 0.5 ? -1 : 1;
+      person2(i, side * (HALF + 10.5 + rand() * 3), pick([0, 0, 1, 2, 3, 4, 5]));
+    }
+  });
+}
+
 export function buildParadise() {
   cloudBand();
   ocean();
@@ -492,6 +719,9 @@ export function buildParadise() {
   prison();
   westSide();
   town();
+  corners();
+  // Roadside billboards on the straights, taking turns through the seven ads.
+  [[30, 1], [96, -1], [200, 1], [250, -1], [520, 1], [600, -1], [680, -1], [8, -1]].forEach(([i, side]) => { if (!corner[i]) roadsideAd(i, side); });
   bake();
   props();
 }
