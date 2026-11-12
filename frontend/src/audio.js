@@ -409,9 +409,12 @@ export function setTempo(k) {
 // original race loop falls in the race file, final.loop is the final-lap loop region. The final-lap file is the
 // same music 8% faster, so a position p in the race loop is position p / ratio in the final-lap file.
 const TRACK_MUSIC = {
+  // Built from an instrumental at 122 BPM, sped up 12% (higher pitch) with a light bitcrush and synth effects
+  // (filter sweep on the intro, risers, a gated chorus, laser zaps): verse as the intro, then pre-chorus, chorus and
+  // post-chorus (32 bars) as the loop. The loop seam is crossfaded in the file.
   night: {
-    race: { len: 90.66196, intro: 37.15419, gara0: 30.55596, loop: [42.35921, 90.16196] },
-    final: { len: 55.69073, loop: [10.92894, 55.19074] },
+    race: { len: 70.76335, intro: 14.05267, gara0: 13.05267, loop: [14.05267, 70.26335] },
+    final: { len: 53.53792, loop: [0.92593, 52.97286] },
     ratio: 1.08,
   },
   space: {
@@ -419,9 +422,14 @@ const TRACK_MUSIC = {
     final: { len: 80.35092, loop: [34.50192, 79.85093] },
     ratio: 1.08,
   },
+  // The music Night Circuit had before (its files were renamed bloody-*).
+  bloody: {
+    race: { len: 90.66196, intro: 37.15419, gara0: 30.55596, loop: [42.35921, 90.16196] },
+    final: { len: 55.69073, loop: [10.92894, 55.19074] },
+    ratio: 1.08,
+  },
 };
-// Bloody Paradise races to the Night Circuit music for now (same files, same loop points).
-TRACK_MUSIC.bloody = { ...TRACK_MUSIC.night, file: 'night' };
+// Chiptune fallback if the files can't be loaded.
 SONGS.bloody = SONGS.night;
 /** File name prefix of a track's race music: its own id unless it borrows another track's music. */
 const fileOf = (id) => (TRACK_MUSIC[id] && TRACK_MUSIC[id].file) || id;
