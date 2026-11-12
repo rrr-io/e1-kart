@@ -25,7 +25,7 @@ const KEY = 'e1kart';
 
 // freePlay: the menu's "Play without a certificate" flag.
 // pixelScale is fixed at 2× (the sharpest pixel look); it is no longer a menu option.
-export const settings = { teamIdx: 3, pixelScale: 2, assist: true, freePlay: true, track: 'night', sound: true };
+export const settings = { teamIdx: 3, pixelScale: 2, assist: false, freePlay: true, track: 'night', sound: true };
 
 try {
   const s = JSON.parse(localStorage.getItem(KEY) || '{}');
@@ -33,7 +33,9 @@ try {
   const name = s.teamName || OLD_ORDER[s.team];
   const k = TEAMS.findIndex((t) => t.name === name);
   if (k >= 0) settings.teamIdx = k;
-  if (typeof s.assist === 'boolean') settings.assist = s.assist;
+  // Steering assist is off by default. Saves from before that (no assistV) always held true, chosen or not, so
+  // they start from off once; a choice made after that is kept.
+  if (typeof s.assist === 'boolean' && s.assistV === 2) settings.assist = s.assist;
   if (typeof s.free === 'boolean') settings.freePlay = s.free;
   if (['night', 'space', 'bloody'].includes(s.track)) settings.track = s.track;
   if (typeof s.sound === 'boolean') settings.sound = s.sound;
@@ -41,6 +43,6 @@ try {
 
 export function saveSettings() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ teamName: TEAMS[settings.teamIdx].name, assist: settings.assist, free: settings.freePlay, track: settings.track, sound: settings.sound }));
+    localStorage.setItem(KEY, JSON.stringify({ teamName: TEAMS[settings.teamIdx].name, assist: settings.assist, assistV: 2, free: settings.freePlay, track: settings.track, sound: settings.sound }));
   } catch (e) { /* storage unavailable */ }
 }
