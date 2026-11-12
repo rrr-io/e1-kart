@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { $ } from './engine.js';
 import { settings, saveSettings, LAPS } from './config.js';
-import { TRACKS, TRACK_IDS, TRACK_ID } from './theme.js';
+import { TRACKS, TRACK_IDS, TRACK_ID, isLocked, UNLOCK_LABEL } from './theme.js';
 
 const GO_FLAG = 'e1kart-go';
 let idx = Math.max(0, TRACK_IDS.indexOf(TRACK_ID));
@@ -55,9 +55,15 @@ function buildCards() {
     map.width = 64; map.height = 44; map.className = 'tp-map';
     drawMap(map, id);
     c.append(img, map);
+    const locked = isLocked(id);
+    if (locked) {
+      card.classList.add('locked');
+      const ban = document.createElement('span'); ban.className = 'tp-lock'; ban.textContent = '🔒 ' + UNLOCK_LABEL;
+      c.append(ban);
+    }
     const head = document.createElement('div'); head.className = 'tp-head';
     const nm = document.createElement('b'); nm.textContent = t.name;
-    const badge = document.createElement('span'); badge.className = 'tp-badge' + (t.cost ? '' : ' free'); badge.textContent = t.cost ? '1 RUN' : 'FREE';
+    const badge = document.createElement('span'); badge.className = 'tp-badge' + (locked ? ' lock' : t.cost ? '' : ' free'); badge.textContent = locked ? 'LOCKED' : t.cost ? '1 RUN' : 'FREE';
     head.append(nm, badge);
     const desc = document.createElement('p'); desc.className = 'tp-desc'; desc.textContent = t.desc;
     const meta = document.createElement('p'); meta.className = 'tp-meta';
@@ -80,8 +86,9 @@ function show(i, animate = true) {
   strip.style.transform = `translateX(${-idx * 100}%)`;
   [...$('tpDots').children].forEach((d, k) => d.classList.toggle('on', k === idx));
   [...strip.children].forEach((c, k) => c.setAttribute('aria-hidden', String(k !== idx)));
-  const t = TRACKS[TRACK_IDS[idx]];
-  $('trackGo').textContent = t.cost ? 'NEXT ▶' : 'RACE ▶';
+  const t = TRACKS[TRACK_IDS[idx]], locked = isLocked(TRACK_IDS[idx]);
+  $('trackGo').textContent = locked ? 'LOCKED' : t.cost ? 'NEXT ▶' : 'RACE ▶';
+  $('trackGo').disabled = locked;
 }
 
 // Swipe: follow the finger, then snap to the nearest track.
@@ -119,6 +126,7 @@ export function takeGoFlag() {
 
 function go() {
   const id = TRACK_IDS[idx];
+  if (isLocked(id)) return;
   if (id !== TRACK_ID) {
     settings.track = id;
     saveSettings();

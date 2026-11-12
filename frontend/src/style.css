@@ -425,6 +425,11 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .tp-head b{font-family:var(--display);font-weight:400;font-size:12px;color:var(--paper)}
 .tp-badge{flex:none;white-space:nowrap;font-family:var(--display);font-size:7px;padding:4px 6px;background:var(--red);color:var(--paper);border:2px solid var(--ink)}
 .tp-badge.free{background:#1f8a5b}
+/* Tracks locked until a set time (isLocked in theme.js): greyed out with the unlock time across the preview. */
+.tp-badge.lock{background:#4a4a52}
+.tp-card.locked .tp-preview img,.tp-card.locked .tp-map{filter:grayscale(1) brightness(.55)}
+.tp-card.locked .tp-head b,.tp-card.locked .tp-desc,.tp-card.locked .tp-note,.tp-card.locked .tp-meta{opacity:.5}
+.tp-lock{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:1;padding:8px 6px;text-align:center;font-family:var(--display);font-size:9px;line-height:1.5;color:var(--paper);background:rgba(11,11,13,.86);border-top:3px solid var(--red);border-bottom:3px solid var(--red)}
 .tp-desc{margin:0;font-size:17px;line-height:1.05;color:var(--paper)}
 .tp-meta{margin:0;font-size:15px;color:var(--moon-dim)}
 .tp-note{margin:0;font-size:16px;line-height:1.05;color:var(--moon)}
