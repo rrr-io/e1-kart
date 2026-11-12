@@ -222,13 +222,13 @@ function advance() {
 /**
  * Shows the driver's dialogue for a race moment. Resolves once the player closes it.
  * opts.onClose runs right in the closing tap or key press (not when another dialogue replaces this one).
- * opts.extra: more lines (strings) said after the driver's own, with the links box (#dlgLinks) shown under them.
+ * opts.extra: more lines (strings) said after the driver's own; the links box (#dlgLinks) shows under the last one.
  */
 export function talk(teamIdx, key, opts = {}) {
   const lines = pickLines(teamIdx, key);
   if (opts.extra && lines.length) {
     const mood = lines[lines.length - 1].mood;
-    opts.extra.forEach((t) => lines.push({ t, mood, links: true }));
+    opts.extra.forEach((t, n) => lines.push({ t, mood, links: n === opts.extra.length - 1 }));
   }
   if (!lines.length) return Promise.resolve();
   if (current) close();

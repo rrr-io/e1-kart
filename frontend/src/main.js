@@ -34,10 +34,8 @@ G.karts = TEAMS.map((t) => makeKart(t.color));
 $('start').onclick = menuStart;
 $('runGo').onclick = startGame;
 $('again').onclick = startGame;
-$('resMnet').hidden = !TRACK.mnet && !mcdOn();
 wireMcdLinks($('dlgLinks'), TRACK_ID);
 wireMcdLinks($('resMcd'), TRACK_ID);
-$('resMcd').hidden = !mcdOn();
 $('resMnet').onclick = () => openMnet('button', TRACK_ID);
 $('toMenu').onclick = toMenu;
 initInput();
@@ -89,6 +87,9 @@ function frame(now) {
       // under the box (instead of opening the video). Otherwise, on Interstellar and Bloody Paradise, closing the
       // driver's line opens the video on Mnet Plus.
       const opts = mcdOn() ? { extra: MCD_LINES } : TRACK.mnet ? { onClose: () => openMnet('auto', TRACK_ID) } : {};
+      // Checked at every finish, so a page left open past the deadline drops the links too.
+      $('resMnet').hidden = !TRACK.mnet && !mcdOn();
+      $('resMcd').hidden = !mcdOn();
       talk(player.team, pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'lose', opts).then(() => {
         showResults();
         $('resRuns').textContent = runsLeftText();
