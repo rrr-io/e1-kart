@@ -83,10 +83,11 @@ function frame(now) {
       $('controls').hidden = true;
       const pos = playerPosition();
       reportFinish(player.finish, pos);
-      // Until the FAVORITE MCD STAGE vote closes, every driver asks to vote and stream Bloody Paradise, with the links
-      // under the box (instead of opening the video). Otherwise, on Interstellar and Bloody Paradise, closing the
-      // driver's line opens the video on Mnet Plus.
-      const opts = mcdOn() ? { extra: MCD_LINES } : TRACK.mnet ? { onClose: () => openMnet('auto', TRACK_ID) } : {};
+      // Closing the driver's line opens the video on Mnet Plus: on every track until the FAVORITE MCD STAGE vote
+      // closes (after the drivers ask to vote and stream Bloody Paradise, with the links under the last line), then on
+      // the tracks that have it (TRACK.mnet).
+      const toMnet = { onClose: () => openMnet('auto', TRACK_ID) };
+      const opts = mcdOn() ? { extra: MCD_LINES, ...toMnet } : TRACK.mnet ? toMnet : {};
       // Checked at every finish, so a page left open past the deadline drops the links too.
       $('resMnet').hidden = !TRACK.mnet && !mcdOn();
       $('resMcd').hidden = !mcdOn();
@@ -130,4 +131,16 @@ resumeTrackChoice();
 requestAnimationFrame(frame);
 trackVisit();
 
-registerSW({ immediate: true });
+// New versions: the service worker takes over as soon as a new one is installed and the page reloads by itself
+// (autoUpdate). The browser only looks for one when the page is opened, so an app left open in the background
+// would keep an old version for days: check again every 10 minutes and whenever the app comes back to the
+// foreground, but only on the menu, so the reload never cuts a race short.
+registerSW({
+  immediate: true,
+  onRegisteredSW(url, reg) {
+    if (!reg) return;
+    const check = () => { if (G.state === 'menu' && navigator.onLine !== false) reg.update().catch(() => {}); };
+    setInterval(check, 10 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+  },
+});
