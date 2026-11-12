@@ -23,8 +23,9 @@ import { tickCountdown } from './race.js';
 import { toMenu } from './menu.js';
 import { initInput } from './input.js';
 import { trackVisit } from './stats.js';
-import { TRACK, TRACK_ID } from './theme.js';
+import { TRACK, TRACK_ID, BLOODY } from './theme.js';
 import { openMnet } from './mnet.js';
+import { updateLockdown } from './lockdown.js';
 import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
 
 G.karts = TEAMS.map((t) => makeKart(t.color));
@@ -69,6 +70,7 @@ function frame(now) {
     updatePlayer(dt);
     updateCpus(dt);
     updateItems(dt);
+    if (BLOODY) updateLockdown(dt, now);
     updateHud(dt);
   }
   if (G.state === 'done') {

@@ -11,6 +11,7 @@
 // Palms, boats, barrels, pier (public/models/bloody): "PSX The Island Pack" by Caliber Creations (not to be redistributed).
 import * as THREE from 'three';
 import { scene, camera, toon, canvasTex } from './engine.js';
+import { nightAmount, setAlarm } from './sky.js';
 import { N, HALF, WORLD_K, corner, off, yawAt, minTrackDist, P, ground } from './track.js';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -32,6 +33,10 @@ const tm = (c) => { const k = 't' + c; if (!mats.has(k)) mats.set(k, toon(c)); r
 const bm = (c) => { const k = 'b' + c; if (!mats.has(k)) mats.set(k, new THREE.MeshBasicMaterial({ color: c })); return mats.get(k); };
 
 // Track index ranges of each part (720 samples, see theme.js for the layout).
+// Unlit surfaces that have to dim when night falls: [material, its colour at sunset, how dark it gets].
+const dims = [];
+const dim = (mat, k = 0.3) => { dims.push([mat, mat.color.clone(), k]); return mat; };
+
 const SEASIDE = [[650, 720], [0, 112]];
 const MARKET = [150, 276];
 const PRISON = [298, 472];
@@ -372,7 +377,7 @@ const peopleTex = canvasTex(8 * PEOPLE.length, 16, (g) => {
     px(white, 1, 15, 3, 1); px(white, 4, 15, 3, 1);
   });
 });
-const peopleM = new THREE.MeshBasicMaterial({ map: peopleTex, alphaTest: 0.5, side: THREE.DoubleSide });
+const peopleM = dim(new THREE.MeshBasicMaterial({ map: peopleTex, alphaTest: 0.5, side: THREE.DoubleSide }), 0.6);
 /** A figure of kind k standing at sample i, lateral lat, facing the karts coming toward it. */
 function person(i, lat, k, y = 0) {
   const g = new THREE.PlaneGeometry(0.95, 1.9);
@@ -470,7 +475,7 @@ function ocean() {
     for (let k = 0; k < 40; k++) { g.fillStyle = ['#7a5a40', '#9a7a5a', '#6f8a4a'][k % 3 === 2 && k % 5 ? 0 : k % 3]; g.fillRect((k * 13) % 32, (k * 5) % 16, 2 + (k % 5), 1); }
   }, true);
   rock.repeat.set(2400 / 32, 1);
-  const face = new THREE.Mesh(new THREE.PlaneGeometry(2400, CLIFF + 1), new THREE.MeshBasicMaterial({ map: rock, side: THREE.DoubleSide }));
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(2400, CLIFF + 1), dim(new THREE.MeshBasicMaterial({ map: rock, side: THREE.DoubleSide })));
   face.position.set(48, -(CLIFF + 1) / 2 + 0.5, SEA_Z);
   scene.add(face);
   const st = new THREE.TextureLoader().load(shoreUrl);
@@ -479,7 +484,7 @@ function ocean() {
   st.wrapS = THREE.RepeatWrapping;
   const PXM = 0.25, depth = 224 * PXM;            // 4 texture pixels per metre
   st.repeat.set(2400 / (96 * PXM), 1);
-  shore = new THREE.Mesh(new THREE.PlaneGeometry(2400, depth), new THREE.MeshBasicMaterial({ map: st, fog: false, color: 0xfff0e6 }));
+  shore = new THREE.Mesh(new THREE.PlaneGeometry(2400, depth), dim(new THREE.MeshBasicMaterial({ map: st, fog: false, color: 0xfff0e6 }), 0.32));
   shore.rotation.x = -Math.PI / 2;
   shore.position.set(48, SL, SEA_Z - BEACH - depth / 2);
   scene.add(shore);
@@ -489,7 +494,7 @@ function ocean() {
     for (let k = 0; k < 30; k++) { g.fillStyle = k % 3 ? '#f0dfbe' : '#e6cfa8'; g.fillRect((k * 13) % 32, (k * 7) % 32, 1 + (k % 2), 1); }
   }, true);
   sand.repeat.set(2400 / 8, BEACH / 8);
-  const dry = new THREE.Mesh(new THREE.PlaneGeometry(2400, BEACH), new THREE.MeshBasicMaterial({ map: sand, color: 0xfff0e6 }));
+  const dry = new THREE.Mesh(new THREE.PlaneGeometry(2400, BEACH), dim(new THREE.MeshBasicMaterial({ map: sand, color: 0xfff0e6 }), 0.32));
   dry.rotation.x = -Math.PI / 2;
   dry.position.set(48, SL, SEA_Z - BEACH / 2);
   scene.add(dry);
@@ -502,7 +507,7 @@ function ocean() {
   }, true);
   tex.repeat.set(120, 50);
   // No fog on the sea, so it stays blue out to the clouds.
-  sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 1000), new THREE.MeshBasicMaterial({ map: tex, fog: false, color: 0xfff0e6 }));
+  sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 1000), dim(new THREE.MeshBasicMaterial({ map: tex, fog: false, color: 0xfff0e6 }), 0.22));
   sea.rotation.x = -Math.PI / 2;
   sea.position.set(48, SL, SEA_Z - BEACH - depth - 500);
   scene.add(sea);
@@ -797,11 +802,38 @@ const muralTex = canvasTex(48, 24, (g) => {
   for (let k = 0; k < 10; k++) F('#f3eee8', (k * 11) % 44 + 2, 20 + (k % 3), 3, 1);
 });
 
+// The hall's lamps and their pools of light have their own materials: they turn red during the lockdown.
+const hallLampM = new THREE.MeshBasicMaterial({ color: 0xffe2a0 });
+const hallPoolM = new THREE.MeshBasicMaterial({ color: 0xff9a3c, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false });
+// The shutter of the far gate: iron bars that roll down from inside the wall during the lockdown (lockdown.js).
+export const GATE = PRISON[1], GATE_R = HALF + 2.4;
+export const HALL = PRISON;
+const gateTex = canvasTex(16, 16, (g) => {
+  g.fillStyle = '#1b1418'; g.fillRect(0, 0, 16, 2); g.fillRect(0, 8, 16, 1);
+  for (let x = 1; x < 16; x += 4) g.fillRect(x, 0, 2, 16);
+  g.fillStyle = '#4a505c'; for (let x = 1; x < 16; x += 4) g.fillRect(x, 0, 1, 16);
+  g.fillStyle = '#C8110E'; g.fillRect(0, 14, 16, 2);
+}, true);
+gateTex.repeat.set(1 / 3, 1 / 3);   // ShapeGeometry UVs are in metres: one tile every 3 m
+let gate = null;
+/** closed 0 (rolled up, hidden in the wall) .. 1 (down to the road); alarm 0..1 for the red lights. */
+export function setLockdown(closed, alarmK, now) {
+  if (!gate) return;
+  gate.visible = closed > 0.001;
+  gate.position.y = (1 - closed) * GATE_R;
+  setAlarm(alarmK);
+  const p = alarmK * (0.5 + 0.5 * Math.sin(now / 110));
+  hallLampM.color.set(0xffe2a0).lerp(redC, alarmK * 0.4 + p * 0.6);
+  hallPoolM.color.set(0xff9a3c).lerp(redC, alarmK);
+  hallPoolM.opacity = 0.2 + p * 0.35;
+}
+const redC = new THREE.Color(0xff1a10);
+
 function prison() {
   const step = 7, plaster = tm(0xcfc4ae), iron = tm(0x2a2024), roofM = tm(0x5a3a32);
   const glass = new THREE.MeshBasicMaterial({ color: 0xffe9c4, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide });
-  const tube = bm(0xfff4d6);
-  const poolM = new THREE.MeshBasicMaterial({ color: 0xff9a3c, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false });
+  const tube = hallLampM;
+  const poolM = hallPoolM;
   const poolG = new THREE.CircleGeometry(5, 12).rotateX(-Math.PI / 2);
   for (let i = PRISON[0], k = 0; i < PRISON[1]; i += step, k++) {
     const a = off(i, 0), b = off(Math.min(i + step, PRISON[1]) % N, 0), len = Math.hypot(b[0] - a[0], b[1] - a[1]) + 0.5;
@@ -826,7 +858,7 @@ function prison() {
       for (let x = -HALL_W + 2; x < HALL_W; x += 3.5) { const d = new THREE.Mesh(new THREE.BoxGeometry(0.2, 4.4, 0.2), iron); d.position.set(x, HALL_H + 1.6, 0); d.rotation.z = (Math.round(x / 3.5) % 2 ? 1 : -1) * 0.75; g.add(d); }
       [-4, 4].forEach((x) => {
         const cord = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 0.1), iron); cord.position.set(x, HALL_H - 2, 0); g.add(cord);
-        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.9), bm(0xffd27a)); lamp.position.set(x, HALL_H - 4.2, 0); g.add(lamp);
+        const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.9), hallLampM); lamp.position.set(x, HALL_H - 4.2, 0); g.add(lamp);
         const pool = new THREE.Mesh(poolG, poolM); pool.position.set(x, 0.12, 0); g.add(pool);
       });
     }
@@ -860,6 +892,15 @@ function prison() {
     g.position.set(o[0], 0, o[1]);
     g.rotation.y = yawAt(i % N);
     add(g);
+    if (i === GATE) {   // not baked: it moves
+      const gs = new THREE.Shape();
+      gs.moveTo(-GATE_R, 0); gs.absarc(0, 0, GATE_R, Math.PI, 0, true); gs.lineTo(-GATE_R, 0);
+      gate = new THREE.Mesh(new THREE.ShapeGeometry(gs, 10), new THREE.MeshBasicMaterial({ map: gateTex, alphaTest: 0.5, side: THREE.DoubleSide }));
+      gate.position.set(o[0], GATE_R, o[1]);
+      gate.rotation.y = yawAt(i % N);
+      gate.visible = false;
+      scene.add(gate);
+    }
   });
   // The concrete floor of the hall, and what stands on it.
   sidewalk(PRISON, HALL_W, ['#8f8a84', '#878279']);
@@ -1041,7 +1082,7 @@ function cloudBand() {
   tex.wrapS = THREE.RepeatWrapping;
   tex.repeat.set(5, 1);
   const r = 860, h = 150;
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 48, 1, true), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 48, 1, true), dim(new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.BackSide, fog: false, depthWrite: false }), 0.22));
   const c = new THREE.Vector3();
   P.forEach((p) => c.add(p)); c.divideScalar(P.length);
   m.position.set(c.x, h / 2 - 4, c.z);
@@ -1113,12 +1154,15 @@ export function buildParadise() {
 }
 
 export function updateParadise(dt, now) {
+  // Night on the last lap: the unlit surfaces (sea, beach, clouds, people) dim with the light.
+  const nk = nightAmount();
+  dims.forEach(([m, c, k]) => m.color.copy(c).multiplyScalar(1 - nk * (1 - k)));
   if (sea) sea.material.map.offset.x = (now / 60000) % 1;
   if (shore) shore.material.map.offset.x = (now / 90000) % 1;   // the ripples drift along the coast
   floating.forEach((b) => { b.position.y = -CLIFF + 0.3 + Math.sin(now / 700 + b.userData.phase) * 0.15; b.rotation.z = Math.sin(now / 900 + b.userData.phase) * 0.05; });
   if (glitter) {
     // On the line from the camera toward the sun (moonDir in theme.js: x 0.1, z -0.97).
     glitter.position.x = camera.position.x - (0.1 / 0.97) * (glitter.position.z - camera.position.z);
-    glitter.material.opacity = 0.65 + Math.sin(now / 500) * 0.15;
+    glitter.material.opacity = (0.65 + Math.sin(now / 500) * 0.15) * (1 - nk);
   }
 }

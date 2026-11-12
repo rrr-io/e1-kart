@@ -1,21 +1,32 @@
 // Night sky: moonlight, blue moon, halo, stars and a shooting star.
 // Bloody Paradise (THEME.sun): a low golden sun with a warm halo instead, and no stars.
 import * as THREE from 'three';
-import { scene, camera, canvasTex } from './engine.js';
+import { scene, camera, canvasTex, redrawTex } from './engine.js';
 import moonUrl from './assets/moon.png';
 import { THEME, SPACE } from './theme.js';
+import { LAPS } from './config.js';
+import { G, player } from './state.js';
 
-scene.background = canvasTex(4, 256, (g) => {
+// Bloody Paradise: night falls on the last lap (THEME.night). night goes from 0 (sunset) to 1 (night) in a few
+// seconds; the sky, the fog and the lights blend between the two looks, the sun sinks and the moon and stars come out.
+const NIGHT = THEME.night;
+let night = 0, alarm = 0;
+export const nightAmount = () => night;
+/** Red emergency light on everything, 0..1 (the prison lockdown). */
+export function setAlarm(a) { alarm = a; }
+const mixC = new THREE.Color(), toC = new THREE.Color();
+const blend = (a, b, k) => mixC.set(a).lerp(toC.set(b), k);
+
+const skyTex = canvasTex(4, 256, (g) => {
   const gr = g.createLinearGradient(0, 0, 0, 256);
-  gr.addColorStop(0, THEME.sky[0]);
-  gr.addColorStop(0.45, THEME.sky[1]);
-  gr.addColorStop(0.78, THEME.sky[2]);
-  gr.addColorStop(1, THEME.sky[3]);
+  [0, 0.45, 0.78, 1].forEach((stop, n) => gr.addColorStop(stop, NIGHT ? '#' + blend(THEME.sky[n], NIGHT.sky[n], night).getHexString() : THEME.sky[n]));
   g.fillStyle = gr;
   g.fillRect(0, 0, 4, 256);
 });
+scene.background = skyTex;
 
-scene.add(new THREE.HemisphereLight(...THEME.hemi));
+const hemi = new THREE.HemisphereLight(...THEME.hemi);
+scene.add(hemi);
 
 // Moonlight: follows the player to keep shadows crisp.
 export const moonLight = new THREE.DirectionalLight(THEME.moonLight, 0.85);
@@ -61,7 +72,7 @@ const glowTex = canvasTex(64, 64, (g) => {
   g.fillRect(0, 0, 64, 64);
 });
 glowTex.magFilter = glowTex.minFilter = THREE.LinearFilter;
-const moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending }));
+export const moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending }));
 moonGlow.scale.set(THEME.moonScale * 2.8, THEME.moonScale * 2.8, 1);
 moonGlow.renderOrder = -2;
 moonGlow.position.copy(MOON_DIR).multiplyScalar(770);
@@ -108,9 +119,44 @@ function starField(n, size, colors, minY) {
   sky.add(p);
   return p;
 }
-if (!THEME.sun) starField(SPACE ? 2400 : 1300, 1, SPACE ? ['#b9a8ff', '#ffffff', '#ff9be6', '#8fd8ff'] : ['#8fa3d6', '#c9d6ff', '#6f86c4'], 0.02);
+const stars = THEME.sun && !NIGHT ? null : starField(SPACE ? 2400 : 1300, 1, SPACE ? ['#b9a8ff', '#ffffff', '#ff9be6', '#8fd8ff'] : ['#8fa3d6', '#c9d6ff', '#6f86c4'], NIGHT ? 0.16 : 0.02);
 if (SPACE) nebula();
-const brightStars = starField(THEME.sun ? 0 : 140, 2, ['#ffffff', '#bfe0ff', '#9fd0ff'], 0.08);
+const brightStars = starField(THEME.sun && !NIGHT ? 0 : 140, 2, ['#ffffff', '#bfe0ff', '#9fd0ff'], NIGHT ? 0.2 : 0.08);
+
+// The moon that rises on the last lap of Bloody Paradise, opposite the sun.
+let nightMoon = null;
+if (NIGHT) {
+  const t = new THREE.TextureLoader().load(moonUrl);
+  t.magFilter = t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false;
+  nightMoon = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, fog: false, depthWrite: false, transparent: true, opacity: 0 }));
+  nightMoon.scale.set(110, 110, 1);
+  nightMoon.renderOrder = -1;
+  sky.add(nightMoon);
+}
+const NIGHT_T = 5;   // seconds from sunset to night
+let drawn = -1;
+function applyNight() {
+  const k = night;
+  if (Math.abs(k - drawn) > 0.004 || k === 0 || k === 1) {
+    if (k !== drawn) redrawTex(skyTex);
+    drawn = k;
+  }
+  scene.fog.color.copy(blend(THEME.fog[0], NIGHT.fog, k));
+  hemi.color.copy(blend(THEME.hemi[0], NIGHT.hemi[0], k));
+  hemi.groundColor.copy(blend(THEME.hemi[1], NIGHT.hemi[1], k));
+  hemi.intensity = THEME.hemi[2] + (NIGHT.hemi[2] - THEME.hemi[2]) * k;
+  moonLight.color.copy(blend(THEME.moonLight, NIGHT.moonLight, k));
+  moonLight.intensity = 0.85 - 0.3 * k;
+  // The sun sinks behind the clouds and goes out; the moon climbs.
+  moon.position.copy(MOON_DIR).multiplyScalar(760).setY(MOON_DIR.y * 760 - k * 230);
+  moonGlow.position.copy(MOON_DIR).multiplyScalar(770).setY(MOON_DIR.y * 770 - k * 230);
+  moon.material.opacity = 1 - k;
+  moonGlow.material.opacity = 1 - k;
+  nightMoon.position.set(-0.5 * 760, (0.12 + 0.3 * k) * 760, 0.75 * 760);
+  nightMoon.material.opacity = k;
+  stars.material.opacity = k;
+}
 
 const shoot = new THREE.Mesh(
   new THREE.BoxGeometry(26, 0.9, 0.9),
@@ -124,10 +170,22 @@ export function updateSky(dt, now, focus) {
   moonLight.position.set(focus.x - 40, 70, focus.z + 75);
   moonLight.target.position.copy(focus);
   sky.position.copy(camera.position);
-  brightStars.material.opacity = 0.75 + Math.sin(now / 400) * 0.25;
+  brightStars.material.opacity = (0.75 + Math.sin(now / 400) * 0.25) * (NIGHT ? night : 1);
+  if (NIGHT) {
+    const want = (G.state === 'race' || G.state === 'done') && player.laps >= LAPS - 1 ? 1 : 0;
+    night = want ? Math.min(1, night + dt / NIGHT_T) : 0;   // back to sunset at once when a new race is set up
+    applyNight();
+    // Lockdown: everything pulses red.
+    if (alarm > 0) {
+      const a = alarm * (0.45 + 0.4 * Math.sin(now / 110));
+      hemi.color.lerp(toC.set(0xff2a1a), a);
+      hemi.groundColor.lerp(toC.set(0x5a0a08), a);
+      moonLight.color.lerp(toC.set(0xff3a2a), a);
+    }
+  }
 
   shootT -= dt;
-  if (shootT < 0 && !THEME.sun) {
+  if (shootT < 0 && (!THEME.sun || night === 1)) {
     shootT = 5 + Math.random() * 6;
     const a = Math.random() * Math.PI * 2;
     shot = { t: 0, x: Math.cos(a) * 600, z: Math.sin(a) * 600, dx: -Math.sin(a), dz: Math.cos(a) };

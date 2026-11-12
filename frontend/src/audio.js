@@ -540,6 +540,9 @@ const SFX = {
   item: (t) => tone(sfxBus, 'p25', 660, t, 0.12, 0.18, 990),
   slip: (t) => tone(sfxBus, 'p50', 700, t, 0.5, 0.18, 110),
   bats: (t) => { for (let i = 0; i < 5; i++) tone(sfxBus, 'p12', 1200 - i * 90, t + i * 0.06, 0.05, 0.12); },
+  // Prison lockdown: a two-tone siren.
+  siren: (t) => { for (let k = 0; k < 6; k++) tone(sfxBus, 'p50', k % 2 ? 620 : 470, t + k * 0.42, 0.42, 0.13, k % 2 ? 470 : 620); },
+  gate: (t) => { noise(sfxBus, t, 0.25, 0.3, 300); tone(sfxBus, 'p25', 90, t, 0.25, 0.2, 50); },
   lap: (t) => ['E5', 'A5'].forEach((n, i) => tone(sfxBus, 'p50', freq(n), t + i * 0.1, 0.12, 0.18)),
 };
 

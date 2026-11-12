@@ -50,6 +50,13 @@ const SUNSET = {
   moonLight: 0xffc490,
   moonScale: 120, moonDir: [0.1, 0.2, -0.97],
   sun: true,
+  // The last lap is driven at night: the look the sunset blends into (sky.js).
+  night: {
+    fog: 0x1a1836,
+    sky: ['#03040e', '#0a0e2a', '#1d1a48', '#4a2a52'],
+    hemi: [0x8088d0, 0x120e22, 0.42],
+    moonLight: 0xa9c0ff,
+  },
   ground: ['#8c8078', '#857970', '#6f655e', '#a39488'],   // stone paving, like the seaside terrace
   asphalt: ['#3a3236', '#363034'],
   line: '#f3e6d6',
