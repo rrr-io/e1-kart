@@ -2,7 +2,7 @@
 // The link opens the Mnet Plus app when it's installed (OneLink), the website otherwise.
 import { track } from './stats.js';
 
-export const MNET_URL = 'https://mnetplus.onelink.me/TRa8/eftibvb4?custom_link_value=play%2Fvideo%2F6ae06ea55ab4a1852d3c5058';
+export const MNET_URL = 'https://mnetplus.onelink.me/TRa8/eftibvb4?custom_link_value=play%2Fvideo%2F6ae06ea55ab4a1852d3c5058%3Fsi%3DoMH%252F4DTADfhGs2eVevb8ZQPuA0CIoUZ3cAB%252BUF6KRTyIG9SVAg%253D%253D';
 
 /**
  * Opens the video in a new tab or the app. Must run inside a tap or key handler, or the browser blocks it.

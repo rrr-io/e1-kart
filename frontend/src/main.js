@@ -25,6 +25,7 @@ import { initInput } from './input.js';
 import { trackVisit } from './stats.js';
 import { TRACK, TRACK_ID, BLOODY } from './theme.js';
 import { openMnet } from './mnet.js';
+import { mcdOn, MCD_LINES, wireMcdLinks } from './campaign.js';
 import { updateLockdown } from './lockdown.js';
 import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
 
@@ -33,7 +34,10 @@ G.karts = TEAMS.map((t) => makeKart(t.color));
 $('start').onclick = menuStart;
 $('runGo').onclick = startGame;
 $('again').onclick = startGame;
-$('resMnet').hidden = !TRACK.mnet;
+$('resMnet').hidden = !TRACK.mnet && !mcdOn();
+wireMcdLinks($('dlgLinks'), TRACK_ID);
+wireMcdLinks($('resMcd'), TRACK_ID);
+$('resMcd').hidden = !mcdOn();
 $('resMnet').onclick = () => openMnet('button', TRACK_ID);
 $('toMenu').onclick = toMenu;
 initInput();
@@ -81,8 +85,10 @@ function frame(now) {
       $('controls').hidden = true;
       const pos = playerPosition();
       reportFinish(player.finish, pos);
-      // Interstellar and Bloody Paradise: closing the driver's line opens the video on Mnet Plus.
-      const opts = TRACK.mnet ? { onClose: () => openMnet('auto', TRACK_ID) } : {};
+      // Until the FAVORITE MCD STAGE vote closes, every driver asks to vote and stream Bloody Paradise, with the links
+      // under the box (instead of opening the video). Otherwise, on Interstellar and Bloody Paradise, closing the
+      // driver's line opens the video on Mnet Plus.
+      const opts = mcdOn() ? { extra: MCD_LINES } : TRACK.mnet ? { onClose: () => openMnet('auto', TRACK_ID) } : {};
       talk(player.team, pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'lose', opts).then(() => {
         showResults();
         $('resRuns').textContent = runsLeftText();

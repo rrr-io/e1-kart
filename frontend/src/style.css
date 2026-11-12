@@ -414,6 +414,13 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .tp-map{position:absolute;right:6px;bottom:6px;width:64px;height:44px;image-rendering:pixelated;background:rgba(5,3,15,.72);border:2px solid var(--ink);outline:1px solid rgba(159,208,255,.35)}
 .vote-link{display:block;margin-top:8px;font-family:var(--display);font-size:8px;line-height:1.6;color:var(--moon);text-decoration:underline;text-underline-offset:3px}
 .vote-link[hidden]{display:none}
+/* FAVORITE MCD STAGE push (campaign.js): links under the end-of-race dialogue and on the results. */
+.dlg-links{display:flex;gap:10px;margin-top:10px}
+.dlg-links[hidden],.res-mcd[hidden]{display:none}
+.dlg-links a{font-family:var(--display);font-size:10px;padding:10px 12px;min-height:40px;display:inline-flex;align-items:center;background:var(--red);color:#fff;border:3px solid var(--ink);text-decoration:none;cursor:pointer}
+.dlg-links a+a{background:var(--ink)}
+.dlg-links a:focus-visible,.res-mcd a:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.res-mcd a{display:block;font-family:var(--display);font-size:8px;line-height:1.6;color:var(--moon);text-decoration:underline;text-underline-offset:3px}
 .tp-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tp-head b{font-family:var(--display);font-weight:400;font-size:12px;color:var(--paper)}
 .tp-badge{flex:none;white-space:nowrap;font-family:var(--display);font-size:7px;padding:4px 6px;background:var(--red);color:var(--paper);border:2px solid var(--ink)}

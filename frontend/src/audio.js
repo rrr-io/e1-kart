@@ -412,7 +412,10 @@ const TRACK_MUSIC = {
   // Built from an instrumental at 122 BPM, sped up 12% (higher pitch) with a light bitcrush and synth effects
   // (filter sweep on the intro, risers, a gated chorus, laser zaps): verse as the intro, then pre-chorus, chorus and
   // post-chorus (32 bars) as the loop. The loop seam is crossfaded in the file.
+  // New file names whenever the music changes: the service worker keeps music files forever (CacheFirst), so a
+  // changed file under the same name would never reach players who already raced on this track.
   night: {
+    file: 'night-v2',
     race: { len: 70.76335, intro: 14.05267, gara0: 13.05267, loop: [14.05267, 70.26335] },
     final: { len: 53.53792, loop: [0.92593, 52.97286] },
     ratio: 1.08,

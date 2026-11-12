@@ -190,6 +190,7 @@ function showLine() {
   const { lines, index, teamIdx } = current;
   const line = lines[index];
   $('dlgNext').hidden = true;
+  $('dlgLinks').hidden = !line.links;
   // After the finish: podium or end drawings; before the start: neutral. Same drawing for the whole dialogue.
   const key = current.key;
   const slot = key === 'win' ? 'win' : key === 'podium' ? 'podium' : key === 'lose' ? 'end' : 'neutral';
@@ -221,9 +222,14 @@ function advance() {
 /**
  * Shows the driver's dialogue for a race moment. Resolves once the player closes it.
  * opts.onClose runs right in the closing tap or key press (not when another dialogue replaces this one).
+ * opts.extra: more lines (strings) said after the driver's own, with the links box (#dlgLinks) shown under them.
  */
 export function talk(teamIdx, key, opts = {}) {
   const lines = pickLines(teamIdx, key);
+  if (opts.extra && lines.length) {
+    const mood = lines[lines.length - 1].mood;
+    opts.extra.forEach((t) => lines.push({ t, mood, links: true }));
+  }
   if (!lines.length) return Promise.resolve();
   if (current) close();
   hideRadio();
@@ -240,7 +246,7 @@ export function talk(teamIdx, key, opts = {}) {
 export const isTalking = () => current !== null;
 
 dlg.addEventListener('click', (e) => {
-  if (e.target.closest('#dlgSkip')) return;
+  if (e.target.closest('#dlgSkip') || e.target.closest('#dlgLinks')) return;
   advance();
 });
 $('dlgSkip').addEventListener('click', (e) => { e.stopPropagation(); close(true); });
