@@ -90,6 +90,12 @@ export function buildMenu() {
     saveSettings();
     buildMenu();
   })));
+  $('side').replaceChildren(...[[false, 'LEFT'], [true, 'RIGHT']].map(([v, l]) => chip('chipbtn', 'side' + l, l, v === settings.steerRight, () => {
+    settings.steerRight = v;
+    saveSettings();
+    buildMenu();
+  })));
+  $('controls').classList.toggle('flip', settings.steerRight);
   $('snd').replaceChildren(...[[true, 'ON'], [false, 'OFF']].map(([v, l]) => chip('chipbtn', 'snd' + l, l, v === settings.sound, () => {
     setSound(v);
     buildMenu();

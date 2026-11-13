@@ -67,6 +67,11 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 #bD.on{background:var(--paper);color:var(--red)}
 #bI{right:calc(max(16px,env(safe-area-inset-right,0px)) + 100px);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:72px;height:50px;font-size:9px}
 #bB{right:calc(max(16px,env(safe-area-inset-right,0px)) + 100px);bottom:calc(76px + env(safe-area-inset-bottom,0px));width:72px;height:40px;font-size:8px}
+/* STEERING SIDE = RIGHT: the steering zone on the right half, the buttons mirrored on the left. */
+#controls.flip #steerZone{left:auto;right:0}
+#controls.flip #steerPad{left:auto;right:max(16px,env(safe-area-inset-right,0px))}
+#controls.flip #bD{right:auto;left:max(16px,env(safe-area-inset-left,0px))}
+#controls.flip #bI,#controls.flip #bB{right:auto;left:calc(max(16px,env(safe-area-inset-left,0px)) + 100px)}
 
 /* Windows — a pit-wall terminal glowing in the same night as the track, not a daytime dialog box. */
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-bottom,0px));box-sizing:border-box;background:radial-gradient(120% 100% at 50% 0%,rgba(9,16,36,.3),rgba(2,4,12,.74))}
@@ -158,6 +163,7 @@ html.pwa #game,html.pwa #splash{bottom:auto}
   #bD{width:70px;height:70px;font-size:9px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
   #bI{width:58px;height:40px;font-size:8px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(12px + env(safe-area-inset-bottom,0px));border-width:2px}
   #bB{width:58px;height:32px;font-size:7px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px);bottom:calc(58px + env(safe-area-inset-bottom,0px));border-width:2px}
+  #controls.flip #bI,#controls.flip #bB{right:auto;left:calc(max(16px,env(safe-area-inset-left,0px)) + 80px)}
   .radio{width:min(300px,calc(100% - 400px));min-width:200px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 }
 
