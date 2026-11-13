@@ -30,10 +30,12 @@ export const TRACKS = {
   // the market street with the green EL CAPULLO arch and the yellow pickup, the seaside terrace with graffiti.
   bloody: {
     name: 'BLOODY PARADISE',
-    cost: true,    // needs a run from a FAVORITE MCD STAGE certificate
+    // While the FAVORITE MCD STAGE vote was open it needed a run from one of its certificates; since it closed it is
+    // free to play like Night Circuit (unlimited races, not counted in the leaderboard).
+    get cost() { return mcdOn(); },
     desc: 'Sunset race from the seaside terrace through the market street and the prison courtyard.',
-    note: 'Your race results count for your team in the global E1 Kart GP leaderboard.',
-    cert: 'FAVORITE MCD STAGE voting certificate',
+    get note() { return mcdOn() ? 'Your race results count for your team in the global E1 Kart GP leaderboard.' : null; },
+    get cert() { return mcdOn() ? 'FAVORITE MCD STAGE voting certificate' : null; },
     // Where to vote to get one (Mnet Plus, FAVORITE MCD STAGE): linked under the upload button.
     // Both only while the vote is open (getters, so a page left open past the deadline follows it too).
     get vote() { return mcdOn() ? MCD_VOTE_URL : null; },
