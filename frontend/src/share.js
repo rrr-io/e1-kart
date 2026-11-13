@@ -19,7 +19,7 @@ const LINK = 'https://e1-kart.ensite.org';
 // (FAVORITE MCD STAGE for Bloody Paradise, then the live voting during the MAMA AWARDS broadcast); afterwards they
 // fall back to the general call to vote. Update for the next event.
 const VOTES = [
-  { until: Date.parse('2026-11-13T15:59:00+09:00'), card: ['UNTIL NOV 13 · 15:59 KST', 'VOTE BLOODY PARADISE · FAVORITE MCD STAGE'],
+  { until: Date.parse('2026-11-13T23:59:00+09:00'), card: ['UNTIL NOV 13 · 23:59 KST', 'VOTE BLOODY PARADISE · FAVORITE MCD STAGE'],
     post: "🚨 Until Nov 13: vote ENHYPEN's Bloody Paradise for FAVORITE MCD STAGE on Mnet Plus!" },
   { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · MAMA AWARDS LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
     post: '🚨 Nov 20: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' },

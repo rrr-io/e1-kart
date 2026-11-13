@@ -2,9 +2,9 @@
 // so every module can build its scene once, at import, for the chosen track.
 import { settings } from './config.js';
 
-// MAMA's FAVORITE MCD STAGE vote closes on 13 November 2026 at 15:59 KST (UTC+9). Until then the game asks to vote and
+// MAMA's FAVORITE MCD STAGE vote closes on 13 November 2026 at 23:59 KST (UTC+9). Until then the game asks to vote and
 // stream Bloody Paradise (campaign.js); after it, everything on Bloody Paradise that says to vote or watch disappears.
-const MCD_UNTIL = Date.UTC(2026, 10, 13, 6, 59);
+const MCD_UNTIL = Date.UTC(2026, 10, 13, 14, 59);
 export const mcdOn = () => Date.now() < MCD_UNTIL;
 const MCD_VOTE_URL = 'https://mnetplus.onelink.me/TRa8/xd22hep2?custom_link_value=vote%2Ftemplates%2Fmama-favorite-mcd-stage%2F6ae064af0c8a27ff60ed92b6%3Furl_fallback_type%3Dupdate';
 
