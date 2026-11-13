@@ -43,10 +43,10 @@ export const TRACKS = {
     scale: 2.0,
   },
 };
-// Until 13 November 2026, 16:00 KST, only Bloody Paradise can be raced: it comes first in the track box and the
+// Until 13 November 2026, 23:59 KST, only Bloody Paradise can be raced: it comes first in the track box and the
 // other two are shown greyed out with the unlock time. After that everything is back to normal by itself.
-const OPEN_AT = Date.UTC(2026, 10, 13, 7, 0);
-export const UNLOCK_LABEL = 'UNLOCKS NOV 13 · 16:00 KST';
+const OPEN_AT = Date.UTC(2026, 10, 13, 14, 59);   // 23:59 KST (UTC+9)
+export const UNLOCK_LABEL = 'UNLOCKS NOV 13 · 23:59 KST';
 export const isLocked = (id) => id !== 'bloody' && Date.now() < OPEN_AT;
 const BLOODY_ONLY = Date.now() < OPEN_AT;
 export const TRACK_IDS = BLOODY_ONLY ? ['bloody', 'night', 'space'] : Object.keys(TRACKS);
