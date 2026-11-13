@@ -105,4 +105,6 @@ export const THEME = BLOODY ? SUNSET : SPACE ? {
   gravel: ['#5f5f74', '#57576b'],
   sign: 'E1 GRAND PRIX',
   lamp: [0xd8ecff, 0x5f8fff],
+  // The last lap: the blue moon turns red and bats fly across it (sky.js).
+  redMoon: { moon: 0xff5a46, glow: 0xff2a1a, moonLight: 0xff9a8a, fog: 0x2a1030 },
 };

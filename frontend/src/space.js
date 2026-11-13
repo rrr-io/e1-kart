@@ -4,6 +4,9 @@
 import * as THREE from 'three';
 import { scene, canvasTex } from './engine.js';
 import { N, HALF, WORLD_K, corner, off, yawAt, minTrackDist, P } from './track.js';
+import { LAPS } from './config.js';
+import { G, player } from './state.js';
+import { toast } from './hud.js';
 import farUrl from './assets/space/skyline-far.png';
 import nearUrl from './assets/space/skyline-near.png';
 
@@ -123,4 +126,84 @@ export function buildSpace() {
 
 export function updateSpace(dt, now) {
   if (cubes) { cubes.position.y = Math.sin(now / 1400) * 1.5; cubes.material.opacity = 0.7 + Math.sin(now / 600) * 0.15; }
+  zeroG(dt, now);
+}
+
+// Last lap: zero gravity. Only a look, the driving is the same: the karts float and bob a little above the road,
+// sparkles and glass bits drift upwards around the player, and the player's kart leaves a trail of stars.
+const FLOAT_N = 70, TRAIL_N = 26;
+const floatGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
+const FLOAT_COLORS = [0x7fe9ff, 0xff4fd8, 0xffffff, 0xb9a8ff, 0xffe27a];
+const TRAIL_COLORS = [0x7fe9ff, 0xff4fd8, 0xffe27a, 0xb9a8ff];
+let floaters = null, trail = null, gOn = 0, told = false, trailNext = 0, trailT = 0;
+function makeZeroG() {
+  floaters = [];
+  for (let k = 0; k < FLOAT_N; k++) {
+    const m = new THREE.Mesh(floatGeo, new THREE.MeshBasicMaterial({ color: FLOAT_COLORS[k % FLOAT_COLORS.length], transparent: true, opacity: 0.85, fog: false }));
+    m.visible = false;
+    m.userData = { vy: 0, spin: 0, life: 0 };
+    scene.add(m);
+    floaters.push(m);
+  }
+  trail = [];
+  for (let k = 0; k < TRAIL_N; k++) {
+    const m = new THREE.Mesh(floatGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false, blending: THREE.AdditiveBlending, depthWrite: false }));
+    m.visible = false;
+    m.userData = { life: 0 };
+    scene.add(m);
+    trail.push(m);
+  }
+}
+function placeFloater(m, near) {
+  // Around and ahead of the player, so they float into view.
+  const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * 22;
+  const ahead = 6 + Math.random() * 26;
+  m.position.set(player.x + Math.sin(player.h) * ahead + Math.cos(a) * r, near ? Math.random() * 6 : 0.2, player.z + Math.cos(player.h) * ahead + Math.sin(a) * r);
+  m.userData.vy = 0.8 + Math.random() * 1.6;
+  m.userData.spin = (Math.random() - 0.5) * 3;
+  m.userData.life = 4 + Math.random() * 4;
+  m.scale.setScalar(0.5 + Math.random());
+  m.visible = true;
+}
+function zeroG(dt, now) {
+  const racing = G.state === 'race' || G.state === 'done';
+  const want = racing && player.laps >= LAPS - 1 ? 1 : 0;
+  gOn = want ? Math.min(1, gOn + dt / 1.5) : 0;
+  if (!want) told = false;
+  if (!floaters) { if (!gOn) return; makeZeroG(); }
+  if (gOn && !told && G.state === 'race') { told = true; toast('ZERO GRAVITY!'); }
+  // Karts float: the physics put them on the road every frame, this lifts the drawn kart only.
+  G.karts.forEach((k, n) => {
+    if (!k.root) return;
+    const b = gOn * (0.55 + Math.sin(now / 420 + n * 1.7) * 0.3);
+    k.root.position.y = b;
+    k.root.rotation.z = gOn * Math.sin(now / 650 + n) * 0.06;
+  });
+  floaters.forEach((m) => {
+    const u = m.userData;
+    if (!gOn) { m.visible = false; return; }
+    if (!m.visible || u.life <= 0 || m.position.y > 14) { placeFloater(m, !m.visible); return; }
+    u.life -= dt;
+    m.position.y += u.vy * dt;
+    m.rotation.x += u.spin * dt; m.rotation.y += u.spin * 0.7 * dt;
+    m.material.opacity = 0.85 * Math.min(1, u.life / 1.5) * gOn;
+  });
+  // Star trail behind the player's kart.
+  trailT -= dt;
+  if (gOn && trailT < 0 && player.v > 5) {
+    trailT = 0.05;
+    const m = trail[trailNext]; trailNext = (trailNext + 1) % TRAIL_N;
+    m.position.set(player.x - Math.sin(player.h) * 2.4 + (Math.random() - 0.5) * 1.2, 0.5 + gOn * 0.5 + Math.random() * 0.5, player.z - Math.cos(player.h) * 2.4 + (Math.random() - 0.5) * 1.2);
+    m.userData.life = 0.9;
+    m.material.color.set(TRAIL_COLORS[trailNext % TRAIL_COLORS.length]);
+    m.visible = true;
+  }
+  trail.forEach((m) => {
+    const u = m.userData;
+    if (u.life <= 0) { m.visible = false; return; }
+    u.life -= dt;
+    m.position.y += 0.6 * dt;
+    m.material.opacity = Math.max(0, u.life / 0.9);
+    m.scale.setScalar(0.25 + u.life * 0.5);
+  });
 }

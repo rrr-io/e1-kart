@@ -1,5 +1,6 @@
 // Night sky: moonlight, blue moon, halo, stars and a shooting star.
 // Bloody Paradise (THEME.sun): a low golden sun with a warm halo instead, and no stars.
+// Night Circuit (THEME.redMoon): on the last lap the moon turns red and bats fly across it.
 import * as THREE from 'three';
 import { scene, camera, canvasTex, redrawTex } from './engine.js';
 import moonUrl from './assets/moon.png';
@@ -158,6 +159,62 @@ function applyNight() {
   stars.material.opacity = k;
 }
 
+// Night Circuit, last lap: the moon turns red in a few seconds and, every so often, a few bats fly across it.
+const RED = THEME.redMoon;
+let red = 0;
+const bats = [];
+let batT = 2;
+if (RED) {
+  const batTex = (up) => canvasTex(9, 5, (g) => {
+    g.fillStyle = '#0a0610';
+    g.fillRect(3, 2, 3, 2); g.fillRect(4, 1, 1, 1);           // body and head
+    if (up) { g.fillRect(0, 0, 3, 1); g.fillRect(1, 1, 2, 1); g.fillRect(6, 0, 3, 1); g.fillRect(6, 1, 2, 1); }
+    else { g.fillRect(0, 3, 3, 1); g.fillRect(1, 2, 2, 1); g.fillRect(6, 3, 3, 1); g.fillRect(6, 2, 2, 1); }
+  });
+  const wings = [batTex(true), batTex(false)];
+  wings.forEach((t) => { t.magFilter = t.minFilter = THREE.NearestFilter; });
+  for (let k = 0; k < 5; k++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: wings[0], fog: false, depthWrite: false, transparent: true }));
+    s.scale.set(34, 19, 1);
+    s.visible = false;
+    s.renderOrder = 0;
+    s.userData = { wings, t: 1, dx: 0, dy: 0, ph: Math.random() * 6 };
+    sky.add(s);
+    bats.push(s);
+  }
+}
+const moonBase = new THREE.Color(1, 1, 1);
+function applyRed(dt, now) {
+  const want = (G.state === 'race' || G.state === 'done') && player.laps >= LAPS - 1 ? 1 : 0;
+  red = want ? Math.min(1, red + dt / 4) : 0;
+  moon.material.color.copy(moonBase).lerp(toC.set(RED.moon), red);
+  moonGlow.material.color.copy(moonBase).lerp(toC.set(RED.glow), red);
+  moonLight.color.set(THEME.moonLight).lerp(toC.set(RED.moonLight), red * 0.7);
+  scene.fog.color.set(THEME.fog[0]).lerp(toC.set(RED.fog), red * 0.6);
+  // Bats: a small flock crosses the moon from one side to the other, flapping.
+  batT -= dt;
+  if (red === 1 && batT < 0) {
+    batT = 9 + Math.random() * 6;
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const right = new THREE.Vector3().crossVectors(MOON_DIR, new THREE.Vector3(0, 1, 0)).normalize();
+    bats.forEach((b, k) => {
+      const u = b.userData;
+      u.t = -k * 0.08;
+      u.from = MOON_DIR.clone().multiplyScalar(740).addScaledVector(right, side * 230).add(new THREE.Vector3(0, (k % 3) * 18 - 10, 0));
+      u.dir = right.clone().multiplyScalar(-side * 460).add(new THREE.Vector3(0, 40 + k * 6, 0));
+    });
+  }
+  bats.forEach((b) => {
+    const u = b.userData;
+    if (!u.from || u.t >= 1) { b.visible = false; if (u.from) u.t = Math.min(u.t, 1); return; }
+    u.t += dt / 4.5;
+    if (u.t < 0) { b.visible = false; return; }
+    b.visible = true;
+    b.position.copy(u.from).addScaledVector(u.dir, u.t).setY(u.from.y + u.dir.y * u.t + Math.sin(u.t * 14 + u.ph) * 6);
+    b.material.map = u.wings[Math.floor(now / 110 + u.ph) % 2];
+  });
+}
+
 const shoot = new THREE.Mesh(
   new THREE.BoxGeometry(26, 0.9, 0.9),
   new THREE.MeshBasicMaterial({ color: 0xdcecff, fog: false, transparent: true, opacity: 0, depthWrite: false }),
@@ -183,6 +240,8 @@ export function updateSky(dt, now, focus) {
       moonLight.color.lerp(toC.set(0xff3a2a), a);
     }
   }
+
+  if (RED) applyRed(dt, now);
 
   shootT -= dt;
   if (shootT < 0 && (!THEME.sun || night === 1)) {
