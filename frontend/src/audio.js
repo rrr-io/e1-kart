@@ -446,7 +446,7 @@ TRACK_MUSIC.want = {
 SONGS.want = SONGS.night;
 /** File name prefix of a track's race music: its own id unless it borrows another track's music. */
 const fileOf = (id) => (TRACK_MUSIC[id] && TRACK_MUSIC[id].file) || id;
-const FILE_SFX = { countdown: 'countdown', boost: 'boost', pickup: 'pickup', finalLap: 'final-lap' };
+const FILE_SFX = { countdown: 'countdown', boost: 'boost', pickup: 'pickup', finalLap: 'final-lap', cheer: 'cheer-v1' };
 
 const raw = {}, decoded = {}, sfxBufs = {};
 function fetchFile(name) {
@@ -588,6 +588,7 @@ const SFX_FILES = {
   turbo: ['boost', 0.6, 1.25],
   pickup: ['pickup', 0.8, 1],
   finalLap: ['finalLap', 0.9, 1],
+  cheer: ['cheer', 0.55, 1],   // the stands at GO and at the finish: "Free Crowd Cheering Sounds" by Gregor Quendel
 };
 export function sfx(name) {
   if (!ctx || !settings.sound) return;

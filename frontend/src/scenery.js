@@ -2,6 +2,7 @@
 // banners, barriers, trees, mountains, clouds, lampposts, boost pads and item boxes.
 import * as THREE from 'three';
 import { scene, toon, canvasTex, redrawTex } from './engine.js';
+import crowdUrl from './assets/crowd.png';   // 15 people from the "pixel people" pack and a lightstick
 import { TEAMS, lum } from './config.js';
 import { N, NR, HALF, WORLD_K, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
 import { THEME, SPACE, BLOODY, WANT } from './theme.js';
@@ -78,7 +79,21 @@ placeAt(gantry, 0, 0, 0);
 
 // ---------- Grandstands with crowd and blue lightsticks ----------
 const crowdCols = TEAMS.map((t) => new THREE.Color(t.color)).concat([new THREE.Color('#ffffff'), new THREE.Color('#ffd9b8'), new THREE.Color('#2b2b30')]);
-const lightsticks = [], crowds = [];
+const crowds = [], crowdTime = { value: 0 };
+let crowdM = null;
+function crowdMat() {
+  if (crowdM) return crowdM;
+  const t = new THREE.TextureLoader().load(crowdUrl);
+  t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false;
+  crowdM = toon(0xffffff, { map: t, alphaTest: 0.5, side: THREE.DoubleSide });
+  crowdM.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = crowdTime;
+    sh.vertexShader = 'attribute float aPhase;\nuniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed.y += max(0.0, sin(uTime * 6.0 + aPhase)) * 0.35;');
+  };
+  return crowdM;
+}
+/** The stands are full (they are empty in the parallel world): the crowd cheers at GO and at the finish. */
+export const crowdCheers = () => crowds.length > 0 && crowds[0].visible;
 function grandstand(i) {
   const g = new THREE.Group();
   const L = 30, steps = 5;
@@ -97,27 +112,34 @@ function grandstand(i) {
     p.position.set(11, 4.8, z);
     g.add(p);
   });
-  const per = steps * 24;
-  const people = new THREE.InstancedMesh(new THREE.BoxGeometry(0.7, 1, 0.7), toon(0xffffff), per);
-  const sticks = new THREE.InstancedMesh(new THREE.BoxGeometry(0.28, 0.5, 0.28), new THREE.MeshBasicMaterial({ color: 0x9fd4ff }), per);
-  const m = new THREE.Matrix4();
-  let n = 0;
+  // The crowd: pixel people on every step, each with a lightstick, jumping to their own beat (bob in the shader).
+  const pos = [], uv = [], nor = [], ph = [], idx = [];
+  const quad = (x, y, z, w, h, cell) => {
+    const n = pos.length / 3, u0 = cell / 16, u1 = (cell + 1) / 16, p = Math.random() * 6.3;
+    pos.push(x, y, z + w / 2, x, y, z - w / 2, x, y + h, z - w / 2, x, y + h, z + w / 2);
+    uv.push(u0, 0, u1, 0, u1, 1, u0, 1);
+    for (let k = 0; k < 4; k++) { nor.push(-1, 0, 0); ph.push(p); }
+    idx.push(n, n + 1, n + 2, n, n + 2, n + 3);
+    return p;
+  };
   for (let s = 0; s < steps; s++) {
-    for (let k = 0; k < 24; k++) {
-      const x = s * 2.2 + 1.1 + (Math.random() - 0.5) * 0.6, z = -L / 2 + 1 + k * 1.2;
-      m.makeTranslation(x, 1.2 + s * 1.2 + 0.5, z);
-      people.setMatrixAt(n, m);
-      people.setColorAt(n, crowdCols[(Math.random() * crowdCols.length) | 0]);
-      m.makeTranslation(x, 1.2 + s * 1.2 + 1.45, z);
-      sticks.setMatrixAt(n, m);
-      n++;
+    for (let k = 0; k < 20; k++) {
+      const x = s * 2.2 + 0.7 + Math.random() * 0.6, z = -L / 2 + 1.2 + k * 1.45 + (Math.random() - 0.5) * 0.3, y = 1.2 + s * 1.2;
+      const p = quad(x, y, z, 1.28, 1.6, (Math.random() * 15) | 0);
+      const n = pos.length / 3;
+      quad(x + 0.02, y + 0.95, z + (k % 2 ? 0.45 : -0.45), 1.28, 1.6, 15);
+      for (let v = n - 4; v < n; v++) ph[v] = p;   // the stick jumps with its owner
     }
   }
-  people.castShadow = true;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('aPhase', new THREE.Float32BufferAttribute(ph, 1));
+  geo.setIndex(idx);
+  const people = new THREE.Mesh(geo, crowdMat());
   g.add(people);
-  g.add(sticks);
-  lightsticks.push(sticks);
-  crowds.push(people, sticks);
+  crowds.push(people);
   placeAt(g, i, HALF + 5, 0);
 }
 // Bloody Paradise: the start straight runs along the sea, so no grandstands there.
@@ -333,7 +355,7 @@ export function updateScenery(dt, now) {
     if (!b.m.visible) { b.t -= dt; if (b.t <= 0) b.m.visible = true; }
   });
   clouds.forEach((c) => { c.position.x += c.userData.v * dt; if (c.position.x > 500 * WORLD_K) c.position.x = -480 * WORLD_K; });
-  lightsticks.forEach((s, k) => { s.position.y = Math.max(0, Math.sin(now / 170 + k * 2)) * 0.35; });
+  crowdTime.value = now / 1000;
   if (SPACE) updateSpace(dt, now);
   if (BLOODY) updateParadise(dt, now);
   if (WANT) {

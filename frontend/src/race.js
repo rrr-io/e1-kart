@@ -2,7 +2,7 @@
 import { $ } from './engine.js';
 import { TEAMS, settings } from './config.js';
 import { N, off, yawAt } from './track.js';
-import { startLights, resetBoxes } from './scenery.js';
+import { startLights, resetBoxes, crowdCheers } from './scenery.js';
 import { paintKart } from './kart.js';
 import { G, player } from './state.js';
 import { updateCpus } from './ai.js';
@@ -88,6 +88,7 @@ export function tickCountdown(dt) {
     startLights.forEach((l) => l.material.color.set(0x29ff5a));
     banner('GO!', 0.8);
     sfx('go');
+    if (crowdCheers()) sfx('cheer');
     wantMusic(TRACK_ID);
   }
 }
