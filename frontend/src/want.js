@@ -21,7 +21,10 @@ import { sfx, musicGlitch } from './audio.js';
 import fireUrl from './assets/want/fire.png';
 import xmasUrl from './assets/want/xmas.png';   // stall, cart, lamp, wreath: "Cozy Christmas Exteriors" demo by MattIAco Studio
 import atlasUrl from './assets/bloody/facade-atlas.png';
-import ATLAS from './assets/bloody/facade-atlas.json';
+import bigUrl from './assets/want/bighouse.png';   // front of the big house, built from the "RowHouseTileSet" (non-commercial use)
+import rowUrl from './assets/want/rowhouses.png';   // brick row houses: the examples of "Modular Pixel Houses"
+import FACADE from './assets/bloody/facade-atlas.json';
+const ATLAS = FACADE;
 
 export const wantTexts = [];
 
@@ -31,7 +34,7 @@ const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4
 const pick = (a) => a[(rand() * a.length) | 0];
 
 const GLITCH_AT = 150;   // lap 2: the world breaks here, in front of the big house, at the gates of the city
-const CITY = [178, 400], WALL = [404, 428], FOREST = [430, 640], FIELD = [650, 712];
+const CITY = [178, 460], WALL = [464, 488], FOREST = [490, 640], FIELD = [650, 712];
 const FAIR = [CITY[0], CITY[0] + 38], FAIR_SIDE = -1;   // the funfair, on one side of the first stretch of the city
 const inZone = (i, z) => i >= z[0] && i < z[1];
 // Lap 3: [from index, world]. The swaps come closer together towards the finish.
@@ -67,7 +70,7 @@ function house(i, side, big, burn) {
   const lat = side * (HALF + (big ? 15 : 10 + rand() * 6));
   const o = off(i, lat);
   if (minTrackDist(o[0], o[1]) < HALF + (big ? 9 : 6.5)) return null;
-  const w = big ? 16 : 8 + rand() * 3, d = big ? 11 : 7 + rand() * 2, h = big ? 8 : 4.6 + rand() * 1.6, rh = big ? 5.5 : 3 + rand() * 1.2;
+  const w = big ? 14.4 : 8 + rand() * 3, d = big ? 11 : 7 + rand() * 2, h = big ? 8.8 : 4.6 + rand() * 1.6, rh = big ? 5.5 : 3 + rand() * 1.2;
   const g = new THREE.Group();
   const wall = big ? wallMats[0] : pick(wallMats);
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wall);
@@ -89,15 +92,16 @@ function house(i, side, big, burn) {
   const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.3, 1.3), tm(0xf4f7fc));
   cap.position.set(w * 0.25, h + rh + 1, 0); g.add(cap);
   // door and windows on the side facing the road
-  const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.6, 0.2), tm(0x5a3d2a));
-  door.position.set(big ? 0 : -w * 0.22, 1.3, d / 2 + 0.05); g.add(door);
+  if (!big) { const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.6, 0.2), tm(0x5a3d2a)); door.position.set(-w * 0.22, 1.3, d / 2 + 0.05); g.add(door); }
   const wm = winM[burn];
   const win = (x, y, ww = 1.5, hh = 1.5) => {
     const fr = new THREE.Mesh(new THREE.BoxGeometry(ww + 0.4, hh + 0.4, 0.15), tm(0xfdf6e6)); fr.position.set(x, y, d / 2 + 0.04); g.add(fr);
     const p = new THREE.Mesh(new THREE.PlaneGeometry(ww, hh), wm); p.position.set(x, y, d / 2 + 0.14); g.add(p);
   };
   if (big) {
-    [-5.5, -2.8, 2.8, 5.5].forEach((x) => { win(x, 2.4); win(x, 5.8); }); win(0, 5.8);
+    // its front is drawn: red brick, white corner stones and cornice, curtained windows (288 x 176 px, 20 px per metre)
+    const ft = load(bigUrl), front = new THREE.Mesh(new THREE.PlaneGeometry(w, h), toon(0xd9c6c0, { map: ft }));   // toned down to sit with the other bricks
+    front.position.set(0, h / 2, d / 2 + 0.04); g.add(front);
     // the white porch with its pediment, and a potted conifer on each side of the door
     const white = tm(0xeae6de);
     [-1.7, 1.7].forEach((x) => { const col = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.6, 0.4), white); col.position.set(x, 1.8, d / 2 + 1.6); g.add(col); });
@@ -206,11 +210,16 @@ const ember = (i, lvl) => {
 };
 
 // ----- City: the 38 facades of the Bloody Paradise atlas, 12 px per metre -----
-const PX = 12, AW = ATLAS.size[0], AH = ATLAS.size[1], FACADES = Object.keys(ATLAS.rects);
+// no art nouveau fronts: they are green, and look wrong in a brick town (and worse behind the flames)
+const PX = 12, AW = ATLAS.size[0], AH = ATLAS.size[1], FACADES = Object.keys(ATLAS.rects).filter((id) => ATLAS.rects[id][4] !== 'art_nouveau');
 const BRICK = FACADES.filter((id) => ['brownstone', 'warehouse'].includes(ATLAS.rects[id][4]));   // the city of the video is red brick
-function facadeBox(d, h, w, id) {
+// Row houses (rowhouses.png): whole fronts, bottom-aligned; the last cell is the roof colour.
+const ROW = { size: [671, 367], rects: { navy: [0, 0, 124, 367], green: [124, 170, 174, 197], red: [298, 58, 182, 309], sage: [480, 94, 175, 273] }, roofs: { concrete: [655, 0, 16, 16] } };
+// Drawn at 30 px per metre (the door is 3 m): each house is 4 to 6 m wide, so a plot takes two of them side by side.
+const ROW_PX = 30, ROW_PAIRS = [['navy', 'red'], ['red', 'navy'], ['red', 'sage'], ['sage', 'red'], ['red', 'red'], ['green', 'red'], ['navy', 'sage']];
+function facadeBox(d, h, w, id, ATLAS = FACADE, AW = ATLAS.size[0], AH = ATLAS.size[1]) {
   const g = new THREE.BoxGeometry(d, h, w), uv = g.attributes.uv;
-  const cut = (fw) => { const [x, y, rw, rh] = ATLAS.rects[id]; const cw = Math.min(rw, fw * PX), ch = Math.min(rh, h * PX), cx = x + (rw - cw) * rand(), cy = y + rh - ch; return [cx / AW, 1 - (cy + ch) / AH, (cx + cw) / AW, 1 - cy / AH]; };
+  const cut = (fw) => { const [x, y, rw, rh] = ATLAS.rects[id]; const side = ATLAS !== FACADE && fw !== w, cw = ATLAS === FACADE ? Math.min(rw, fw * PX) : side ? 6 : rw, ch = ATLAS === FACADE ? Math.min(rh, h * PX) : rh, cx = side ? x + 1 : x + (rw - cw) * rand(), cy = y + rh - ch; return [cx / AW, 1 - (cy + ch) / AH, (cx + cw) / AW, 1 - cy / AH]; };
   const [rx, ry, rw, rh] = ATLAS.roofs.concrete, roof = [rx / AW, 1 - (ry + rh) / AH, (rx + rw) / AW, 1 - ry / AH];
   [cut(w), cut(w), roof, roof, cut(d), cut(d)].forEach(([u0, v0, u1, v1], f) => { for (let k = f * 4; k < f * 4 + 4; k++) uv.setXY(k, u0 + uv.getX(k) * (u1 - u0), v0 + uv.getY(k) * (v1 - v0)); });
   return g;
@@ -238,6 +247,9 @@ function city() {
   const atlas = new THREE.TextureLoader().load(atlasUrl);
   atlas.magFilter = THREE.NearestFilter; atlas.minFilter = THREE.LinearMipmapLinearFilter;
   const facM = toon(0xffffff, { map: atlas });
+  const rowTex = new THREE.TextureLoader().load(rowUrl);
+  rowTex.magFilter = THREE.NearestFilter; rowTex.minFilter = THREE.LinearMipmapLinearFilter;
+  const rowM = toon(0xffffff, { map: rowTex });
   carM = CAR_COLS.map((c) => toon(c));
   // shop signs: one texture, 4 x 3 names
   const signTex = canvasTex(256, 96, (g) => {
@@ -278,18 +290,32 @@ function city() {
       // front row on the pavement, a taller row behind it
       let lat = HALF + 5.5;
       for (let row = 0; row < 2; row++) {
-        const d = 8 + rand() * 4, h = row ? 22 + rand() * 18 : 9 + rand() * 16, w = STEP * 1.9 + (row ? 3 : 0);
+        const d = 8 + rand() * 4, w = STEP * 1.9 + (row ? 3 : 0);
+        let h = row ? 22 + rand() * 18 : 9 + rand() * 16;
+        // half of the plots on the street are a pair of brick row houses, each at the size of its drawing
+        const pair = !row && rand() < 0.5 ? pick(ROW_PAIRS) : null;
+        if (pair) h = Math.max(...pair.map((id) => ROW.rects[id][3] / ROW_PX));
         const o = off(i + STEP / 2, side * (lat + d / 2));
         lat += d + 1.5;
         if (minTrackDist(o[0], o[1]) < HALF + 4.5 + (row ? 8 : 0)) continue;
         if (side === FAIR_SIDE && inZone(i, FAIR)) continue;   // the funfair is here
-        const b = new THREE.Mesh(facadeBox(d, h, w, rand() < 0.75 ? pick(BRICK) : pick(FACADES)), facM);
-        b.position.set(o[0], h / 2, o[1]); b.rotation.y = yawAt(i + STEP / 2); b.castShadow = !row;
-        add(b);
+        if (pair) {
+          const yw = yawAt(i + STEP / 2), ws = pair.map((id) => ROW.rects[id][2] / ROW_PX), tot = ws[0] + ws[1];
+          let at = -tot / 2;
+          pair.forEach((id, k) => {
+            const hh = ROW.rects[id][3] / ROW_PX, c = at + ws[k] / 2; at += ws[k];
+            const m = new THREE.Mesh(facadeBox(d, hh, ws[k], id, ROW), rowM);
+            m.position.set(o[0] + Math.sin(yw) * c, hh / 2, o[1] + Math.cos(yw) * c); m.rotation.y = yw; m.castShadow = true; add(m);
+          });
+        } else {
+          const b = new THREE.Mesh(facadeBox(d, h, w, rand() < 0.75 ? pick(BRICK) : pick(FACADES)), facM);
+          b.position.set(o[0], h / 2, o[1]); b.rotation.y = yawAt(i + STEP / 2); b.castShadow = !row;
+          add(b);
+        }
         taken.push({ x: o[0], z: o[1], r: 9 });
         if (row) continue;
         // a shop sign, flat on the front of the building over the shop window
-        if (rand() < 0.7) {
+        if (rand() < 0.7 && !pair) {
           const c = off(i + STEP / 2, 0), dx = c[0] - o[0], dz = c[1] - o[1], len = Math.hypot(dx, dz) || 1;
           const sg = new THREE.Mesh(signGeo((rand() * 12) | 0), signM);
           sg.position.set(o[0] + (dx / len) * (d / 2 + 0.2), 4.6, o[1] + (dz / len) * (d / 2 + 0.2)); sg.rotation.y = Math.atan2(dx, dz); add(sg);
@@ -399,7 +425,7 @@ function lifeSigns() {
   });
   lifeM.map = tex; wantTexts.push(tex);
   // cloth banners across the road: in the village and deep in the city
-  [60, 352].forEach((i) => {
+  [60, 352, 436].forEach((i) => {
     const a = off(i, -(HALF + 2.4)), b = off(i, HALF + 2.4);
     [a, b].forEach((p) => { const pole = new THREE.Mesh(new THREE.BoxGeometry(0.3, 9, 0.3), tm(0x1b1b20)); pole.position.set(p[0], 4.5, p[1]); add(pole); });
     const m = new THREE.Mesh(lifeGeo(LIFE.banner, 2 * HALF + 4.8, (2 * HALF + 4.8) / 16), lifeM);
@@ -411,7 +437,7 @@ function lifeSigns() {
     m.position.set(o[0], 1.9, o[1]); m.rotation.y = yawAt(i) - side * Math.PI / 2; add(m);
   });
   // wooden road signs: in the forest, at the camp, by the flower field
-  [[470, 1], [548, -1], [668, 1]].forEach(([i, side]) => {
+  [[506, 1], [548, -1], [668, 1]].forEach(([i, side]) => {
     const o = off(i, side * (HALF + 3)), post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3, 0.25), tm(0x5a3d2a)); post.position.set(o[0], 1.5, o[1]); add(post);
     const m = new THREE.Mesh(lifeGeo(LIFE.wood, 6, 1.5), lifeM); m.position.set(o[0], 2.9, o[1]); m.rotation.y = yawAt(i) + Math.PI + side * 0.5; add(m);
     taken.push({ x: o[0], z: o[1], r: 3 });
@@ -671,8 +697,7 @@ export function buildWant() {
   // the line that opens the video, over the start of every race
   quote = document.createElement('div');
   quote.className = 'want-quote';
-  quote.innerHTML = 'If we were just <i>human,</i> this is how we would have loved each other.';
-  document.body.appendChild(quote);
+  (document.getElementById('hud') || document.body).appendChild(quote);
 }
 
 /** Embers on the road slow the karts, in the burning world only. */
@@ -682,7 +707,8 @@ export function emberHit(x, z) {
   return false;
 }
 
-let glitchT = 0, told = false, quote = null, quoteT = 0, lastState = '';
+let glitchT = 0, told = false, quote = null, quoteT = 0, quoteN = -1, lastState = '';
+const QUOTE = 'If we were just human, this is how we would have loved each other.', QUOTE_T = 9;
 /** 1 in the parallel world, 0 in the one we know. */
 export const wantWorld = () => world;
 function glitch() {
@@ -699,12 +725,21 @@ let fogK = 0;
 export function updateWant(dt, now) {
   const racing = G.state === 'race' || G.state === 'done';
   if (G.state !== lastState) {
-    if (G.state === 'count') quoteT = 7;   // through the countdown and the first seconds of the race
+    if (G.state === 'count') { quoteT = QUOTE_T; quoteN = -1; }   // through the countdown and the first seconds of the race
     else if (G.state !== 'race') quoteT = 0;
     lastState = G.state;
   }
-  if (quoteT > 0) quoteT -= dt;
-  quote.classList.toggle('on', quoteT > 0);
+  if (quoteT > 0) {
+    quoteT -= dt;
+    // typed out, 30 letters a second; "human," a shade lighter, as in the video
+    const n = Math.min(QUOTE.length, Math.floor((QUOTE_T - quoteT) * 30));
+    if (n !== quoteN) {
+      quoteN = n;
+      const a = QUOTE.indexOf('human,'), b = a + 6, t = QUOTE.slice(0, n);
+      quote.innerHTML = n <= a ? t : t.slice(0, a) + '<i>' + t.slice(a, b) + '</i>' + t.slice(b);
+    }
+  }
+  quote.classList.toggle('on', quoteT > 0.01);
   let w = 0;
   level = 0;
   if (racing && player.laps === 1) { level = 1; w = player.idx >= GLITCH_AT ? 1 : 0; }

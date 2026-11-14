@@ -44,6 +44,13 @@ scene.add(sky);
 
 const MOON_DIR = new THREE.Vector3(...THEME.moonDir).normalize();
 // The sun: stepped pixel disc, white-hot core to deep orange rim.
+const SOFT = THEME.sun === 'soft';
+// The winter sun: an almost white disc whose edge melts into the haze (no rings).
+const softSunTex = () => canvasTex(64, 64, (g) => {
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,253,244,1)'); r.addColorStop(0.62, 'rgba(255,247,226,1)'); r.addColorStop(0.8, 'rgba(255,236,200,.85)'); r.addColorStop(1, 'rgba(255,224,176,0)');
+  g.clearRect(0, 0, 64, 64); g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+});
 const sunTex = () => canvasTex(32, 32, (g) => {
   [[16, '#ff8a2a'], [14, '#ffb03c'], [11, '#ffd46a'], [7, '#fff1c2']].forEach(([r, c]) => {
     g.fillStyle = c;
@@ -53,9 +60,9 @@ const sunTex = () => canvasTex(32, 32, (g) => {
     }
   });
 });
-const moonTex = THEME.sun ? sunTex() : new THREE.TextureLoader().load(moonUrl);
-moonTex.magFilter = THREE.NearestFilter;
-moonTex.minFilter = THREE.NearestFilter;
+const moonTex = SOFT ? softSunTex() : THEME.sun ? sunTex() : new THREE.TextureLoader().load(moonUrl);
+moonTex.magFilter = SOFT ? THREE.LinearFilter : THREE.NearestFilter;
+moonTex.minFilter = SOFT ? THREE.LinearFilter : THREE.NearestFilter;
 moonTex.generateMipmaps = false;
 
 const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, fog: false, depthWrite: false, transparent: true }));
@@ -65,7 +72,7 @@ moon.position.copy(MOON_DIR).multiplyScalar(760);
 
 const glowTex = canvasTex(64, 64, (g) => {
   const r = g.createRadialGradient(32, 32, 4, 32, 32, 32);
-  const [a, b, c] = THEME.sun ? ['255,214,140', '255,140,60', '255,90,40'] : ['170,205,255', '110,160,255', '80,120,255'];
+  const [a, b, c] = SOFT ? ['255,240,214', '255,214,170', '255,190,150'] : THEME.sun ? ['255,214,140', '255,140,60', '255,90,40'] : ['170,205,255', '110,160,255', '80,120,255'];
   r.addColorStop(0, `rgba(${a},.8)`);
   r.addColorStop(0.45, `rgba(${b},.3)`);
   r.addColorStop(1, `rgba(${c},0)`);
@@ -74,7 +81,7 @@ const glowTex = canvasTex(64, 64, (g) => {
 });
 glowTex.magFilter = glowTex.minFilter = THREE.LinearFilter;
 export const moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending }));
-moonGlow.scale.set(THEME.moonScale * 2.8, THEME.moonScale * 2.8, 1);
+moonGlow.scale.set(THEME.moonScale * (SOFT ? 6 : 2.8), THEME.moonScale * (SOFT ? 4.2 : 2.8), 1);   // the soft sun spreads wide along the horizon
 moonGlow.renderOrder = -2;
 moonGlow.position.copy(MOON_DIR).multiplyScalar(770);
 sky.add(moonGlow);

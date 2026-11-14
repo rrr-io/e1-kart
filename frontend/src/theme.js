@@ -93,8 +93,8 @@ const VILLAGE = {
   sky: ['#6f86c4', '#e9b0a0', '#ffd0a0', '#ffe9c4'],
   hemi: [0xfff2e0, 0x9a9ab4, 0.78],
   moonLight: 0xffdcb0,
-  moonScale: 110, moonDir: [-0.3, 0.22, -0.93],
-  sun: true,
+  moonScale: 64, moonDir: [-0.3, 0.2, -0.93],
+  sun: 'soft',   // a pale winter sun low in the haze, not the golden disc of Bloody Paradise
   night: {
     manual: true, time: 0.3,
     // a cold, dead night under heavy clouds, the moon behind them; the only warm light is the fires (want.js)

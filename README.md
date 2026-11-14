@@ -131,7 +131,7 @@ Skyline of the INTERSTELLAR track (`frontend/src/assets/space/`): "Neon City" by
 
 Sunset clouds of the BLOODY PARADISE track (`frontend/src/assets/bloody/clouds.png`): from "Free Sky with Clouds Background Pixel Art Set" by CraftPix (craftpix.net, free license), cropped and made tileable; not to be redistributed as an asset pack.
 
-Flames of the PARALLEL WORLD track (`frontend/src/assets/want/fire.png`): "Pixel Fire Asset Pack" v2.2, free for use in games; not to be redistributed as an asset. Its city uses the Bloody Paradise facade atlas.
+Flames of the PARALLEL WORLD track (`frontend/src/assets/want/fire.png`): "Pixel Fire Asset Pack" v2.2, free for use in games; not to be redistributed as an asset. Its city uses the Bloody Paradise facade atlas and, for half of the plots on the street, pairs of brick row houses at their own scale (`frontend/src/assets/want/rowhouses.png`): the four example houses of the "Modular Pixel Houses" pack, cropped to their walls; check the pack's license before publishing the track. The front of the big house (`frontend/src/assets/want/bighouse.png`) is assembled from the "RowHouseTileSet", which allows non-commercial use only: fine for this free fan game, to be replaced if the game ever earns money.
 
 Market stall, vendor cart, street lamp and wreath of its funfair (`frontend/src/assets/want/xmas.png`): "Cozy Christmas Exteriors" demo by MattIAco Studio, commercial use allowed in games; not to be redistributed as raw assets.
 

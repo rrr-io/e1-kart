@@ -18,6 +18,8 @@ export function toast(msg) {
 export function banner(txt, seconds) {
   const b = $('banner');
   b.textContent = txt;
+  // one line, and the pixel font is as wide as it is tall: long texts shrink to fit a phone held upright
+  b.style.fontSize = `min(clamp(28px, 8vw, 64px), ${(86 / Math.max(1, txt.length)).toFixed(2)}vw)`;
   b.hidden = false;
   clearTimeout(banner.t);
   banner.t = setTimeout(() => { b.hidden = true; }, seconds * 1000);

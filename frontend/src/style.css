@@ -462,10 +462,11 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .mv-track i{display:block;height:100%;width:0;background:var(--red);transition:width .4s linear}
 .mv-info{margin:8px 0;font-size:18px;line-height:1.1;min-height:20px}
 .mv-box .go:disabled{opacity:.45;cursor:not-allowed;animation:none}
-.want-quote{position:fixed;left:50%;top:34%;transform:translateX(-50%);z-index:6;width:min(92vw,720px);pointer-events:none;text-align:center;
-  font-family:"Courier New",Courier,monospace;font-size:clamp(11px,2.6vw,18px);line-height:1.4;letter-spacing:.02em;color:#fff;text-shadow:0 1px 0 rgba(20,30,50,.9);padding:8px 12px;background:radial-gradient(ellipse closest-side,rgba(40,52,74,.6) 0,rgba(40,52,74,.42) 60%,rgba(40,52,74,0) 100%);opacity:0;transition:opacity 1.2s}
+.want-quote{position:absolute;left:0;right:0;top:31%;transform:translateY(-50%);z-index:3;box-sizing:border-box;padding:10px max(14px,calc(50% - 250px));min-height:2.3em;pointer-events:none;text-align:center;
+  font-family:var(--body);font-size:clamp(20px,5.6vw,30px);line-height:1.15;color:var(--paper);background:rgba(11,11,18,.82);border-block:2px solid var(--paper);text-shadow:2px 2px 0 var(--ink);opacity:0;transition:opacity .5s}
 .want-quote.on{opacity:1}
-.want-quote i{font-style:normal;opacity:.6}
+.want-quote i{font-style:normal;color:#9fb4d8}
+@media (orientation:landscape){.want-quote{top:27%;left:50%;right:auto;width:min(56%,500px);transform:translate(-50%,-50%);padding:6px 14px;border:2px solid var(--paper);font-size:clamp(18px,3.2vw,24px)}}
 #c.glitch{animation:glitch .6s steps(1) both}
 @keyframes glitch{
   0%{transform:none;filter:none}
