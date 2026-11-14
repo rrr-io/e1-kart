@@ -1,11 +1,14 @@
 package com.rrriooo.e1kart.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rrriooo.e1kart.config.E1KartProperties;
 import com.rrriooo.e1kart.dto.ConfigResponse;
+import com.rrriooo.e1kart.model.CertificateKind;
 
 /** Public configuration read by the game on startup (e.g. whether to show the "free play" flag). */
 @RestController
@@ -23,6 +26,7 @@ public class ConfigController {
         return new ConfigResponse(
                 props.freePlayAllowed(),
                 props.runsPerCertificate(),
-                props.voteWindows().stream().map(w -> new ConfigResponse.Window(w.label(), w.start(), w.end())).toList());
+                props.voteWindows().stream().map(w -> new ConfigResponse.Window(w.label(), w.start(), w.end())).toList(),
+                List.of(CertificateKind.FREE.track()));
     }
 }

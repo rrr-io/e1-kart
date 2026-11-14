@@ -5,7 +5,7 @@ import { scene, toon, canvasTex, redrawTex } from './engine.js';
 import { TEAMS, lum } from './config.js';
 import { N, NR, HALF, WORLD_K, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
 import { THEME, SPACE, BLOODY, WANT } from './theme.js';
-import { buildWant, updateWant, wantTexts } from './want.js';
+import { buildWant, updateWant, wantTexts, wantWorld } from './want.js';
 import { buildSpace, updateSpace, spaceTexts } from './space.js';
 import { buildParadise, updateParadise, paradiseTexts } from './paradise.js';
 const NIGHT = !SPACE && !BLOODY && !WANT;
@@ -78,7 +78,7 @@ placeAt(gantry, 0, 0, 0);
 
 // ---------- Grandstands with crowd and blue lightsticks ----------
 const crowdCols = TEAMS.map((t) => new THREE.Color(t.color)).concat([new THREE.Color('#ffffff'), new THREE.Color('#ffd9b8'), new THREE.Color('#2b2b30')]);
-const lightsticks = [];
+const lightsticks = [], crowds = [];
 function grandstand(i) {
   const g = new THREE.Group();
   const L = 30, steps = 5;
@@ -117,6 +117,7 @@ function grandstand(i) {
   g.add(people);
   g.add(sticks);
   lightsticks.push(sticks);
+  crowds.push(people, sticks);
   placeAt(g, i, HALF + 5, 0);
 }
 // Bloody Paradise: the start straight runs along the sea, so no grandstands there.
@@ -335,7 +336,14 @@ export function updateScenery(dt, now) {
   lightsticks.forEach((s, k) => { s.position.y = Math.max(0, Math.sin(now / 170 + k * 2)) * 0.35; });
   if (SPACE) updateSpace(dt, now);
   if (BLOODY) updateParadise(dt, now);
-  if (WANT) updateWant(dt, now);
+  if (WANT) {
+    updateWant(dt, now);
+    // the parallel world is deserted: nobody in the stands, start lights off, team banners dark
+    const dead = !!wantWorld();
+    crowds.forEach((m) => { m.visible = !dead; });
+    startLights.forEach((l) => { l.visible = !dead; });
+    bannerMats.forEach((m) => m.color.setHex(dead ? 0x24242e : 0xffffff));
+  }
 }
 
 // Redraws the text once the pixel font has loaded.

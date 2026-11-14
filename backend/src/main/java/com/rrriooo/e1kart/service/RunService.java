@@ -20,6 +20,7 @@ import com.rrriooo.e1kart.repository.RunRepository;
  * Run balance and consumption. The balance isn't a stored counter:
  * it's always (runs granted by certificates) - (runs started), so it can never drift out of sync.
  * Each certificate kind has its own balance: FANS' CHOICE runs for Interstellar, MCD runs for Bloody Paradise.
+ * Races on the free tracks that count for the standings (kind FREE: Parallel World) are saved too, without a balance.
  */
 @Service
 public class RunService {
@@ -47,6 +48,10 @@ public class RunService {
     @Transactional
     public synchronized StartRunResponse start(Player player, int team, String track) {
         CertificateKind kind = CertificateKind.forTrack(track);
+        if (kind.free()) {
+            Run run = runs.save(new Run(UUID.randomUUID().toString(), player.getId(), team, kind, Instant.now()));
+            return new StartRunResponse(run.getId(), 0);
+        }
         long balance = balance(player, kind);
         if (balance <= 0) {
             throw new ApiException(kind == CertificateKind.MCD ? ErrorCode.NO_MCD_RUNS : ErrorCode.NO_RUNS);

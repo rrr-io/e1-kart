@@ -89,7 +89,7 @@ public class CertificateService {
     public RedeemResponse redeem(Player player, MultipartFile file, String trackHint, String clientIp) {
         rateLimiter.check("player:" + player.getId(), "ip:" + clientIp);
         try {
-            RedeemResponse r = check(player, file, CertificateKind.forTrack(trackHint));
+            RedeemResponse r = check(player, file, CertificateKind.forCertificate(trackHint));
             stats.count("certificate", CertificateKind.MCD.name().equals(r.kind()) ? "accepted_mcd" : "accepted");
             return r;
         } catch (ApiException e) {

@@ -43,13 +43,14 @@ export const TRACKS = {
     raw: [[0, 0], [70, -6], [140, -4], [184, 22], [190, 74], [186, 124], [164, 164], [112, 180], [50, 174], [-12, 180], [-72, 172], [-122, 142], [-142, 92], [-132, 42], [-92, 8], [-42, -2]],
     scale: 2.0,
   },
-  // ENHYPEN "I Want You" music video: a cosy snowy village at golden hour that glitches into its parallel world,
+  // PARALLEL WORLD (id `want`), from the ENHYPEN "I Want You" music video: a cosy snowy village at golden hour that glitches into its parallel world,
   // dark and burning (want.js). Free, but the MV has to be watched in full once a day to race it (mvgate.js).
   want: {
-    name: 'I WANT YOU',
+    name: 'PARALLEL WORLD',
     cost: false,
-    desc: 'Brick town, funfair, frosted forest... until the world glitches into its burnt, deserted parallel.',
-    note: 'Watch the "I Want You" MV to unlock it for the day.',
+    board: true,         // free, but its races count for the leaderboard (account.js)
+    desc: 'Inspired by the ENHYPEN "I Want You" MV: the life we know... until it glitches into the one we left elsewhere.',
+    note: 'Watch the "I Want You" MV to unlock it for the day. Your race results count for your team in the global E1 Kart GP leaderboard.',
     mv: 'dE_Ro8Sac2M',   // YouTube id of the official MV
     preview: true,       // not public yet: only with the preview link (see PREVIEW below)
     raw: [[0, 0], [70, -8], [140, 0], [176, 40], [150, 86], [96, 92], [70, 128], [100, 172], [60, 204], [0, 196], [-40, 160], [-96, 164], [-140, 124], [-126, 70], [-150, 24], [-104, -14], [-50, -6]],

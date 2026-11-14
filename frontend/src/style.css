@@ -462,6 +462,10 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 .mv-track i{display:block;height:100%;width:0;background:var(--red);transition:width .4s linear}
 .mv-info{margin:8px 0;font-size:18px;line-height:1.1;min-height:20px}
 .mv-box .go:disabled{opacity:.45;cursor:not-allowed;animation:none}
+.want-quote{position:fixed;left:50%;top:34%;transform:translateX(-50%);z-index:6;width:min(92vw,720px);pointer-events:none;text-align:center;
+  font-family:"Courier New",Courier,monospace;font-size:clamp(11px,2.6vw,18px);line-height:1.4;letter-spacing:.02em;color:#fff;text-shadow:0 1px 0 rgba(20,30,50,.9);padding:8px 12px;background:radial-gradient(ellipse closest-side,rgba(40,52,74,.6) 0,rgba(40,52,74,.42) 60%,rgba(40,52,74,0) 100%);opacity:0;transition:opacity 1.2s}
+.want-quote.on{opacity:1}
+.want-quote i{font-style:normal;opacity:.6}
 #c.glitch{animation:glitch .6s steps(1) both}
 @keyframes glitch{
   0%{transform:none;filter:none}

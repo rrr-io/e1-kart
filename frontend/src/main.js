@@ -22,7 +22,7 @@ import { talk } from './dialogue.js';
 import { tickCountdown } from './race.js';
 import { toMenu } from './menu.js';
 import { initInput } from './input.js';
-import { trackVisit } from './stats.js';
+import { trackVisit, track } from './stats.js';
 import { TRACK, TRACK_ID, BLOODY } from './theme.js';
 import { openMnet } from './mnet.js';
 import { mcdOn, MCD_LINES, wireMcdLinks } from './campaign.js';
@@ -37,6 +37,9 @@ $('again').onclick = startGame;
 wireMcdLinks($('dlgLinks'), TRACK_ID);
 wireMcdLinks($('resMcd'), TRACK_ID);
 $('resMnet').onclick = () => openMnet('button', TRACK_ID);
+// Tracks made after a music video (TRACK.mv): the results link to it on YouTube.
+$('resMv').hidden = !TRACK.mv;
+$('resMv').onclick = () => { track('mv', 'results'); window.open('https://www.youtube.com/watch?v=' + TRACK.mv, '_blank', 'noopener'); };
 $('toMenu').onclick = toMenu;
 initInput();
 initAccountUi();

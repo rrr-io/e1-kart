@@ -13,6 +13,7 @@ export const wallet = {
   online: false,          // the server has responded
   error: '',              // why the server couldn't be used, shown in the menu
   freePlayAllowed: true,  // the server allows playing without a certificate
+  boardTracks: [],        // free tracks whose races the server counts for the leaderboard
   balances: {},           // runs available per track: { space, bloody } (each certificate kind has its own runs)
   busy: false,
   checked: false,         // the first /config + /me answer (or failure) arrived
@@ -69,6 +70,7 @@ export async function initAccount() {
     const cfg = await api.getConfig();
     wallet.online = true;
     wallet.freePlayAllowed = !!cfg.freePlayAllowed;
+    wallet.boardTracks = cfg.freeBoardTracks || [];
     const me = await api.getMe();
     wallet.balances = { space: me.balance, bloody: me.mcdBalance ?? 0 };
   } catch (e) {
@@ -121,6 +123,14 @@ export async function startGame() {
   if (TRACK.mv && !mvUnlocked()) { openMvGate(TRACK.mv, startGame); return; }
   if (isFreePlay()) {
     G.runId = null;
+    // Free tracks that count for the leaderboard (TRACK.board): the race is registered like a certificate run, but
+    // costs nothing. Only if the server knows the track (an older server would spend an Interstellar run), and the
+    // race starts anyway if it can't be reached: it just doesn't count.
+    if (TRACK.board && !TRACK.cost && wallet.online && wallet.boardTracks.includes(TRACK_ID)) {
+      if (wallet.busy) return;
+      wallet.busy = true;
+      try { G.runId = (await api.startRun(settings.teamIdx, TRACK_ID)).runId; } catch (e) { /* not counted */ } finally { wallet.busy = false; }
+    }
     setupRace();
     return;
   }
@@ -146,8 +156,8 @@ export async function startGame() {
 }
 
 /**
- * Reports the time and position of the race just finished (only for races paid for with a run: Interstellar and
- * Bloody Paradise, the races that count for the E1 Kart GP leaderboard), then offers the leaderboard on the results.
+ * Reports the time and position of the race just finished (only for races registered on the server: the ones paid
+ * for with a run and the free ones of Parallel World, which are the races that count for the E1 Kart GP leaderboard), then offers the leaderboard on the results.
  */
 export function reportFinish(timeSeconds, position) {
   $('resBoard').hidden = true;

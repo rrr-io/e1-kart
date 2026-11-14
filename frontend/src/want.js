@@ -216,7 +216,8 @@ function facadeBox(d, h, w, id) {
   return g;
 }
 const SIGNS = ['CAFE', '24H', 'MART', 'NOODLES', 'PC ROOM', 'KARAOKE', 'BOOKS', 'BAKERY', 'FLOWERS', 'PHARMACY', 'LAUNDRY', 'RECORDS'];
-const SIGN_COLS = ['#ff4fa0', '#3ad0ff', '#ffd23a', '#7dff8a', '#ff7a3a', '#c79bff'];
+// painted boards in the colours of a brick street: [board, lettering]
+const SIGN_COLS = [['#efe4cf', '#3a2420'], ['#6e2a22', '#f3ead8'], ['#8fae8c', '#2a3a2c'], ['#d9a441', '#3a2420'], ['#9db4c4', '#26324a'], ['#f3ead8', '#8a2a22']];
 const signM = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 const lightM = new THREE.MeshBasicMaterial({ color: 0x3aff7a });   // traffic lights
 const boardM = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
@@ -242,8 +243,9 @@ function city() {
   const signTex = canvasTex(256, 96, (g) => {
     SIGNS.forEach((t, k) => {
       const x = (k % 4) * 64, y = ((k / 4) | 0) * 32;
-      g.fillStyle = '#14101c'; g.fillRect(x, y, 64, 32);
-      g.fillStyle = SIGN_COLS[k % SIGN_COLS.length]; g.fillRect(x + 1, y + 1, 62, 1); g.fillRect(x + 1, y + 30, 62, 1); g.fillRect(x + 1, y + 1, 1, 30); g.fillRect(x + 62, y + 1, 1, 30);
+      const [bg, ink] = SIGN_COLS[k % SIGN_COLS.length];
+      g.fillStyle = bg; g.fillRect(x, y, 64, 32);
+      g.fillStyle = ink; g.fillRect(x + 1, y + 1, 62, 1); g.fillRect(x + 1, y + 30, 62, 1); g.fillRect(x + 1, y + 1, 1, 30); g.fillRect(x + 62, y + 1, 1, 30);
       g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
       const parts = t.split(' ');
       parts.forEach((w, n) => g.fillText(w.slice(0, 7), x + 32, y + 17 + (n - (parts.length - 1) / 2) * 11));
@@ -291,6 +293,12 @@ function city() {
           const c = off(i + STEP / 2, 0), dx = c[0] - o[0], dz = c[1] - o[1], len = Math.hypot(dx, dz) || 1;
           const sg = new THREE.Mesh(signGeo((rand() * 12) | 0), signM);
           sg.position.set(o[0] + (dx / len) * (d / 2 + 0.2), 4.6, o[1] + (dz / len) * (d / 2 + 0.2)); sg.rotation.y = Math.atan2(dx, dz); add(sg);
+        }
+        // and, here and there, the poster of the exhibition by the door
+        if (((i - CITY[0]) / STEP + (side > 0 ? 1 : 0)) % 3 === 0) {
+          const c = off(i + STEP / 2, 0), dx = c[0] - o[0], dz = c[1] - o[1], len = Math.hypot(dx, dz) || 1, yw = yawAt(i + STEP / 2);
+          const ps = new THREE.Mesh(lifeGeo(LIFE.poster, 2.2, 3.3), lifeM);
+          ps.position.set(o[0] + (dx / len) * (d / 2 + 0.2) + Math.sin(yw) * 3.4, 2.3, o[1] + (dz / len) * (d / 2 + 0.2) + Math.cos(yw) * 3.4); ps.rotation.y = Math.atan2(dx, dz); add(ps);
         }
         // the city burns from the moment the world breaks
         if (rand() < 0.45) {
@@ -363,6 +371,51 @@ function city() {
   const so = off(ui + 6, -(HALF + 2)), pole = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.2, 0.14), tm(0x8a9096)); pole.position.set(so[0], 1.6, so[1]); add(pole);
   const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.3), new THREE.MeshBasicMaterial({ map: stopTex, side: THREE.DoubleSide })); plate.position.set(so[0], 3, so[1]); plate.rotation.y = yawAt(ui) + Math.PI; add(plate);
   const bo = off(ui + 9, -(HALF + 4)), bench = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 3), tm(0x6a6e74)); bench.position.set(bo[0], 0.5, bo[1]); bench.rotation.y = yawAt(ui + 9); add(bench);
+}
+
+// THE LIFE WE LEFT ELSEWHERE, the title of the exhibition in the video, in other shapes than the board over the
+// street: a cloth banner, a stencil on the concrete wall, a wooden road sign, a poster. One texture, cells in px.
+const LIFE = { banner: [0, 0, 256, 16], stencil: [0, 16, 256, 16], wood: [0, 32, 128, 32], poster: [128, 32, 64, 96] };
+const lifeM = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, alphaTest: 0.5 });
+const lifeGeo = ([x, y, w, h], gw, gh) => {
+  const g = new THREE.PlaneGeometry(gw, gh), uv = g.attributes.uv;
+  for (let n = 0; n < 4; n++) uv.setXY(n, (x + uv.getX(n) * w) / 256, 1 - (y + (1 - uv.getY(n)) * h) / 128);
+  return g;
+};
+function lifeSigns() {
+  const tex = canvasTex(256, 128, (g) => {
+    g.clearRect(0, 0, 256, 128);
+    g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#8a2a22'; g.fillRect(0, 0, 256, 16); g.fillStyle = '#f3ead8'; g.fillRect(0, 1, 256, 1); g.fillRect(0, 14, 256, 1);
+    g.fillText('THE LIFE WE LEFT ELSEWHERE', 128, 8);
+    g.fillStyle = '#2a2420'; g.fillText('THE LIFE WE LEFT ELSEWHERE', 128, 24);   // stencil: letters only
+    g.fillStyle = '#f3ead8';
+    g.fillStyle = '#8a6a4f'; g.fillRect(0, 32, 128, 32); g.fillStyle = '#6b513b'; g.fillRect(0, 47, 128, 1); g.fillRect(0, 32, 128, 1); g.fillRect(0, 63, 128, 1);
+    g.fillStyle = '#f3ead8'; g.fillText('THE LIFE WE', 64, 41); g.fillText('LEFT ELSEWHERE', 64, 56);
+    g.fillStyle = '#eef1f2'; g.fillRect(128, 32, 64, 96); g.fillStyle = '#c8110e'; g.fillRect(134, 38, 20, 2);
+    g.fillStyle = '#1b1c20'; g.textAlign = 'left';
+    ['THE', 'LIFE', 'WE', 'LEFT', 'ELSE', 'WHERE'].forEach((t, k) => g.fillText(t, 134, 50 + k * 12));
+    g.fillStyle = '#8a9096'; g.fillRect(134, 120, 40, 1);
+  });
+  lifeM.map = tex; wantTexts.push(tex);
+  // cloth banners across the road: in the village and deep in the city
+  [60, 352].forEach((i) => {
+    const a = off(i, -(HALF + 2.4)), b = off(i, HALF + 2.4);
+    [a, b].forEach((p) => { const pole = new THREE.Mesh(new THREE.BoxGeometry(0.3, 9, 0.3), tm(0x1b1b20)); pole.position.set(p[0], 4.5, p[1]); add(pole); });
+    const m = new THREE.Mesh(lifeGeo(LIFE.banner, 2 * HALF + 4.8, (2 * HALF + 4.8) / 16), lifeM);
+    m.position.set((a[0] + b[0]) / 2, 8.2, (a[1] + b[1]) / 2); m.rotation.y = yawAt(i) + Math.PI; add(m);
+  });
+  // stencilled on the concrete walls, one side and then the other
+  [[WALL[0] + 6, -1], [WALL[0] + 16, 1]].forEach(([i, side]) => {
+    const o = off(i, side * (HALF + 3.2)), m = new THREE.Mesh(lifeGeo(LIFE.stencil, 18, 1.125), lifeM);
+    m.position.set(o[0], 1.9, o[1]); m.rotation.y = yawAt(i) - side * Math.PI / 2; add(m);
+  });
+  // wooden road signs: in the forest, at the camp, by the flower field
+  [[470, 1], [548, -1], [668, 1]].forEach(([i, side]) => {
+    const o = off(i, side * (HALF + 3)), post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3, 0.25), tm(0x5a3d2a)); post.position.set(o[0], 1.5, o[1]); add(post);
+    const m = new THREE.Mesh(lifeGeo(LIFE.wood, 6, 1.5), lifeM); m.position.set(o[0], 2.9, o[1]); m.rotation.y = yawAt(i) + Math.PI + side * 0.5; add(m);
+    taken.push({ x: o[0], z: o[1], r: 3 });
+  });
 }
 
 const TREE_COLS = [0xb9d0de, 0xa7c2d4, 0xc9dce6], treeM = [];
@@ -602,6 +655,7 @@ export function buildWant() {
   city();
   fair();
   blockWall();
+  lifeSigns();
   camp();
   field();
   forest();
@@ -614,6 +668,11 @@ export function buildWant() {
   fx = document.createElement('div');
   fx.className = 'glitch-fx';
   document.body.appendChild(fx);
+  // the line that opens the video, over the start of every race
+  quote = document.createElement('div');
+  quote.className = 'want-quote';
+  quote.innerHTML = 'If we were just <i>human,</i> this is how we would have loved each other.';
+  document.body.appendChild(quote);
 }
 
 /** Embers on the road slow the karts, in the burning world only. */
@@ -623,7 +682,9 @@ export function emberHit(x, z) {
   return false;
 }
 
-let glitchT = 0, told = false;
+let glitchT = 0, told = false, quote = null, quoteT = 0, lastState = '';
+/** 1 in the parallel world, 0 in the one we know. */
+export const wantWorld = () => world;
 function glitch() {
   glitchT = 0.6;
   canvas.classList.remove('glitch'); fx.classList.remove('on');
@@ -637,6 +698,13 @@ const tmpC = new THREE.Color();
 let fogK = 0;
 export function updateWant(dt, now) {
   const racing = G.state === 'race' || G.state === 'done';
+  if (G.state !== lastState) {
+    if (G.state === 'count') quoteT = 7;   // through the countdown and the first seconds of the race
+    else if (G.state !== 'race') quoteT = 0;
+    lastState = G.state;
+  }
+  if (quoteT > 0) quoteT -= dt;
+  quote.classList.toggle('on', quoteT > 0);
   let w = 0;
   level = 0;
   if (racing && player.laps === 1) { level = 1; w = player.idx >= GLITCH_AT ? 1 : 0; }
@@ -673,6 +741,7 @@ export function updateWant(dt, now) {
   // who and what is there
   if (alive) { alive.visible = !world; ruin.visible = !!world; }
   if (carM) carM.forEach((m, k) => m.color.setHex(world ? 0x1a1614 : CAR_COLS[k]));
+  lifeM.color.setHex(world ? (Math.sin(now / 67) > 0.5 ? 0xc8110e : 0x3a1010) : 0xffffff);   // in the other world the line is still there, in red
   signM.color.setHex(world ? (Math.sin(now / 53) > 0.93 ? 0x8a8a9a : 0x0c0a10) : 0xffffff);
   boardM.color.setHex(world ? (Math.sin(now / 71) > 0.6 ? 0x7a4038 : 0x2a1a1a) : 0xffffff);
   treeM.forEach((m, k) => m.color.setHex(world ? (k < 3 ? 0x14161a : 0x4a4e56) : (k < 3 ? TREE_COLS[k] : 0xffffff)));   // dead and bare
