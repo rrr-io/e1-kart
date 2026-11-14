@@ -50,7 +50,7 @@ export const TRACKS = {
     cost: false,
     board: true,         // free, but its races count for the leaderboard (account.js)
     desc: 'Inspired by the ENHYPEN "I Want You" MV: the life we know... until it glitches into the one we left elsewhere.',
-    note: 'Watch the "I Want You" MV to unlock it for the day. Your race results count for your team in the global E1 Kart GP leaderboard.',
+    note: 'Watch the first minute of the "I Want You" MV to unlock 3 races. Your race results count for your team in the global E1 Kart GP leaderboard.',
     mv: 'dE_Ro8Sac2M',   // YouTube id of the official MV
     preview: true,       // not public yet: only with the preview link (see PREVIEW below)
     raw: [[0, 0], [70, -8], [140, 0], [176, 40], [150, 86], [96, 92], [70, 128], [100, 172], [60, 204], [0, 196], [-40, 160], [-96, 164], [-140, 124], [-126, 70], [-150, 24], [-104, -14], [-50, -6]],

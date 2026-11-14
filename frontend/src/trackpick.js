@@ -68,7 +68,7 @@ function buildCards() {
     head.append(nm, badge);
     const desc = document.createElement('p'); desc.className = 'tp-desc'; desc.textContent = t.desc;
     const meta = document.createElement('p'); meta.className = 'tp-meta';
-    meta.textContent = `${LAPS} LAPS` + (t.cost ? ' · ' + (COST[id] || '1 certificate = 1 run') : (t.mv ? ' · watch the MV to unlock' : ' · unlimited races'));
+    meta.textContent = `${LAPS} LAPS` + (t.cost ? ' · ' + (COST[id] || '1 certificate = 1 run') : (t.mv ? ' · 1 min of the MV = 3 races' : ' · unlimited races'));
     card.append(c, head, desc);
     if (t.note) {
       const note = document.createElement('p'); note.className = 'tp-note'; note.textContent = t.note;

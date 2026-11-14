@@ -149,11 +149,19 @@ function house(i, side, big, burn) {
 }
 
 let fireMat = [];
-const glowMat = new THREE.SpriteMaterial({ map: canvasTex(32, 32, (g) => {
-  const gr = g.createRadialGradient(16, 16, 1, 16, 16, 16);
-  gr.addColorStop(0, 'rgba(255,150,50,.75)'); gr.addColorStop(0.5, 'rgba(255,80,20,.3)'); gr.addColorStop(1, 'rgba(255,60,0,0)');
-  g.fillStyle = gr; g.fillRect(0, 0, 32, 32);
-}), fog: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+// The glow around a fire. Computed pixel by pixel instead of drawn on a canvas: on iPhone the almost transparent pixels
+// of a canvas gradient came out as green squares (premultiplied alpha), all over the sky behind the fires.
+const glowTex = (() => {
+  const S = 32, d = new Uint8Array(S * S * 4);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.min(1, Math.hypot(x + 0.5 - S / 2, y + 0.5 - S / 2) / (S / 2)), k = (1 - r) * (1 - r), i = (y * S + x) * 4;
+    d[i] = 255; d[i + 1] = Math.round(70 + 90 * k); d[i + 2] = Math.round(20 * k); d[i + 3] = Math.round(190 * k);
+  }
+  const t = new THREE.DataTexture(d, S, S, THREE.RGBAFormat);
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
+  return t;
+})();
+const glowMat = new THREE.SpriteMaterial({ map: glowTex, fog: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
 const taken = [];
 function village() {
   wallMats = WALLS.map(([b, k]) => toon(0xffffff, { map: plankTex(b, k) }));

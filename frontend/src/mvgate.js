@@ -1,15 +1,21 @@
 // "Watch the MV" gate for tracks with `mv` (a YouTube video id) in theme.js: the official video plays in YouTube's own
-// embedded player, the player starts it (no autoplay, so the play is theirs), and the track unlocks for the rest of
-// the day once the whole video has really played. Seeking ahead doesn't count: only seconds that actually played do.
+// embedded player, the player starts it (no autoplay, so the play is theirs), and once its first minute has really
+// played the track unlocks for the next RACES races. Seeking ahead doesn't count: only seconds that actually played do.
 import { $ } from './engine.js';
 import { track } from './stats.js';
 
 const KEY = 'e1kart-mv';
-const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
-const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
+export const RACES = 3;     // races unlocked by one watch
+const NEED = 60;            // seconds of the video that have to play
+let mem = 0;                // races left when localStorage isn't available (private mode)
+const left = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && Number.isInteger(v.left) ? v.left : mem; } catch { return mem; } };
+const setLeft = (n) => { mem = n; try { localStorage.setItem(KEY, JSON.stringify({ left: n })); } catch { /* kept in memory */ } };
 
-/** Watched in full today, on this device. */
-export const mvUnlocked = () => read().day === today();
+/** Races left before the MV has to be watched again, on this device. */
+export const mvRacesLeft = () => left();
+export const mvUnlocked = () => left() > 0;
+/** One race used (called when a race on the track starts). */
+export const useMvRace = () => setLeft(Math.max(0, left() - 1));
 
 let api = null;
 function loadApi() {
@@ -48,10 +54,10 @@ export function openMvGate(videoId, onUnlocked) {
   const finish = () => {
     if (done) return;
     done = true;
-    try { localStorage.setItem(KEY, JSON.stringify({ day: today() })); } catch { /* private mode: unlocked for this race only */ }
+    setLeft(RACES);
     track('mv', 'unlock');
     bar.style.width = '100%';
-    info.textContent = 'Unlocked for today. Thank you for watching!';
+    info.textContent = `Unlocked for ${RACES} races. Keep watching if you like!`;
     go.disabled = false;
   };
   loadApi().then((YT) => {
@@ -60,7 +66,7 @@ export function openMvGate(videoId, onUnlocked) {
       videoId, width: '100%', height: '100%',
       playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
       events: {
-        onReady: () => { info.textContent = 'Press play and watch the whole MV to unlock the track.'; },
+        onReady: () => { info.textContent = `Press play and watch the first minute of the MV to unlock ${RACES} races.`; },
         onError: () => { info.textContent = 'The video could not be played here. Try again later.'; },
       },
     });
@@ -72,9 +78,9 @@ export function openMvGate(videoId, onUnlocked) {
         last = t;
       } else last = null;
       if (dur > 0) {
-        const need = dur - 4;
+        const need = Math.min(NEED, dur - 1);
         bar.style.width = Math.min(100, (watched / need) * 100) + '%';
-        if (watched > 0) info.textContent = `Watched ${mmss(Math.min(watched, dur))} of ${mmss(dur)}`;
+        if (watched > 0 && !done) info.textContent = `Watched ${mmss(Math.min(watched, need))} of ${mmss(need)}`;
         if (watched >= need) finish();
       }
     }, 500);
