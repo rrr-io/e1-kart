@@ -4,10 +4,11 @@ import * as THREE from 'three';
 import { scene, toon, canvasTex, redrawTex } from './engine.js';
 import { TEAMS, lum } from './config.js';
 import { N, NR, HALF, WORLD_K, corner, bend, off, yawAt, placeAt, flat, minTrackDist } from './track.js';
-import { THEME, SPACE, BLOODY } from './theme.js';
+import { THEME, SPACE, BLOODY, WANT } from './theme.js';
+import { buildWant, updateWant, wantTexts } from './want.js';
 import { buildSpace, updateSpace, spaceTexts } from './space.js';
 import { buildParadise, updateParadise, paradiseTexts } from './paradise.js';
-const NIGHT = !SPACE && !BLOODY;
+const NIGHT = !SPACE && !BLOODY && !WANT;
 
 // ---------- Start line and portal ----------
 const checker = canvasTex(16, 2, (g) => {
@@ -284,6 +285,9 @@ if (SPACE) buildSpace();
 // ---------- Bloody Paradise: sea, market street, prison courtyard, town, sunset clouds ----------
 if (BLOODY) buildParadise();
 
+// ---------- I Want You: snowy village and its burning parallel world ----------
+if (WANT) buildWant();
+
 // ---------- Boost pads: [track index, lateral offset] ----------
 const padTex = canvasTex(16, 32, (g) => {
   g.fillStyle = '#1a1a1e'; g.fillRect(0, 0, 16, 32);
@@ -331,9 +335,10 @@ export function updateScenery(dt, now) {
   lightsticks.forEach((s, k) => { s.position.y = Math.max(0, Math.sin(now / 170 + k * 2)) * 0.35; });
   if (SPACE) updateSpace(dt, now);
   if (BLOODY) updateParadise(dt, now);
+  if (WANT) updateWant(dt, now);
 }
 
 // Redraws the text once the pixel font has loaded.
 export function redrawText() {
-  [signTex, ...bannerTexs, ...spaceTexts, ...paradiseTexts].forEach(redrawTex);
+  [signTex, ...bannerTexs, ...spaceTexts, ...paradiseTexts, ...wantTexts].forEach(redrawTex);
 }

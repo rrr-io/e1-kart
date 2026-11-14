@@ -136,6 +136,9 @@ if (NIGHT) {
   sky.add(nightMoon);
 }
 const NIGHT_T = 5;   // seconds from sunset to night
+// I Want You (NIGHT.manual): want.js switches between the two worlds itself.
+let shift = 0;
+export function setShift(v) { shift = v; }
 let drawn = -1;
 function applyNight() {
   const k = night;
@@ -156,7 +159,7 @@ function applyNight() {
   moonGlow.material.opacity = 1 - k;
   nightMoon.position.set(-0.5 * 760, (0.12 + 0.3 * k) * 760, 0.75 * 760);
   nightMoon.material.opacity = k;
-  stars.material.opacity = k;
+  stars.material.opacity = NIGHT.noStars ? 0 : k;
 }
 
 // Night Circuit, last lap: the moon turns red in a few seconds and, every so often, a few bats fly across it.
@@ -227,10 +230,11 @@ export function updateSky(dt, now, focus) {
   moonLight.position.set(focus.x - 40, 70, focus.z + 75);
   moonLight.target.position.copy(focus);
   sky.position.copy(camera.position);
-  brightStars.material.opacity = (0.75 + Math.sin(now / 400) * 0.25) * (NIGHT ? night : 1);
+  brightStars.material.opacity = (0.75 + Math.sin(now / 400) * 0.25) * (NIGHT ? (NIGHT.noStars ? 0 : night) : 1);
   if (NIGHT) {
     const want = (G.state === 'race' || G.state === 'done') && player.laps >= LAPS - 1 ? 1 : 0;
-    night = want ? Math.min(1, night + dt / NIGHT_T) : 0;   // back to sunset at once when a new race is set up
+    if (NIGHT.manual) night = shift > night ? Math.min(shift, night + dt / NIGHT.time) : Math.max(shift, night - dt / NIGHT.time);
+    else night = want ? Math.min(1, night + dt / NIGHT_T) : 0;   // back to sunset at once when a new race is set up
     applyNight();
     // Lockdown: everything pulses red.
     if (alarm > 0) {

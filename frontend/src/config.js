@@ -39,7 +39,7 @@ try {
   if (typeof s.assist === 'boolean' && s.assistV === 2) settings.assist = s.assist;
   if (typeof s.free === 'boolean') settings.freePlay = s.free;
   if (typeof s.steerRight === 'boolean') settings.steerRight = s.steerRight;
-  if (['night', 'space', 'bloody'].includes(s.track)) settings.track = s.track;
+  if (['night', 'space', 'bloody', 'want'].includes(s.track)) settings.track = s.track;
   if (typeof s.sound === 'boolean') settings.sound = s.sound;
 } catch (e) { /* storage unavailable */ }
 

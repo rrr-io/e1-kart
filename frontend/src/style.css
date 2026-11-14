@@ -453,3 +453,28 @@ html.pwa #game,html.pwa #splash{bottom:auto}
   .tp-note{font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){.tp-strip{transition:none}}
+
+/* I Want You: the MV gate (mvgate.js) and the glitch between the two worlds (want.js). */
+.mv-box .run-card{width:min(560px,94vw)}
+.mv-player{margin-top:10px;height:min(300px,calc(100vh - 215px));min-height:120px;background:#000;border:3px solid var(--ink)}
+.mv-player iframe{width:100%;height:100%;display:block;border:0}
+.mv-track{height:8px;margin-top:8px;background:rgba(255,255,255,.14);border:2px solid var(--ink)}
+.mv-track i{display:block;height:100%;width:0;background:var(--red);transition:width .4s linear}
+.mv-info{margin:8px 0;font-size:18px;line-height:1.1;min-height:20px}
+.mv-box .go:disabled{opacity:.45;cursor:not-allowed;animation:none}
+#c.glitch{animation:glitch .6s steps(1) both}
+@keyframes glitch{
+  0%{transform:none;filter:none}
+  10%{transform:translate(-14px,0) skewX(-4deg);filter:hue-rotate(90deg) saturate(3)}
+  20%{transform:translate(10px,3px);filter:invert(1)}
+  30%{transform:translate(-6px,-2px) scaleY(1.03);filter:hue-rotate(200deg) contrast(1.8)}
+  45%{transform:translate(16px,0) skewX(6deg);filter:saturate(0) brightness(1.6)}
+  60%{transform:translate(-4px,2px);filter:hue-rotate(300deg) saturate(4)}
+  75%{transform:translate(3px,0);filter:contrast(2)}
+  100%{transform:none;filter:none}
+}
+.glitch-fx{position:fixed;inset:0;z-index:5;pointer-events:none;display:none;mix-blend-mode:screen;
+  background:repeating-linear-gradient(0deg,rgba(255,0,60,.22) 0 3px,transparent 3px 9px),linear-gradient(90deg,rgba(0,255,255,.18),rgba(255,0,255,.18))}
+.glitch-fx.on{display:block;animation:glitchbars .6s steps(1) both}
+@keyframes glitchbars{0%{clip-path:inset(10% 0 70% 0)}20%{clip-path:inset(55% 0 20% 0)}40%{clip-path:inset(0 0 85% 0)}60%{clip-path:inset(30% 0 40% 0)}80%{clip-path:inset(75% 0 5% 0)}100%{clip-path:inset(0 0 100% 0)}}
+@media (prefers-reduced-motion:reduce){#c.glitch{animation:none}.glitch-fx.on{animation:none;clip-path:inset(40% 0 40% 0)}}

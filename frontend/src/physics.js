@@ -1,6 +1,8 @@
 // Player driving: assisted analog steering, drift and mini-turbo, off-road, laps, pads and items.
 import { wrapAngle } from './engine.js';
 import { LAPS, settings } from './config.js';
+import { WANT } from './theme.js';
+import { emberHit } from './want.js';
 import { N, P, HALF, KERB, off, yawAt, lateral, nearestIdx } from './track.js';
 import { pads, boxes } from './scenery.js';
 import { G, input, player, boostFor } from './state.js';
@@ -57,6 +59,7 @@ export function updatePlayer(dt) {
   const offroad = Math.abs(lat) > HALF + KERB;
   let target = racing ? TUNING.topSpeed : 0;
   if (offroad) target *= TUNING.offroadFactor;
+  if (WANT && emberHit(p.x, p.z)) target *= 0.72;   // I Want You: embers on the road in the burning world
   if (p.slip > 0) target *= 0.25;   // BLOOD POP
   if (p.bats > 0) target *= 0.8;    // BAT SWARM
   if (p.boost > 0) { target *= TUNING.boostFactor; p.boost -= dt; }

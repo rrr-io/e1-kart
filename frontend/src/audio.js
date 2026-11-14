@@ -434,6 +434,16 @@ const TRACK_MUSIC = {
 };
 // Chiptune fallback if the files can't be loaded.
 SONGS.bloody = SONGS.night;
+// I Want You: built from an instrumental at 113 BPM, sped up 12% (higher pitch) with a light bitcrush and synth
+// effects (filter opening on the intro, risers, laser zaps, gated bars, 16th chip ticks). The breakdown is the
+// intro; the loop is 24 bars of full band and the 8 bars of breakdown that lead back into it.
+TRACK_MUSIC.want = {
+  file: 'want-v1',
+  race: { len: 76.3712, intro: 15.18853, gara0: 14.18853, loop: [15.18853, 75.8712] },
+  final: { len: 57.61358, loop: [0.92592, 57.11358] },
+  ratio: 1.08,
+};
+SONGS.want = SONGS.night;
 /** File name prefix of a track's race music: its own id unless it borrows another track's music. */
 const fileOf = (id) => (TRACK_MUSIC[id] && TRACK_MUSIC[id].file) || id;
 const FILE_SFX = { countdown: 'countdown', boost: 'boost', pickup: 'pickup', finalLap: 'final-lap' };
@@ -532,6 +542,18 @@ function toFinal() {
   });
 }
 
+/** The race music glitches for half a second (I Want You, when the world swaps): it stutters, with the pitch
+ *  dropping and jumping. The slow and the fast parts cancel out, so the music is back on its beat afterwards. */
+export function musicGlitch() {
+  if (!race || !ctx) return;
+  const r = race.src.playbackRate, g = race.g.gain, t = ctx.currentTime + 0.02, v = g.value;
+  r.cancelScheduledValues(t);
+  [[0, 0.5], [0.1, 1.5], [0.2, 0.25], [0.28, 1.75], [0.36, 0.6], [0.46, 1.4], [0.56, 1]].forEach(([at, rate]) => r.setValueAtTime(rate, t + at));
+  g.cancelScheduledValues(t);
+  for (let k = 0; k < 7; k++) { g.setValueAtTime(k % 2 ? 0 : v, t + k * 0.08); }
+  g.setValueAtTime(v, t + 0.56);
+}
+
 // At the finish the race music drops to the background for the results.
 function finishRace() {
   if (!race) return;
@@ -551,6 +573,8 @@ const SFX = {
   item: (t) => tone(sfxBus, 'p25', 660, t, 0.12, 0.18, 990),
   slip: (t) => tone(sfxBus, 'p50', 700, t, 0.5, 0.18, 110),
   bats: (t) => { for (let i = 0; i < 5; i++) tone(sfxBus, 'p12', 1200 - i * 90, t + i * 0.06, 0.05, 0.12); },
+  // I Want You: the world glitches.
+  glitch: (t) => { for (let k = 0; k < 7; k++) tone(sfxBus, k % 2 ? 'p25' : 'p50', 120 + ((k * 733) % 1500), t + k * 0.07, 0.06, 0.12, 60 + ((k * 397) % 900)); noise(sfxBus, t, 0.5, 0.22, 2400); },
   // Prison lockdown: a two-tone siren.
   siren: (t) => { for (let k = 0; k < 6; k++) tone(sfxBus, 'p50', k % 2 ? 620 : 470, t + k * 0.42, 0.42, 0.13, k % 2 ? 470 : 620); },
   gate: (t) => { noise(sfxBus, t, 0.25, 0.3, 300); tone(sfxBus, 'p25', 90, t, 0.25, 0.2, 50); },

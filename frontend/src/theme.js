@@ -43,6 +43,18 @@ export const TRACKS = {
     raw: [[0, 0], [70, -6], [140, -4], [184, 22], [190, 74], [186, 124], [164, 164], [112, 180], [50, 174], [-12, 180], [-72, 172], [-122, 142], [-142, 92], [-132, 42], [-92, 8], [-42, -2]],
     scale: 2.0,
   },
+  // ENHYPEN "I Want You" music video: a cosy snowy village at golden hour that glitches into its parallel world,
+  // dark and burning (want.js). Free, but the MV has to be watched in full once a day to race it (mvgate.js).
+  want: {
+    name: 'I WANT YOU',
+    cost: false,
+    desc: 'Brick town, funfair, frosted forest... until the world glitches into its burnt, deserted parallel.',
+    note: 'Watch the "I Want You" MV to unlock it for the day.',
+    mv: 'dE_Ro8Sac2M',   // YouTube id of the official MV
+    preview: true,       // not public yet: only with the preview link (see PREVIEW below)
+    raw: [[0, 0], [70, -8], [140, 0], [176, 40], [150, 86], [96, 92], [70, 128], [100, 172], [60, 204], [0, 196], [-40, 160], [-96, 164], [-140, 124], [-126, 70], [-150, 24], [-104, -14], [-50, -6]],
+    scale: 2.0,
+  },
 };
 // Until 13 November 2026, 23:59 KST, only Bloody Paradise can be raced: it comes first in the track box and the
 // other two are shown greyed out with the unlock time. After that everything is back to normal by itself.
@@ -50,11 +62,55 @@ const OPEN_AT = Date.UTC(2026, 10, 13, 14, 59);   // 23:59 KST (UTC+9)
 export const UNLOCK_LABEL = 'UNLOCKS NOV 13 · 23:59 KST';
 export const isLocked = (id) => id !== 'bloody' && Date.now() < OPEN_AT;
 const BLOODY_ONLY = Date.now() < OPEN_AT;
-export const TRACK_IDS = BLOODY_ONLY ? ['bloody', 'night', 'space'] : Object.keys(TRACKS);
-export const TRACK_ID = TRACKS[settings.track] && !isLocked(settings.track) ? settings.track : BLOODY_ONLY ? 'bloody' : 'night';
+// Tracks with `preview: true` are hidden from everyone who has not opened the preview link: `?preview=want` (the
+// track's id) shows that track on this device from then on, `?preview=off` hides the previews again. Remove
+// `preview` from the track to publish it.
+const PREVIEW_KEY = 'e1kart-preview';
+const PREVIEW = (() => {
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem(PREVIEW_KEY)) || []; } catch { /* nothing saved */ }
+  try {
+    const q = new URLSearchParams(location.search).get('preview');
+    if (q === 'off') ids = [];
+    else if (q && TRACKS[q] && TRACKS[q].preview && !ids.includes(q)) ids.push(q);
+    if (q) localStorage.setItem(PREVIEW_KEY, JSON.stringify(ids));
+  } catch { /* private mode: the link works for this page only */ }
+  return ids;
+})();
+const shown = (id) => !TRACKS[id].preview || PREVIEW.includes(id);
+export const TRACK_IDS = (BLOODY_ONLY ? ['bloody', 'night', 'space'] : Object.keys(TRACKS)).filter(shown);
+export const TRACK_ID = TRACKS[settings.track] && shown(settings.track) && !isLocked(settings.track) ? settings.track : BLOODY_ONLY ? 'bloody' : 'night';
 export const TRACK = TRACKS[TRACK_ID];
 export const SPACE = TRACK === TRACKS.space;
 export const BLOODY = TRACK === TRACKS.bloody;
+export const WANT = TRACK === TRACKS.want;
+
+// I Want You: a snowy village in warm afternoon light. night is its parallel world; manual: want.js decides when
+// to switch (setShift in sky.js), and the switch takes a fraction of a second, with a glitch.
+const VILLAGE = {
+  fog: [0xf0cdb4, 210, 900],
+  sky: ['#6f86c4', '#e9b0a0', '#ffd0a0', '#ffe9c4'],
+  hemi: [0xfff2e0, 0x9a9ab4, 0.78],
+  moonLight: 0xffdcb0,
+  moonScale: 110, moonDir: [-0.3, 0.22, -0.93],
+  sun: true,
+  night: {
+    manual: true, time: 0.3,
+    // a cold, dead night under heavy clouds, the moon behind them; the only warm light is the fires (want.js)
+    noStars: true,
+    fog: 0x161c26,
+    sky: ['#05070b', '#0e131a', '#1c232e', '#2c333c'],
+    hemi: [0x7888a8, 0x08090c, 0.36],
+    moonLight: 0x8aa0c8,
+  },
+  ground: ['#eef2f8', '#e6ecf5', '#dbe3ef', '#ffffff'],   // snow
+  asphalt: ['#4c4852', '#47434d'],
+  line: '#fff4d6',
+  kerb: ['#C8110E', '#ffffff'],
+  gravel: ['#f6f8fc', '#e9eef6'],
+  sign: 'I WANT YOU',
+  lamp: [0xffe2a0, 0xffb060],
+};
 
 // Bloody Paradise: golden hour. sun* replaces the moon with a low sun; ground is warm paving.
 const SUNSET = {
@@ -80,7 +136,7 @@ const SUNSET = {
   lamp: [0xffd27a, 0xff9a3c],
 };
 
-export const THEME = BLOODY ? SUNSET : SPACE ? {
+export const THEME = BLOODY ? SUNSET : WANT ? VILLAGE : SPACE ? {
   fog: [0x1a1140, 170, 820],
   sky: ['#05030f', '#140a33', '#2a1660', '#46308f'],
   hemi: [0x9a86ff, 0x120a24, 0.7],

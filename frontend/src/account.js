@@ -1,6 +1,7 @@
 // Runs and certificates: "free play" flag, balance, certificate upload and starting a race.
 import { $ } from './engine.js';
 import { settings, saveSettings } from './config.js';
+import { mvUnlocked, openMvGate } from './mvgate.js';
 import { TRACK, TRACKS, TRACK_ID } from './theme.js';
 import { G } from './state.js';
 import * as api from './api.js';
@@ -116,6 +117,8 @@ export function resumeTrackChoice() {
 
 /** RACE (entry ticket) and PLAY AGAIN: in certificate mode, asks the server to consume a run before starting. */
 export async function startGame() {
+  // I Want You: the MV has to be watched in full once a day first.
+  if (TRACK.mv && !mvUnlocked()) { openMvGate(TRACK.mv, startGame); return; }
   if (isFreePlay()) {
     G.runId = null;
     setupRace();
