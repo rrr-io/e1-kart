@@ -3,6 +3,7 @@
 // played the track unlocks for the next RACES races. Seeking ahead doesn't count: only seconds that actually played do.
 import { $ } from './engine.js';
 import { track } from './stats.js';
+import { fadeOutMusic, wantMusic, musicWanted } from './audio.js';
 
 const KEY = 'e1kart-mv';
 export const RACES = 3;     // races unlocked by one watch
@@ -33,17 +34,23 @@ function loadApi() {
 }
 
 const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-let player = null, timer = null;
+let player = null, timer = null, prevMusic = '';
 
 function close() {
   clearInterval(timer); timer = null;
   if (player) { try { player.destroy(); } catch { /* already gone */ } player = null; }
   $('mvBox').hidden = true;
+  // the game's music comes back (a race that starts now sets its own music anyway)
+  if (prevMusic && prevMusic !== 'finish') wantMusic(prevMusic);
+  prevMusic = '';
 }
 
 export function openMvGate(videoId, onUnlocked) {
   const box = $('mvBox'), info = $('mvInfo'), go = $('mvGo'), bar = $('mvBar');
   box.hidden = false;
+  // the game's music stops while the video is on screen
+  if (!prevMusic) prevMusic = musicWanted();
+  fadeOutMusic(0.4);
   go.disabled = true;
   bar.style.width = '0%';
   info.textContent = 'Loading the video…';

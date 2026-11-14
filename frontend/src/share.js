@@ -21,8 +21,8 @@ const LINK = 'https://e1-kart.ensite.org';
 const VOTES = [
   { until: Date.parse('2026-11-13T23:59:00+09:00'), card: ['UNTIL NOV 13 · 23:59 KST', 'VOTE BLOODY PARADISE · FAVORITE MCD STAGE'],
     post: "🚨 Until Nov 13: vote ENHYPEN's Bloody Paradise for FAVORITE MCD STAGE on Mnet Plus!" },
-  { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · MAMA AWARDS LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
-    post: '🚨 Nov 20: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' },
+  { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · 18:00 KST · MAMA LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
+    post: '🚨 Nov 20, from 18:00 KST: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' },
 ];
 const nextVote = () => VOTES.find((v) => Date.now() < v.until);
 const logoUrl = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;

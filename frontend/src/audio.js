@@ -652,6 +652,8 @@ export function fadeOutMusic(sec = 0.7) {
 export function prepareMusic(id) {
   if (ctx && TRACK_MUSIC[id]) { decode(fileOf(id) + '-race'); decode(fileOf(id) + '-final'); }
 }
+/** The music asked for last ('menu', a track id, 'finish', or '' for silence). */
+export const musicWanted = () => wanted;
 /** Asks for a piece of music: 'menu', a track id (race music from its intro), 'finish', or '' for silence. */
 export function wantMusic(name) {
   wanted = name;

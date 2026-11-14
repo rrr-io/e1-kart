@@ -25,7 +25,7 @@ import { initInput } from './input.js';
 import { trackVisit, track } from './stats.js';
 import { TRACK, TRACK_ID, BLOODY } from './theme.js';
 import { openMnet } from './mnet.js';
-import { mcdOn, MCD_LINES, wireMcdLinks } from './campaign.js';
+import { mcdOn, MCD_LINES, wireMcdLinks, liveOn, LIVE_LINES, wireLiveLinks } from './campaign.js';
 import { updateLockdown } from './lockdown.js';
 import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
 
@@ -35,6 +35,7 @@ $('start').onclick = menuStart;
 $('runGo').onclick = startGame;
 $('again').onclick = startGame;
 wireMcdLinks($('dlgLinks'), TRACK_ID);
+if (!mcdOn()) wireLiveLinks($('dlgLinks'), TRACK_ID);
 wireMcdLinks($('resMcd'), TRACK_ID);
 $('resMnet').onclick = () => openMnet('button', TRACK_ID);
 // Tracks made after a music video (TRACK.mv): the results link to it on YouTube.
@@ -90,7 +91,8 @@ function frame(now) {
       // closes (after the drivers ask to vote and stream Bloody Paradise, with the links under the last line), then on
       // the tracks that have it (TRACK.mnet).
       const toMnet = { onClose: () => openMnet('auto', TRACK_ID) };
-      const opts = mcdOn() ? { extra: MCD_LINES, ...toMnet } : TRACK.mnet ? toMnet : {};
+      // Until the MAMA live voting (Nov 20): the drivers remind it and ask to stream "I Want You" (campaign.js).
+      const opts = mcdOn() ? { extra: MCD_LINES, ...toMnet } : liveOn() ? { extra: LIVE_LINES, ...(TRACK.mnet ? toMnet : {}) } : TRACK.mnet ? toMnet : {};
       // Checked at every finish, so a page left open past the deadline drops the links too.
       $('resMnet').hidden = !TRACK.mnet && !mcdOn();
       $('resMcd').hidden = !mcdOn();
