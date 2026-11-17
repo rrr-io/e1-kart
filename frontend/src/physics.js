@@ -5,7 +5,7 @@ import { WANT } from './theme.js';
 import { emberHit } from './want.js';
 import { N, P, HALF, KERB, off, yawAt, lateral, nearestIdx } from './track.js';
 import { pads, boxes, crowdCheers } from './scenery.js';
-import { G, input, player, boostFor } from './state.js';
+import { G, MP, input, player, boostFor } from './state.js';
 import { spawn } from './particles.js';
 import { burst } from './fx.js';
 import { toast, banner, playerPosition } from './hud.js';
@@ -102,7 +102,7 @@ export function updatePlayer(dt) {
       if (G.bestLap === null || lt < G.bestLap) G.bestLap = lt;
     }
     G.lapStart = G.raceT;
-    if (p.laps >= LAPS && G.state === 'race') { G.state = 'done'; p.finish = G.raceT; G.doneT = 0; banner('FINISH!', 1.8); setTempo(1); wantMusic('finish'); if (crowdCheers()) sfx('cheer'); }
+    if (p.laps >= LAPS && G.state === 'race') { G.state = 'done'; p.finish = G.raceT; G.doneT = 0; banner('FINISH!', 1.8); setTempo(1); wantMusic('finish'); if (crowdCheers()) sfx('cheer'); MP.send({ t: 'fin', time: Math.round(G.raceT * 1000) / 1000 }); }
     else if (p.laps === LAPS - 1 && G.state === 'race') { banner('FINAL LAP', 1.4); radio(p.team, 'lastLap', true); sfx('finalLap'); setTempo(1.08); }
     else if (p.laps >= 1 && G.state === 'race') sfx('lap');
   }

@@ -113,8 +113,9 @@ function afterTrack() {
   else { renderAccount(); openRunBox(); }
 }
 /** Called once at startup: if the page was reloaded to switch track, carry on to the race / entry ticket. */
-export function resumeTrackChoice() {
-  if (takeGoFlag()) afterTrack();
+export function resumeTrackChoice(onMp) {
+  const mode = takeGoFlag();
+  if (mode === 'mp') { if (onMp) onMp(); } else if (mode !== null) afterTrack();
 }
 
 /** RACE (entry ticket) and PLAY AGAIN: in certificate mode, asks the server to consume a run before starting. */

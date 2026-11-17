@@ -12,7 +12,7 @@ import './track.js';
 import { updateScenery, redrawText } from './scenery.js';
 import { makeKart } from './kart.js';
 import { updateParticles } from './particles.js';
-import { G, player } from './state.js';
+import { G, MP, player } from './state.js';
 import { updatePlayer } from './physics.js';
 import { updateCpus } from './ai.js';
 import { updateItems } from './items.js';
@@ -28,6 +28,8 @@ import { openMnet } from './mnet.js';
 import { mcdOn, MCD_LINES, wireMcdLinks, liveOn, LIVE_LINES, wireLiveLinks } from './campaign.js';
 import { updateLockdown } from './lockdown.js';
 import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
+import { initMp, resumeCreate } from './mp.js';
+import { garageActive, garageFocus, redrawGarageText } from './garage.js';
 
 G.karts = TEAMS.map((t) => makeKart(t.color));
 
@@ -60,7 +62,7 @@ window.addEventListener('resize', resizeSoon);
 window.addEventListener('orientationchange', resizeSoon);
 if (window.visualViewport) visualViewport.addEventListener('resize', resizeSoon);
 if (document.fonts && document.fonts.load) {
-  document.fonts.load('8px "Press Start 2P"').then(redrawText).catch(() => {});
+  document.fonts.load('8px "Press Start 2P"').then(() => { redrawText(); redrawGarageText(); }).catch(() => {});
 }
 
 const focus = new THREE.Vector3();
@@ -75,6 +77,7 @@ function frame(now) {
   if (G.state !== 'menu') {
     updatePlayer(dt);
     updateCpus(dt);
+    MP.tick(dt);
     updateItems(dt);
     if (BLOODY) updateLockdown(dt, now);
     updateHud(dt);
@@ -86,7 +89,7 @@ function frame(now) {
       G.ending = true;
       $('controls').hidden = true;
       const pos = playerPosition();
-      reportFinish(player.finish, pos);
+      if (!MP.on) reportFinish(player.finish, pos); // multiplayer races don't count for the standings
       // Closing the driver's line opens the video on Mnet Plus: on every track until the FAVORITE MCD STAGE vote
       // closes (after the drivers ask to vote and stream Bloody Paradise, with the links under the last line), then on
       // the tracks that have it (TRACK.mnet).
@@ -98,7 +101,7 @@ function frame(now) {
       $('resMcd').hidden = !mcdOn();
       talk(player.team, pos === 1 ? 'win' : pos <= 3 ? 'podium' : 'lose', opts).then(() => {
         showResults();
-        $('resRuns').textContent = runsLeftText();
+        $('resRuns').textContent = MP.on ? 'Multiplayer race: just for fun, not counted.' : runsLeftText();
       });
     }
   }
@@ -106,7 +109,7 @@ function frame(now) {
   updateScenery(dt, now);
   updateParticles(dt);
   updateCamera(dt);
-  if (G.state === 'menu') focus.copy(G.karts[0].root.position); else focus.set(player.x, 0, player.z);
+  if (G.state === 'menu') focus.copy(garageActive() ? garageFocus() : G.karts[0].root.position); else focus.set(player.x, 0, player.z);
   updateSky(dt, now, focus);
 
   renderer.render(scene, camera);
@@ -132,7 +135,8 @@ function hideSplash() {
 resize();
 toMenu();
 initAccount();
-resumeTrackChoice();
+initMp();
+resumeTrackChoice(resumeCreate);
 requestAnimationFrame(frame);
 trackVisit();
 

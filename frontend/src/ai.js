@@ -3,7 +3,7 @@
 import { LAPS } from './config.js';
 import { N, P, T, NR, HALF, WORLD_K, bend, spacing } from './track.js';
 import { pads } from './scenery.js';
-import { G, player, playerProgress } from './state.js';
+import { G, MP, player, playerProgress } from './state.js';
 import { spawn } from './particles.js';
 import { SLIP_T } from './itemdefs.js';
 
@@ -16,8 +16,16 @@ function cpuPos(c) {
 
 export function updateCpus(dt) {
   const pp = playerProgress();
+  // In a room where another game is the host, the CPU karts follow the host's states (mp.js) instead of deciding.
+  const follow = MP.on && !MP.host;
   G.cpus.forEach((c) => {
-    if (G.state === 'race' || G.state === 'done') {
+    if (follow && (G.state === 'race' || G.state === 'done')) {
+      const step = ((c.speed || 0) / spacing) * dt;
+      c.netProg += step;
+      c.prog += step + (c.netProg - c.prog) * Math.min(1, dt * 5);
+      if (Math.abs(c.netProg - c.prog) > 40) c.prog = c.netProg;
+      c.lat += (c.netLat - c.lat) * Math.min(1, dt * 6);
+    } else if (G.state === 'race' || G.state === 'done') {
       const diff = c.prog - pp;
       const want = diff > 45 / WORLD_K ? -4 : diff < -60 / WORLD_K ? 3.5 : 0;
       c.band += (want - c.band) * Math.min(1, dt * 0.8);

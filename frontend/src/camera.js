@@ -4,6 +4,7 @@ import { camera } from './engine.js';
 import { G, player } from './state.js';
 import { TEAMS, settings } from './config.js';
 import { updateStage } from './stage.js';
+import { garageActive, updateGarage } from './garage.js';
 
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const want = new THREE.Vector3(), look = new THREE.Vector3();
@@ -19,6 +20,12 @@ const fitFov = (vfov) => {
 };
 
 export function updateCamera(dt) {
+  // Multiplayer lobby: the camera looks at the pit garage (garage.js).
+  if (G.state === 'menu' && garageActive()) {
+    updateStage(dt, null);
+    updateGarage(dt, camera, fitFov);
+    return;
+  }
   if (G.state === 'menu') {
     // Fixed shot from behind the selected kart (like the race camera, a bit lower), with a slow breath.
     menuA += dt;

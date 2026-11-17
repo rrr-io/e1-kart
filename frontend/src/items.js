@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { $, scene, toon, outlineMat } from './engine.js';
 import { N, off, spacing, lateral, HALF, WORLD_K } from './track.js';
 import { boxes } from './scenery.js';
-import { G, player, playerProgress, boostFor } from './state.js';
+import { G, MP, isLocal, player, playerProgress, boostFor } from './state.js';
 import { spawn } from './particles.js';
 import { burst } from './fx.js';
 import { toast, playerPosition } from './hud.js';
@@ -23,7 +23,7 @@ const BAT_SPEED = 60;       // swarm speed (units/s), used for the hit delay and
 
 let clock = 0;
 
-const racers = () => [player, ...G.cpus];
+const racers = () => [player, ...G.cpus, ...G.remotes.filter((r) => !r.left)];
 const progOf = (o) => (o === player ? playerProgress() : o.prog);
 const rankOf = (o) => {
   const p = progOf(o);
@@ -62,13 +62,14 @@ function makePop() {
   g.add(puddle);
   g.visible = false;
   scene.add(g);
-  return { g, body, live: false, age: 0, owner: null };
+  return { g, body, live: false, age: 0, owner: null, n: null };
 }
 const pops = Array.from({ length: 10 }, makePop);
 
-function dropPop(owner, x, z) {
+// n: the popsicle's id in a room, so every game removes the same one when somebody steps on it.
+function dropPop(owner, x, z, n = null) {
   const slot = pops.find((p) => !p.live) || pops.reduce((a, b) => (b.age > a.age ? b : a));
-  Object.assign(slot, { live: true, age: 0, owner, x, z });
+  Object.assign(slot, { live: true, age: 0, owner, x, z, n });
   slot.g.position.set(x, 0, z);
   slot.g.visible = true;
 }
@@ -94,10 +95,15 @@ function updatePops(dt) {
     p.body.rotation.y += dt * 1.2;
     if (p.age > POP_LIFE) { p.live = false; p.g.visible = false; return; }
     for (const o of racers()) {
+      if (!isLocal(o)) continue; // a friend's kart: their game decides, and tells us (popOff)
       if (o === p.owner && p.age < 1) continue;
       if (o.ghost > 0 || o.slip > 0) continue;
       const dx = o.x - p.x, dz = o.z - p.z;
-      if (dx * dx + dz * dz < POP_R2) { slip(o); p.live = false; p.g.visible = false; break; }
+      if (dx * dx + dz * dz < POP_R2) {
+        slip(o); p.live = false; p.g.visible = false;
+        if (p.n) MP.send({ t: 'ev', k: 'popOff', n: p.n });
+        break;
+      }
     }
   });
 }
@@ -178,10 +184,30 @@ function releaseBats(user) {
   const dir = user === player ? user.h : user.kart.root.rotation.y;
   const dx = Math.sin(dir), dz = Math.cos(dir), u = progOf(user);
   spawnBats(user.x, user.z, dx, dz);
+  queueBats(user, u);
+  MP.send({ t: 'ev', k: 'bats', x: Math.round(user.x * 100) / 100, z: Math.round(user.z * 100) / 100, d: Math.round(dir * 1000) / 1000, u: Math.round(u * 100) / 100 });
+}
+
+// The karts behind u that the swarm will reach (only ours: friends' games do the same for their karts).
+function queueBats(user, u) {
   racers().forEach((o) => {
     const d = u - progOf(o);
-    if (o !== user && o.finish == null && d > 0 && d < BAT_RANGE) pending.push({ o, at: clock + 0.3 + (d * spacing) / BAT_SPEED });
+    if (o !== user && isLocal(o) && o.finish == null && d > 0 && d < BAT_RANGE) pending.push({ o, at: clock + 0.3 + (d * spacing) / BAT_SPEED });
   });
+}
+
+let popSeq = 0;
+/** A race event from a friend's game (mp.js): owner is their kart. */
+export function netEvent(ev, owner) {
+  if (G.state === 'menu') return;
+  if (ev.k === 'pop') dropPop(owner, ev.x, ev.z, ev.n);
+  else if (ev.k === 'popOff') pops.forEach((p) => { if (p.live && p.n === ev.n) { p.live = false; p.g.visible = false; } });
+  else if (ev.k === 'bats') { spawnBats(ev.x, ev.z, Math.sin(ev.d), Math.cos(ev.d)); queueBats(owner, ev.u); }
+}
+function dropShared(o, x, z) {
+  const n = MP.on ? MP.me + ':' + (++popSeq) : null;
+  dropPop(o, x, z, n);
+  if (n) MP.send({ t: 'ev', k: 'pop', x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, n });
 }
 
 function hitBats(o) {
@@ -255,7 +281,7 @@ export function useItem(o) {
     burst('flare', o.x, 1, o.z, 4.5);
     if (me) { toast('LIGHTSTICK BOOST!'); radio(o.team, 'lightstick'); }
   } else if (kind === 'pop') {
-    if (me) dropPop(o, o.x - Math.sin(o.h) * 3.4, o.z - Math.cos(o.h) * 3.4);
+    if (me) dropShared(o, o.x - Math.sin(o.h) * 3.4, o.z - Math.cos(o.h) * 3.4);
     else {
       // The CPU drops it where the closest kart behind is driving.
       const i = (((Math.floor(o.prog) - 3) % N) + N) % N, p = progOf(o);
@@ -263,7 +289,7 @@ export function useItem(o) {
       racers().forEach((r) => { if (r !== o && p - progOf(r) > 0 && (!near || progOf(r) > progOf(near))) near = r; });
       const lat = near ? Math.max(-(HALF - 2), Math.min(HALF - 2, lateral(i, near.x, near.z))) : o.lat;
       const e = off(i, lat);
-      dropPop(o, e[0], e[1]);
+      dropShared(o, e[0], e[1]);
     }
     if (me) { toast('BLOOD POP!'); radio(o.team, 'attack', true); }
   } else if (kind === 'bats') {
@@ -337,7 +363,7 @@ export function updateItems(dt) {
       spawn(o.x + (Math.random() - 0.5) * 2.4, 0.5 + Math.random() * 1.6, o.z + (Math.random() - 0.5) * 2.4, petalColor(o), (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.7);
     }
   });
-  if (racing) updateCpuItems(dt);
+  if (racing && (!MP.on || MP.host)) updateCpuItems(dt);
   updatePops(dt);
   updateBats(dt);
   updateFlowers(dt);

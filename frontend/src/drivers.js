@@ -20,6 +20,7 @@
 // Moments:
 //   select      menu preview when you pick the team
 //   start       dialogue before the lights (advance by tapping)
+//   mpStart     the same, in a multiplayer room (challenge and MAMA live voting)
 //   miniTurbo   in-race radio after a mini-turbo
 //   lightstick  in-race radio when you use the lightstick boost
 //   lastLap     radio at the start of the last lap
@@ -36,6 +37,7 @@
 export const DEFAULT_MOOD = {
   select: 'normal',
   start: 'normal',
+  mpStart: 'normal',
   miniTurbo: 'hype',
   lightstick: 'happy',
   lastLap: 'hype',
@@ -82,6 +84,9 @@ export const DRIVERS = [
         ['Fun fact: most overtakes here happen into turn one.', { t: "So let's make one.", mood: 'hype' }],
         ['Tyres are cold for the first half lap.', 'Take it easy, then trust the grip. I trust you.'],
       ],
+      mpStart: [
+        ["Real rivals today, not CPUs. I've already studied their racing lines.", { t: 'Fun fact: Nov 20, 18:00 KST is MAMA live voting. Win here, then vote ENHYPEN there!', mood: 'hype' }],
+      ],
       miniTurbo: ['Textbook. Honestly, better than textbook.'],
       lastLap: ["Final lap. Gap's holding. Keep the lines we practiced."],
       takeLead: ["P1. Are you a Pro?"],
@@ -111,6 +116,9 @@ export const DRIVERS = [
         ['Easy. Deep breath.', { t: "Okay. Now let's beat everyone.", mood: 'hype' }],
         ['No pressure, Engene.', { t: '…Little bit of pressure. We want P1.', mood: 'hype' }],
       ],
+      mpStart: [
+        ['A friend challenged us? Cute.', { t: "Let's beat them. Then we all vote ENHYPEN on Nov 20, 18:00 KST. Deal?", mood: 'hype' }],
+      ],
       miniTurbo: ['Smooth. Very smooth.'],
       lastLap: ['Final lap. Stay chill. But also, go.'],
       takeLead: ["P1. Chill. Stay chill. …Okay, but also don't let them pass you."],
@@ -138,6 +146,9 @@ export const DRIVERS = [
       select: ["Engene, fast laps? Let's go. We can do it."],
       start: [
         ['Ready?', { t: 'Good. Me too.', mood: 'hype' }],
+      ],
+      mpStart: [
+        ['A real race.', { t: 'Win it. Then Nov 20, 18:00 KST: MAMA live voting. Same focus.', mood: 'hype' }],
       ],
       miniTurbo: ['Nice. Again!'],
       lastLap: ['Last lap. Enjoy it.'],
@@ -168,6 +179,9 @@ export const DRIVERS = [
       start: [
         ["You look nervous. It's okay, I'm right here.", { t: "Now let's show them how it's done.", mood: 'hype' }],
       ],
+      mpStart: [
+        ['Ooh, you brought friends! Be nice… after the finish line.', { t: 'And on Nov 20, 18:00 KST everyone votes ENHYPEN live on Mnet Plus. Promise me!', mood: 'hype' }],
+      ],
       miniTurbo: ['Ooh, that was pretty. And fast!'],
       lastLap: ["Final lap! I'm cheering the loudest, you know that."],
       takeLead: ["We're first! Selfie? Nah, maybe later."],
@@ -197,6 +211,9 @@ export const DRIVERS = [
         ['Radio check. Engene, you there?', "Okay. Mirrors, focus, hands on the wheel. I'm serious.", { t: "…Mostly serious. Let's go.", mood: 'hype' }],
         ['Three laps. I believe in you.', { t: 'Now prove me right.', mood: 'hype' }],
       ],
+      mpStart: [
+        ['Okay, Engenes, listen up. Friendly race, serious rules.', 'Rule one: no crying if you lose. Rule two: Nov 20, 18:00 KST, MAMA live voting.', { t: "Rule two matters more. Let's go!", mood: 'hype' }],
+      ],
       miniTurbo: ["That's my Engene!", 'Wait, did you just— okay, that was cool.'],
       lastLap: ["Final lap. Eyes up, no silly mistakes. I'm watching."],
       takeLead: ["P1! ENGENEEE!"],
@@ -224,6 +241,9 @@ export const DRIVERS = [
       select: ["Engene. Let's win. Together."],
       start: [
         ['Ready.', "I've got your back. Whole race."],
+      ],
+      mpStart: [
+        ["Friends or not, I don't lose.", { t: "Nov 20, 18:00 KST. Live voting. We don't lose that one either.", mood: 'hype' }],
       ],
       miniTurbo: ['Good.'],
       lastLap: ["Last lap. Don't let them pass. Not now."],

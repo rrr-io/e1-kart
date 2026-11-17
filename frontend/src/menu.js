@@ -119,6 +119,7 @@ export function toMenu() {
   resetItems();
 
   // The player's kart stopped near the finish line, the others in grid behind it.
+  G.karts.forEach((kk) => { kk.root.visible = true; });
   const k = G.karts[0];
   const o = off(4, 0);
   paintKart(k, TEAMS[settings.teamIdx].color);

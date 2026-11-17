@@ -5,8 +5,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   base: '/',
   // In development, /api calls go to the local Spring Boot backend.
-  server: { proxy: { '/api': 'http://localhost:8080' } },
-  preview: { proxy: { '/api': 'http://localhost:8080' } },
+  // ws: the multiplayer WebSocket (/api/mp) goes there too.
+  server: { proxy: { '/api': { target: 'http://localhost:8080', ws: true } } },
+  preview: { proxy: { '/api': { target: 'http://localhost:8080', ws: true } } },
   build: {
     target: 'es2019',
     chunkSizeWarningLimit: 900,

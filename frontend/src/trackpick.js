@@ -9,7 +9,7 @@ import { TRACKS, TRACK_IDS, TRACK_ID, isLocked, UNLOCK_LABEL } from './theme.js'
 
 const GO_FLAG = 'e1kart-go';
 let idx = Math.max(0, TRACK_IDS.indexOf(TRACK_ID));
-let onGo = null;
+let onGo = null, goMode = '';
 
 // ---------- Preview: a shot rendered from the game itself, plus a small map of the layout ----------
 const SHOTS = {
@@ -112,17 +112,27 @@ function swipe() {
   view.addEventListener('pointercancel', end);
 }
 
-export function openTrackBox(cb) {
+// mode: '' for a race, 'mp' for a multiplayer room (remembered across the reload, see takeGoFlag).
+export function openTrackBox(cb, mode = '') {
   onGo = cb;
+  goMode = mode;
+  $('trackBack').onclick = closeTrackBox;
+  $('trackClose').onclick = closeTrackBox;
   show(Math.max(0, TRACK_IDS.indexOf(TRACK_ID)), false);
   $('trackBox').hidden = false;
   $('trackGo').focus();
 }
 export function closeTrackBox() { $('trackBox').hidden = true; }
 
-/** After a reload caused by a track change: carry on as if GO had been pressed. */
+/** After a reload caused by a track change: the mode GO was pressed in ('' or 'mp'), or null if it wasn't. */
 export function takeGoFlag() {
-  try { const v = sessionStorage.getItem(GO_FLAG); sessionStorage.removeItem(GO_FLAG); return v === TRACK_ID; } catch (e) { return false; }
+  try {
+    const v = sessionStorage.getItem(GO_FLAG);
+    sessionStorage.removeItem(GO_FLAG);
+    if (!v) return null;
+    const [id, mode = ''] = v.split('|');
+    return id === TRACK_ID ? mode : null;
+  } catch (e) { return null; }
 }
 
 function go() {
@@ -131,7 +141,7 @@ function go() {
   if (id !== TRACK_ID) {
     settings.track = id;
     saveSettings();
-    try { sessionStorage.setItem(GO_FLAG, id); } catch (e) { /* the player just presses START again */ }
+    try { sessionStorage.setItem(GO_FLAG, id + (goMode ? '|' + goMode : '')); } catch (e) { /* the player just presses START again */ }
     $('trackGo').disabled = true;
     $('trackGo').textContent = 'LOADING…';
     location.reload();

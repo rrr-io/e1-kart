@@ -4,6 +4,8 @@ Mobile single-player kart racer inspired by E1 / Enhypen MAMA Grand Prix: a nigh
 
 The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run per race: runs are earned by uploading a screenshot of a MAMA FANS' CHOICE voting certificate (**1 certificate = 1 run**, each certificate can only be used once). The **BLOODY PARADISE** track worked the same way with FAVORITE MCD STAGE certificates (their own runs) until the vote closed on 13 November 2026, 23:59 KST; since then it is free to play like Night Circuit (`cost`, `note` and `cert` are getters on the track in `theme.js`). When the server allows it (`E1KART_FREE_PLAY`), OPTIONS shows **PLAY WITHOUT A CERTIFICATE** to race those tracks for free, for testing.
 
+**Multiplayer (MULTIPLAYER)**: real-time races for 2 to 6 players ("Challenge your friends, remind them to vote, show up for ENHYPEN."). Not public yet: the MULTIPLAYER button shows only on devices that opened `/?preview=mp` (or an invite link); `MP_PUBLIC` in `frontend/src/mp.js` turns it on for everyone. The lobby sits in front of a 3D pit garage (`garage.js`, built far from the track in the same toon style, the camera moves there while the lobby is open) with a box per team: the players' karts in their open, lit boxes, the CPU karts behind half-closed shutters. Whoever creates the room picks the track and gets a 5-character code to share (INVITE TO VOTE & RACE shares a link `/?room=CODE` with a reminder of the MAMA live voting until Nov 20); every player needs a different driver (tiles with the drivers' faces light up as friends join and pick, with a notice in the room box), and the free teams race as CPU karts. Multiplayer races are just for fun: they never count for the standings. Server: `RoomService` (rooms, teams, phases, relay) behind the WebSocket `/api/mp` (`MultiplayerSocketHandler`, `WebSocketConfig`); Caddy already forwards it with the rest of `/api/*`. Game: `frontend/src/mp.js` (connection, lobby, sending the own kart ~15 times a second and drawing the friends' karts 0.11 s in the past); the host's game also drives the CPU karts and sends their state; popsicles and bat swarms travel as events. Before the start each driver says the multiplayer lines (`mpStart` in `drivers.js`), and the lights go when everyone has closed the dialogue.
+
 **Where things are**
 
 - Game: https://e1-kart.ensite.org (official) · https://e1kart.rrriooo.com (debug, same game and data)
@@ -15,7 +17,7 @@ The **NIGHT CIRCUIT** is free to play. The **INTERSTELLAR** track costs one run 
 |---|---|
 | Game | JavaScript (ES modules), [three.js](https://threejs.org) 0.128, HTML + CSS for HUD and menus |
 | Build | [Vite](https://vitejs.dev) 5, [vite-plugin-pwa](https://vite-pwa-org.netlify.app) (installable, offline-capable) |
-| API | Java 21, Spring Boot 3.3 (web, data-jpa, validation), package-by-layer |
+| API | Java 21, Spring Boot 3.3 (web, websocket, data-jpa, validation), package-by-layer |
 | Database | SQLite (file in a Docker volume) |
 | Certificate reading | Tesseract OCR 5 (CLI inside the container); card detection, ENHYPEN photo check and ID voting ported from the collab verifier |
 | CI/CD | GitHub Actions: one workflow for the game, one for the API |

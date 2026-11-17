@@ -6,7 +6,13 @@ export const input = { l: false, r: false, ax: 0, drift: false, brake: false, it
 // state: 'menu' | 'intro' (pre-race dialogue) | 'count' (lights) | 'race' | 'done' (crossed the finish line)
 // runId: race paid for with a run (null in free-play mode).
 // ending: end-of-race dialogue already started.
-export const G = { state: 'menu', raceT: 0, countT: 0, lapStart: 0, bestLap: null, doneT: 0, cpus: [], karts: [], runId: null, ending: false };
+export const G = { state: 'menu', raceT: 0, countT: 0, lapStart: 0, bestLap: null, doneT: 0, cpus: [], remotes: [], karts: [], runId: null, ending: false };
+
+// Multiplayer (mp.js): on during a race in a room. host: this game also drives the CPU karts.
+// roster: the human players [{ id, team }] by join order; me: this game's id. send/tick/afterIntro are set by mp.js.
+export const MP = { on: false, host: false, me: 0, roster: [], send: () => {}, tick: () => {}, afterIntro: () => Promise.resolve() };
+/** True for the karts this game decides about: its own, and the CPU karts unless another game hosts them. */
+export const isLocal = (o) => !o.remote && (o === player || !MP.on || MP.host);
 
 export const player = {
   x: 0, z: 0, h: 0, v: 0,

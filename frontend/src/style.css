@@ -456,6 +456,51 @@ html.pwa #game,html.pwa #splash{bottom:auto}
 
 /* I Want You: the MV gate (mvgate.js) and the glitch between the two worlds (want.js). */
 .mv-box .run-card{width:min(560px,94vw)}
+/* Multiplayer: button in the menu corner and the room box */
+.gear.mp-btn{background:var(--red);color:var(--paper);border-color:var(--paper)}
+.gear.mp-btn[hidden]{display:none}
+/* The 3D garage is drawn by the game behind this box (garage.js): no dark veil, and the rest of the menu hides. */
+.mp-box{background:none}
+#menu.mp-lobby>*{visibility:hidden}
+#menu.mp-lobby .run-box{visibility:visible}
+.mp-box .run-card{position:relative;width:min(520px,100%);background:rgba(11,16,36,.9)}
+/* In a room the box moves right, so the garage (the karts in their boxes) shows on the left. */
+.mp-box.in-room{justify-content:flex-end;padding-right:max(10px,env(safe-area-inset-right))}
+.mp-box.in-room{justify-content:center;padding-right:0}
+.mp-box.in-room .run-card{width:min(720px,100%)}
+.mp-box #mpRoomView{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.mp-box .mp-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+@media (max-width:560px){.mp-box #mpRoomView{grid-template-columns:1fr}}
+@media (max-height:500px){.mp-invite{display:none}}
+.mp-box #mpStartView{display:flex;flex-direction:column;gap:10px}
+.mp-box [hidden]{display:none!important}
+.mp-join input{flex:1 1 auto;min-width:0;height:48px;padding:0 12px;border:3px solid var(--ink);outline:2px solid rgba(159,208,255,.4);background:#0b1024;color:var(--paper);font-family:var(--display);font-size:16px;letter-spacing:4px;text-transform:uppercase}
+.mp-code{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mp-code b{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:4px;color:var(--paper);text-shadow:3px 3px 0 var(--red)}
+.mp-track{font-size:18px;color:var(--moon-dim)}
+.mp-invite{font-size:15px;line-height:1.15;color:var(--moon-dim);white-space:pre-line;margin:0}
+.mp-head{display:flex;justify-content:space-between}
+.mp-teams{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+/* a small square with the driver's face (top of the portrait), a bar in the team colour, and who's there */
+.mp-teams .team{position:relative;padding:0;display:flex;flex-direction:column;border:2px solid #0b1024;border-bottom:6px solid var(--tc);background:#18244a;color:var(--paper);cursor:pointer;transition:background .25s,box-shadow .25s,filter .25s;overflow:hidden}
+.mp-box .mp-teams .team{padding:0;min-height:0;gap:0;justify-content:flex-start;align-items:stretch;flex:none}
+.mp-teams .face{display:block;width:100%;height:auto;aspect-ratio:6/5;image-rendering:pixelated;background:var(--tc)}
+.mp-teams .nm{position:absolute;left:0;right:0;bottom:0;display:block;padding:3px 2px 2px;background:rgba(11,16,36,.72);text-align:center}
+.mp-box .mp-teams .who{position:absolute;top:3px;left:3px;padding:3px 4px;background:var(--paper);color:var(--ink);font-family:var(--display);font-size:7px;line-height:1;white-space:nowrap}
+.mp-box .mp-teams .team.free .who{background:rgba(11,16,36,.85);color:var(--moon-dim)}
+.mp-box .mp-teams .team .drv{display:block;font-family:var(--display);font-size:8px;line-height:1.2;letter-spacing:.5px;color:var(--paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+/* free: dark and grey; taken: lit in the team colour; just joined/picked: a flash */
+.mp-teams .team.free{filter:grayscale(1) brightness(.5)}
+.mp-teams .team.free:hover{filter:grayscale(.3) brightness(.85)}
+.mp-teams .team.taken,.mp-teams .team.mine{border-color:var(--tc);box-shadow:0 0 12px var(--tc)}
+.mp-teams .team.taken{cursor:default}
+.mp-teams .team.fresh{animation:mpJoin 1.2s steps(6) 1}
+@keyframes mpJoin{0%{filter:brightness(3);transform:scale(1.15)}50%{filter:brightness(1.6)}100%{filter:none;transform:none}}
+.mp-notice{margin:0;padding:8px 10px;background:var(--paper);color:var(--ink);font-family:var(--display);font-size:9px;text-align:center;box-shadow:4px 4px 0 var(--red)}
+.mp-notice.pop{animation:mpNotice .5s steps(4) 1}
+@keyframes mpNotice{0%{transform:scale(1.2);background:#ffd23a}100%{transform:none}}
+.mp-tag{margin:0;font-family:var(--display);font-size:10px;line-height:1.6;color:var(--paper)}
+.stand .hum span:last-child::after,#resList .hum .nm::after{content:' ●'}
 .mv-player{margin-top:10px;height:min(300px,calc(100vh - 215px));min-height:120px;background:#000;border:3px solid var(--ink)}
 .mv-player iframe{width:100%;height:100%;display:block;border:0}
 .mv-track{height:8px;margin-top:8px;background:rgba(255,255,255,.14);border:2px solid var(--ink)}

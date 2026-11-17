@@ -53,6 +53,12 @@ function drawMini() {
   mctx.strokeStyle = '#5a5a62'; mctx.lineWidth = 6; mctx.stroke(trackPath);
   mctx.strokeStyle = '#ffffff'; mctx.lineWidth = 1; mctx.setLineDash([2, 2]); mctx.stroke(trackPath); mctx.setLineDash([]);
   G.cpus.forEach((c) => { mctx.fillStyle = TEAMS[c.team].color; mctx.fillRect(mx(c.x) - 2, mz(c.z) - 2, 4, 4); });
+  // Friends in a room: a bit bigger, with a dark outline.
+  G.remotes.forEach((r) => {
+    if (r.left) return;
+    mctx.fillStyle = '#0b0b0d'; mctx.fillRect(mx(r.x) - 3, mz(r.z) - 3, 6, 6);
+    mctx.fillStyle = TEAMS[r.team].color; mctx.fillRect(mx(r.x) - 2, mz(r.z) - 2, 4, 4);
+  });
   mctx.fillStyle = TEAMS[player.team].color;
   mctx.fillRect(mx(player.x) - 3, mz(player.z) - 3, 6, 6);
   mctx.strokeStyle = '#ffffff';
@@ -63,6 +69,7 @@ function drawMini() {
 function ranking() {
   const list = [{ me: true, team: player.team, prog: player.finish != null ? LAPS * N + 1e6 - player.finish : playerProgress() }];
   G.cpus.forEach((c) => list.push({ me: false, team: c.team, prog: c.finish != null ? LAPS * N + 1e6 - c.finish : c.prog }));
+  G.remotes.forEach((r) => { if (!r.left) list.push({ me: false, human: true, team: r.team, prog: r.finish != null ? LAPS * N + 1e6 - r.finish : r.prog }); });
   list.sort((a, b) => b.prog - a.prog);
   return list;
 }
@@ -91,7 +98,7 @@ export function updateHud(dt) {
   standT -= dt;
   if (standT <= 0) {
     standT = 0.25;
-    const html = r.map((e, k) => row(e.me ? 'me' : '',
+    const html = r.map((e, k) => row(e.me ? 'me' : e.human ? 'hum' : '',
       '<span class="n">' + (k + 1) + '</span><span class="chip" style="background:' + TEAMS[e.team].color + '"></span><span>' + TEAMS[e.team].name + '</span>')).join('');
     if (html !== lastStand) { $('stand').innerHTML = html; lastStand = html; }
   }
@@ -105,9 +112,14 @@ export function showResults() {
     me: false, team: c.team,
     t: c.finish != null ? c.finish : G.raceT + (LAPS * N - c.prog) / ((c.speed || 30) / spacing),
   }));
+  // Friends in a room: their time once they finish, an estimate until then.
+  G.remotes.forEach((r) => {
+    if (r.left) return;
+    rows.push({ me: false, human: true, team: r.team, t: r.finish != null ? r.finish : G.raceT + Math.max(0, LAPS * N - r.prog) / (Math.max(10, r.v || 30) / spacing) });
+  });
   rows.sort((a, b) => a.t - b.t);
   const w = rows[0].t;
-  $('resList').innerHTML = rows.map((e, k) => row(e.me ? 'me' : '',
+  $('resList').innerHTML = rows.map((e, k) => row(e.me ? 'me' : e.human ? 'hum' : '',
     '<span class="p">' + (k + 1) + '</span><span class="chip" style="background:' + TEAMS[e.team].color + '"></span><span class="nm">' + TEAMS[e.team].name +
     '</span><span class="t">' + (k ? '+' + (e.t - w).toFixed(2) : fmt(e.t)) + '</span>')).join('');
   // Header and driver card: position, verdict, driver.

@@ -225,7 +225,8 @@ function advance() {
  * opts.extra: more lines (strings) said after the driver's own; the links box (#dlgLinks) shows under the last one.
  */
 export function talk(teamIdx, key, opts = {}) {
-  const lines = pickLines(teamIdx, key);
+  let lines = pickLines(teamIdx, key);
+  if (!lines.length && key === 'mpStart') lines = pickLines(teamIdx, 'start'); // a driver without multiplayer lines
   if (opts.extra && lines.length) {
     const mood = lines[lines.length - 1].mood;
     opts.extra.forEach((t, n) => lines.push({ t, mood, links: n === opts.extra.length - 1 }));

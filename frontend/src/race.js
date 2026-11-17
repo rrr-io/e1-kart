@@ -4,7 +4,7 @@ import { TEAMS, settings } from './config.js';
 import { N, off, yawAt } from './track.js';
 import { startLights, resetBoxes, crowdCheers } from './scenery.js';
 import { paintKart } from './kart.js';
-import { G, player } from './state.js';
+import { G, MP, player } from './state.js';
 import { updateCpus } from './ai.js';
 import { placePlayer } from './physics.js';
 import { banner } from './hud.js';
@@ -15,34 +15,63 @@ import { wantMusic, prepareMusic, fadeOutMusic, setTempo, sfx } from './audio.js
 const FADE = 0.7; // seconds of menu-music fade between the dialogue and the countdown
 import { TRACK_ID } from './theme.js';
 import { track } from './stats.js';
+import { liveOn } from './campaign.js';
 
 const COUNTDOWN = 3.6;
 const PLAYER_SLOT = 3;
 
+// Who starts where. Alone: the player in the middle of the grid. In a room: the human players by join order
+// from pole position, then the CPU karts with the free teams (the same order on every player's screen).
+function grid() {
+  if (!MP.on) {
+    const cpus = [...TEAMS.keys()].filter((k) => k !== settings.teamIdx);
+    return [...TEAMS.keys()].map((slot) => (slot === PLAYER_SLOT ? { me: true, team: settings.teamIdx } : { team: cpus.shift() }));
+  }
+  const taken = MP.roster.map((p) => p.team);
+  return [
+    ...MP.roster.map((p) => ({ me: p.id === MP.me, id: p.id, team: p.team, human: true })),
+    ...[...TEAMS.keys()].filter((k) => !taken.includes(k)).map((team) => ({ team })),
+  ];
+}
+
 export function setupRace() {
-  track('race_start', TRACK_ID + ':' + TEAMS[settings.teamIdx].name.split(' ')[0]);
-  const others = [...TEAMS.keys()].filter((k) => k !== settings.teamIdx);
+  const order = grid();
+  const myTeam = order.find((e) => e.me).team;
+  if (!MP.on) track('race_start', TRACK_ID + ':' + TEAMS[myTeam].name.split(' ')[0]);
   G.cpus = [];
+  G.remotes = [];
+  G.karts.forEach((k) => { k.root.visible = true; k.body.rotation.set(0, 0, 0); });
   let ck = 0;
-  for (let slot = 0; slot < TEAMS.length; slot++) {
-    const idx = (N - 4 - slot * 3 + N) % N, lat = slot % 2 ? -3.2 : 3.2;
-    if (slot === PLAYER_SLOT) {
+  for (let slot = 0; slot < order.length; slot++) {
+    const idx = (N - 4 - slot * 3 + N) % N, lat = slot % 2 ? -3.2 : 3.2, e = order[slot];
+    if (e.me) {
       const o = off(idx, lat);
       Object.assign(player, {
         x: o[0], z: o[1], h: yawAt(idx), v: 0, idx, prevIdx: undefined, laps: -1, half: true,
-        drifting: false, dT: 0, boost: 0, item: null, hop: 0, steerS: 0, finish: null, team: settings.teamIdx,
+        drifting: false, dT: 0, boost: 0, item: null, hop: 0, steerS: 0, finish: null, team: myTeam,
         slip: 0, bats: 0, ghost: 0, spun: false,
       });
       player.kart = G.karts[0];
-      paintKart(G.karts[0], TEAMS[settings.teamIdx].color);
+      paintKart(G.karts[0], TEAMS[myTeam].color);
+    } else if (e.human) {
+      // A friend's kart: placed on the grid, then moved by the states their game sends (mp.js).
+      const kart = G.karts[ck + 1], o = off(idx, lat);
+      paintKart(kart, TEAMS[e.team].color);
+      G.remotes.push({
+        remote: true, id: e.id, team: e.team, kart, x: o[0], z: o[1], h: yawAt(idx), v: 0, prog: idx - N,
+        finish: null, left: false, boost: 0, slip: 0, bats: 0, ghost: 0, pal: 0, item: null, buf: [],
+      });
+      kart.root.position.set(o[0], 0, o[1]);
+      kart.root.rotation.y = yawAt(idx);
+      ck++;
     } else {
-      const t = others[ck], kart = G.karts[ck + 1];
+      const t = e.team, kart = G.karts[ck + 1];
       paintKart(kart, TEAMS[t].color);
       G.cpus.push({
         kart, team: t, prog: idx - N, lat, latT: lat,
         spd: 40 + ck * 0.9 + Math.random() * 1.1, band: 0, boost: 0,
         item: null, slip: 0, bats: 0, ghost: 0, pickCd: 0, spun: false,
-        timer: 1 + Math.random() * 2, finish: null, speed: 0, x: 0, z: 0,
+        timer: 1 + Math.random() * 2, finish: null, speed: 0, x: 0, z: 0, netProg: idx - N, netLat: lat,
       });
       ck++;
     }
@@ -63,7 +92,9 @@ export function setupRace() {
   // and the race music starts on the GO.
   wantMusic('menu');
   prepareMusic(TRACK_ID);
-  talk(settings.teamIdx, 'start').then(() => {
+  // In a room the lights go when everyone has closed the dialogue (MP.afterIntro waits for the server's GO).
+  // The multiplayer lines remind the MAMA live voting: until it's over, then the usual ones.
+  talk(myTeam, MP.on && liveOn() ? 'mpStart' : 'start').then(() => (MP.on ? MP.afterIntro() : null)).then(() => {
     fadeOutMusic(FADE);
     setTimeout(startCountdown, FADE * 1000);
   });

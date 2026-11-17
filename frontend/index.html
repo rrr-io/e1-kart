@@ -110,7 +110,7 @@
       </header>
 
       <div class="m-corner m-right">
-        <div class="m-tools"><button class="gear" id="e1Btn" aria-expanded="false" aria-controls="e1Panel">WHAT IS E1?</button><button class="gear" id="optBtn" aria-expanded="false" aria-controls="optPanel">OPTIONS</button></div>
+        <div class="m-tools"><button class="gear mp-btn" id="mpBtn" hidden>MULTIPLAYER</button><button class="gear" id="e1Btn" aria-expanded="false" aria-controls="e1Panel">WHAT IS E1?</button><button class="gear" id="optBtn" aria-expanded="false" aria-controls="optPanel">OPTIONS</button></div>
       </div>
 
       <div class="m-bubble" id="teamIntro">
@@ -147,6 +147,35 @@
           <div class="mv-track" aria-hidden="true"><i id="mvBar"></i></div>
           <p class="mv-info" id="mvInfo" role="status"></p>
           <div class="row"><button class="go" id="mvGo" disabled>RACE ▶</button></div>
+        </div>
+      </div>
+
+      <div class="run-box mp-box" id="mpBox" hidden>
+        <div class="run-card" role="dialog" aria-labelledby="mpTitle">
+          <div class="run-head"><span id="mpTitle">MULTIPLAYER</span><button class="x" id="mpClose" aria-label="Close">✕</button></div>
+          <div id="mpStartView">
+            <p class="mp-tag">Challenge your friends, remind them to vote, show up for ENHYPEN.</p>
+            <p class="hint">2 to 6 players, each with a different team. Whoever creates the room picks the track.</p>
+            <p class="hint mp-live" id="mpLive" hidden>🗳️ Nov 20, 18:00 KST: MAMA live voting on Mnet Plus.</p>
+            <button class="go" id="mpCreate">CREATE ROOM ▶</button>
+            <span class="lbl">OR JOIN WITH A CODE</span>
+            <div class="row mp-join"><input id="mpCode" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" aria-label="Room code"><button class="go alt" id="mpJoin">JOIN</button></div>
+          </div>
+          <div id="mpRoomView" hidden>
+            <div class="mp-col">
+              <div class="mp-code"><span class="lbl">ROOM CODE</span><b id="mpRoomCode"></b><span class="mp-track" id="mpTrack"></span></div>
+              <p class="mp-notice" id="mpNotice" role="status" hidden></p>
+              <button class="go" id="mpInvite">INVITE TO VOTE &amp; RACE ↗</button>
+              <p class="mp-invite" id="mpInviteText"></p>
+              <p class="hint" id="mpWait"></p>
+              <div class="row"><button class="go alt" id="mpLeave">LEAVE</button><button class="go" id="mpGo">START RACE ▶</button></div>
+            </div>
+            <div class="mp-col">
+              <div class="mp-head"><span class="lbl">PICK YOUR DRIVER</span><span class="lbl" id="mpCount"></span></div>
+              <div class="mp-teams" id="mpTeams"></div>
+            </div>
+          </div>
+          <p class="msg" id="mpMsg" role="status" aria-live="polite"></p>
         </div>
       </div>
 
