@@ -79,7 +79,7 @@ export function setupRace() {
   resetBoxes();
   resetItems();
   // 'intro': the driver talks before the lights; the countdown starts once the dialogue closes.
-  Object.assign(G, { raceT: 0, countT: COUNTDOWN, lapStart: 0, bestLap: null, state: 'intro', ending: false });
+  Object.assign(G, { raceT: 0, countT: COUNTDOWN, countAt: null, lapStart: 0, bestLap: null, state: 'intro', ending: false });
   startLights.forEach((l) => l.material.color.set(0x330000));
   $('hud').hidden = false;
   $('controls').hidden = true;
@@ -103,8 +103,22 @@ export function setupRace() {
 export function startCountdown() {
   if (G.state !== 'intro') return;
   G.state = 'count';
+  // In a room every game counts from the server's GO by the wall clock (see raceClock).
+  if (MP.on && MP.goAt) G.countAt = MP.goAt + FADE * 1000;
   $('controls').hidden = false;
   sfx('countdown');
+}
+
+/** In a room the countdown and the race time follow the wall clock from the server's GO, not the frames:
+ *  a slow phone (frames longer than 50 ms are cut short) or a game left in the background would otherwise
+ *  run a slower clock and finish with a better time than a friend who crossed the line first.
+ *  Returns false when the usual frame clock applies. */
+export function raceClock(now) {
+  if (!MP.on || G.countAt == null) return false;
+  const e = (now - G.countAt) / 1000;
+  if (G.state === 'count') tickCountdown(Math.max(0, G.countT - (COUNTDOWN - e)));
+  if (G.state === 'race' || G.state === 'done') G.raceT = Math.max(G.raceT, e - (COUNTDOWN - 0.6));
+  return true;
 }
 
 export function tickCountdown(dt) {

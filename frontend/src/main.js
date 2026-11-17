@@ -19,7 +19,7 @@ import { updateItems } from './items.js';
 import { updateCamera } from './camera.js';
 import { updateHud, showResults, playerPosition } from './hud.js';
 import { talk } from './dialogue.js';
-import { tickCountdown } from './race.js';
+import { tickCountdown, raceClock } from './race.js';
 import { toMenu } from './menu.js';
 import { initInput } from './input.js';
 import { trackVisit, track } from './stats.js';
@@ -72,8 +72,10 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
 
-  if (G.state === 'count') tickCountdown(dt);
-  if (G.state === 'race' || G.state === 'done') G.raceT += dt;
+  if (!raceClock(now)) {
+    if (G.state === 'count') tickCountdown(dt);
+    if (G.state === 'race' || G.state === 'done') G.raceT += dt;
+  }
   if (G.state !== 'menu') {
     updatePlayer(dt);
     updateCpus(dt);

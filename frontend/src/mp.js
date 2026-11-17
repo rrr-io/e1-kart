@@ -106,7 +106,7 @@ function onMessage(m) {
     case 'info': return onInfo(m);
     case 'room': return onRoom(m);
     case 'intro': return onIntro();
-    case 'go': if (goResolve) { goResolve(); goResolve = null; } return;
+    case 'go': MP.goAt = performance.now(); if (goResolve) { goResolve(); goResolve = null; } return;
     case 's': return onState(m);
     case 'ev': { const r = remote(m.id); if (r) netEvent(m, r); return; }
     case 'fin': return onFinish(m);
