@@ -24,9 +24,9 @@ import { liveOn } from './campaign.js';
 import { toMenu } from './menu.js';
 import { setGarage, showGarage } from './garage.js';
 
-// Before going live the MULTIPLAYER button shows only on devices that opened the preview link (?preview=mp,
-// ?preview=off hides it again) or an invite link. Set MP_PUBLIC to true to show it to everyone.
-const MP_PUBLIC = false;
+// The MULTIPLAYER button is public. Set MP_PUBLIC to false to show it again only on devices that opened the
+// preview link (?preview=mp, ?preview=off hides it again) or an invite link.
+const MP_PUBLIC = true;
 const PREVIEW_KEY = 'e1kart-mp-preview';
 
 const SEND_MS = 66;      // own state, ~15 per second
