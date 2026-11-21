@@ -43,3 +43,36 @@ export function wireLiveLinks(el, trackId) {
   yt.onclick = () => track('stream', 'youtube:' + trackId);
   sp.onclick = () => track('stream', 'spotify:' + trackId);
 }
+
+// After the MAMA AWARDS (ENHYPEN won a Daesang) the drivers thank the ENGENEs and ask to stream the new album
+// "THE SIN : PARALLEL WORLD", one line each after their end-of-race dialogue, with a Spotify link under it.
+// Set ALBUM_ON to false to stop it.
+const ALBUM_ON = true;
+export const albumOn = () => ALBUM_ON && !liveOn() && !mcdOn();
+export const ALBUM_NAME = 'THE SIN : PARALLEL WORLD';
+export const ALBUM_SPOTIFY = 'https://open.spotify.com/album/2Gv2qKwrKxUZ025POfeOmT';
+// In TEAMS order: Jay, Jake, Sunghoon, Sunoo, Jungwon, Ni-ki.
+export const ALBUM_LINES = [
+  'Data check: one Daesang, one new album. Streaming it now is the logical next lap.',
+  'We won, Engenes! No pressure, but THE SIN : PARALLEL WORLD sounds great on repeat 😎',
+  "Thank you for the Daesang. Now go listen to the album. That's all.",
+  'A Daesang AND a new album?! Put it on and dance with me! 💖',
+  "We did it together. Next mission: stream the album, team. I'm counting on you.",
+  "We won. New album's out. You know what to do.",
+];
+
+/** Opens the album on Spotify (the app when it's installed). Must run inside a tap. */
+export function openAlbum(where) {
+  track('stream', 'album:' + where);
+  try {
+    window.open(ALBUM_SPOTIFY, '_blank', 'noopener');
+  } catch (e) { /* nothing to do */ }
+}
+
+/** Turns the links box under the driver's last line into a single Spotify link to the album. */
+export function wireAlbumLinks(el, trackId) {
+  const [sp, other] = el.querySelectorAll('a');
+  sp.href = ALBUM_SPOTIFY; sp.textContent = 'STREAM ON SPOTIFY ▶';
+  sp.onclick = () => track('stream', 'album-dlg:' + trackId);
+  other.hidden = true;
+}

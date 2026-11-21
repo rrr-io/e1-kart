@@ -24,7 +24,10 @@ const VOTES = [
   { until: Date.parse('2026-11-21T00:00:00+09:00'), card: ['NOV 20 · 18:00 KST · MAMA LIVE VOTING', 'VOTE ENHYPEN ON MNET PLUS'],
     post: '🚨 Nov 20, from 18:00 KST: vote ENHYPEN live on Mnet Plus during the MAMA AWARDS!' },
 ];
-const nextVote = () => VOTES.find((v) => Date.now() < v.until);
+// After the MAMA AWARDS: ENHYPEN's Daesang and the new album.
+const AFTER = { card: ['ENHYPEN · 2026 MAMA DAESANG', 'OUT NOW: THE SIN : PARALLEL WORLD'],
+  post: '🏆 ENHYPEN won a 2026 MAMA Daesang! 🎧 Stream THE SIN : PARALLEL WORLD' };
+const nextVote = () => VOTES.find((v) => Date.now() < v.until) || AFTER;
 const logoUrl = new URL('./assets/brand/e1-logo-pixel.png', import.meta.url).href;
 
 let ready = null;   // { blob, file, text, url } of the last results, or null while drawing
@@ -182,7 +185,7 @@ export async function prepareShare(r) {
     // Longest case ~250 of X's 280 (link 23, 🏁 2): 6th, NI-KI (RIKSTON DRIFT) on Bloody Paradise, MCD line. Fine for Threads and Bluesky too.
     const text = (r.pos === 1 ? 'I won' : 'I finished ' + ordinal(r.pos).toLowerCase()) + ' on ' + TRACK.name.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase()) +
       ' with ' + nameOf(r.team) + ' (' + team.name + ') in ' + fmt(r.time) + ' 🏁 Can you beat me in E1 Kart GP? ' +
-      (nextVote() ? nextVote().post : 'Vote ENHYPEN at the MAMA AWARDS!') + ' #EMGP2026 #2026MAMAVOTE #ENHYPEN';
+      (nextVote() ? nextVote().post : 'Vote ENHYPEN at the MAMA AWARDS!') + (nextVote() === AFTER ? ' #EMGP2026 #ENHYPEN #THE_SIN_PARALLEL_WORLD' : ' #EMGP2026 #2026MAMAVOTE #ENHYPEN');
     ready = { blob, file: new File([blob], 'e1-kart-gp.png', { type: 'image/png' }), text, url: LINK };
     btn.disabled = false;
   } catch (e) {

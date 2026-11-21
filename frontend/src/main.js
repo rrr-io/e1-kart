@@ -24,8 +24,8 @@ import { toMenu } from './menu.js';
 import { initInput } from './input.js';
 import { trackVisit } from './stats.js';
 import { TRACK, TRACK_ID, BLOODY } from './theme.js';
-import { openMnet, openMnetApp } from './mnet.js';
-import { mcdOn, MCD_LINES, wireMcdLinks, liveOn, LIVE_LINES, wireLiveLinks } from './campaign.js';
+import { openMnet } from './mnet.js';
+import { mcdOn, MCD_LINES, wireMcdLinks, liveOn, LIVE_LINES, wireLiveLinks, albumOn, ALBUM_LINES, wireAlbumLinks, openAlbum } from './campaign.js';
 import { updateLockdown } from './lockdown.js';
 import { initAccount, initAccountUi, startGame, menuStart, reportFinish, runsLeftText, resumeTrackChoice } from './account.js';
 import { initMp, resumeCreate } from './mp.js';
@@ -37,12 +37,12 @@ $('start').onclick = menuStart;
 $('runGo').onclick = startGame;
 $('again').onclick = startGame;
 wireMcdLinks($('dlgLinks'), TRACK_ID);
-if (!mcdOn()) wireLiveLinks($('dlgLinks'), TRACK_ID);
+if (!mcdOn()) (liveOn() ? wireLiveLinks : wireAlbumLinks)($('dlgLinks'), TRACK_ID);
 wireMcdLinks($('resMcd'), TRACK_ID);
 $('resMnet').onclick = () => openMnet('button', TRACK_ID);
 // Tracks made after a music video (TRACK.mv): the results link to it on YouTube.
-// On every track: the Mnet Plus app, where ENHYPEN gets the votes.
-$('resApp').onclick = () => openMnetApp(TRACK_ID);
+// On every track: ENHYPEN's new album on Spotify.
+$('resApp').onclick = () => openAlbum(TRACK_ID);
 $('toMenu').onclick = toMenu;
 initInput();
 initAccountUi();
@@ -97,7 +97,9 @@ function frame(now) {
       // the tracks that have it (TRACK.mnet).
       const toMnet = { onClose: () => openMnet('auto', TRACK_ID) };
       // Until the MAMA live voting (Nov 20): the drivers remind it and ask to stream "I Want You" (campaign.js).
-      const opts = mcdOn() ? { extra: MCD_LINES, ...toMnet } : liveOn() ? { extra: LIVE_LINES, ...(TRACK.mnet ? toMnet : {}) } : TRACK.mnet ? toMnet : {};
+      // After it: each driver thanks for the Daesang and asks to stream the new album (campaign.js).
+      const opts = mcdOn() ? { extra: MCD_LINES, ...toMnet } : liveOn() ? { extra: LIVE_LINES, ...(TRACK.mnet ? toMnet : {}) }
+        : albumOn() ? { extra: [ALBUM_LINES[player.team]], ...(TRACK.mnet ? toMnet : {}) } : TRACK.mnet ? toMnet : {};
       // Checked at every finish, so a page left open past the deadline drops the links too.
       $('resMnet').hidden = !TRACK.mnet && !mcdOn();
       $('resMcd').hidden = !mcdOn();

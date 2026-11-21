@@ -20,7 +20,7 @@ import { nameOf, drawPortrait, portraitImage } from './dialogue.js';
 import { sfx } from './audio.js';
 import { SLIP_T } from './itemdefs.js';
 import { track } from './stats.js';
-import { liveOn } from './campaign.js';
+import { liveOn, albumOn, ALBUM_NAME, ALBUM_SPOTIFY } from './campaign.js';
 import { toMenu } from './menu.js';
 import { setGarage, showGarage } from './garage.js';
 
@@ -50,7 +50,8 @@ let ws = null, room = null, pingT = null, sendT = 0, wantJoin = null, goResolve 
 const inviteUrl = (code) => location.origin + '/?room=' + code;
 export function inviteText(code) {
   return '🏎️ Race me in E1 Kart GP! Room code: ' + code + ' 👉 ' + inviteUrl(code) +
-    (liveOn() ? '\n🗳️ Nov 20, 18:00 KST: MAMA live voting. Vote ENHYPEN on Mnet Plus!' : '');
+    (liveOn() ? '\n🗳️ Nov 20, 18:00 KST: MAMA live voting. Vote ENHYPEN on Mnet Plus!' : '') +
+    (albumOn() ? '\n🏆 ENHYPEN won the MAMA Daesang! 🎧 Stream ' + ALBUM_NAME + ': ' + ALBUM_SPOTIFY : '');
 }
 
 // ---------- Connection ----------
@@ -520,6 +521,7 @@ export function initMp() {
   $('mpBtn').hidden = !previewAccess();
   $('mpBtn').onclick = () => { openBox(); message(''); };
   $('mpLive').hidden = !liveOn();
+  $('mpAlbum').hidden = !albumOn();
   $('mpClose').onclick = closeBox;
   // The track box opens in front of the garage (which stays on screen); closing it goes back to this box.
   $('mpCreate').onclick = () => {
